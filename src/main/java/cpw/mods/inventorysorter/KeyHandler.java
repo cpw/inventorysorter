@@ -36,12 +36,14 @@ public class KeyHandler
         private final boolean altDown;
         private final boolean space;
         private final int mouseWheel;
+        private final boolean isDownClick;
 
         KeyStates()
         {
             this.leftMouse = Mouse.getEventButton() == 0;
             this.middleMouse = Mouse.getEventButton() == 2;
             this.rightMouse = Mouse.getEventButton() == 1;
+            this.isDownClick = Mouse.getEventButtonState();
             this.shiftDown = Keyboard.isKeyDown(Keyboard.KEY_RSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_LSHIFT);
             this.ctrlDown = Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL);
             this.altDown = Keyboard.isKeyDown(Keyboard.KEY_LMENU) || Keyboard.isKeyDown(Keyboard.KEY_RMENU);
@@ -98,5 +100,7 @@ public class KeyHandler
         {
             return mouseWheel < 0;
         }
+
+        public boolean isDownClick() { return isDownClick; }
     }
 }

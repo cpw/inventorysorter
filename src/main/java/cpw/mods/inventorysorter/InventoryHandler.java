@@ -1,5 +1,6 @@
 package cpw.mods.inventorysorter;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
@@ -33,14 +34,14 @@ public enum InventoryHandler
         }
     }
 
-    public void mergeStack(Container container, ItemStack stack, int low, int high, boolean rev)
+    public boolean mergeStack(Container container, ItemStack stack, int low, int high, boolean rev)
     {
         try
         {
-            mergeStack.invoke(container, stack, low, high, rev);
+            return (Boolean)mergeStack.invoke(container, stack, low, high, rev);
         } catch (Exception e)
         {
-
+            return false;
         }
     }
 
@@ -54,18 +55,25 @@ public enum InventoryHandler
         return slot.inventory.getStackInSlot(slot.getSlotIndex());
     }
 
-    public void moveItemToOtherInventory(Slot origin, Action.ActionContext ctx, Map<IInventory,InventoryMapping> mapping, ItemStack is)
+    public void moveItemToOtherInventory(Slot origin, Action.ActionContext ctx, Map<IInventory,InventoryMapping> mapping, ItemStack is, boolean rev)
     {
         int targetLow = 0;
         int targetHigh = 0;
 
-        if (ctx.player.inventoryContainer == ctx.player.openContainer)
+        boolean forcedSlot = false;
+        if (!rev && ctx.slot.getStack().getMaxStackSize() > ctx.slot.getStack().stackSize)
+        {
+            targetLow = ctx.slot.slotNumber;
+            targetHigh = ctx.slot.slotNumber+1;
+            forcedSlot = true;
+        }
+        if (ctx.player.inventoryContainer == ctx.player.openContainer && !forcedSlot)
         {
             boolean sourceHotBar = origin.slotNumber >= 36 && origin.slotNumber < 45;
             targetLow = sourceHotBar ? 9 : 36;
             targetHigh = sourceHotBar ? 36 : 45;
         }
-        else if (origin.inventory == ctx.player.inventory)
+        else if (origin.inventory == ctx.player.inventory && !forcedSlot)
         {
             for (Map.Entry<IInventory, InventoryMapping> m : mapping.entrySet())
             {
@@ -76,13 +84,25 @@ public enum InventoryHandler
                 }
             }
         }
-        else
+        else if (!forcedSlot)
         {
             InventoryMapping m = mapping.get(ctx.player.inventory);
             targetLow = m.begin;
             targetHigh = m.end;
         }
-        mergeStack(ctx.player.openContainer, is, targetLow, targetHigh, false);
+
+        int rng = targetHigh - targetLow;
+        for (int i = 0; i < rng; i++)
+        {
+            int slNum = rev ? targetHigh - i - 1 : targetLow + i;
+            if (!ctx.player.openContainer.getSlot(slNum).isItemValid(is))
+            {
+                System.out.printf("Skipping %d\n", slNum);
+                continue;
+            }
+            System.out.printf("Mergestack %s %s %d %b\n", ctx.player.openContainer, is, slNum, !rev);
+            mergeStack(ctx.player.openContainer, is, slNum, slNum+1, !rev);
+        }
     }
 
     public Slot findStackWithItem(ItemStack is, Action.ActionContext ctx, Map<IInventory,InventoryMapping> mapping, Slot origin)
@@ -132,6 +152,12 @@ public enum InventoryHandler
         {
             this.inv = inv;
             this.container = container;
+        }
+
+        @Override
+        public String toString()
+        {
+            return Objects.toStringHelper(this).add("i", inv).add("c", container).add("b",begin).add("e",end).toString();
         }
     }
 }

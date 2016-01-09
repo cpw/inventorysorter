@@ -42,12 +42,14 @@ public enum ScrollWheelHandler implements Function<Action.ActionContext, Void>
             source = context.slot;
         }
 
+        System.out.printf("Source slot : %s %s %d\n", source, source != null ? source.inventory : null, source != null ? source.slotNumber : -1);
         if (source == null) return null;
 
         ItemStack sourceStack = InventoryHandler.INSTANCE.getItemStack(source);
         ItemStack iscopy = sourceStack.copy();
         iscopy.stackSize = 1;
-        InventoryHandler.INSTANCE.moveItemToOtherInventory(source, context, mapping, iscopy);
+        System.out.printf("IS %s %s\n", sourceStack, iscopy);
+        InventoryHandler.INSTANCE.moveItemToOtherInventory(source, context, mapping, iscopy, moveAmount != -1);
         if (iscopy.stackSize == 0)
         {
             sourceStack.stackSize--;

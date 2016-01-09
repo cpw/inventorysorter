@@ -1,6 +1,8 @@
 package cpw.mods.inventorysorter;
 
 import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
@@ -32,6 +34,7 @@ public enum Action
 
     public static Action interpret(KeyHandler.KeyStates keyStates)
     {
+        if (keyStates.isDownClick()) return null;
         if (keyStates.isMiddleMouse()) return SORT;
         if (keyStates.mouseWheelRollingDown()) return ONEITEMIN;
         if (keyStates.mouseWheelRollingUp()) return ONEITEMOUT;
@@ -67,9 +70,10 @@ public enum Action
                     mapping.put(sl.inventory, new InventoryHandler.InventoryMapping(sl.inventory, playerEntity.openContainer));
                 }
                 mapping.get(sl.inventory).begin = Math.min(sl.slotNumber, mapping.get(sl.inventory).begin);
-                mapping.get(sl.inventory).end = Math.min(sl.slotNumber, mapping.get(sl.inventory).end);
+                mapping.get(sl.inventory).end = Math.max(sl.slotNumber, mapping.get(sl.inventory).end);
             }
             this.mapping = ImmutableMap.copyOf(mapping);
+            System.out.println(Joiner.on("\n").withKeyValueSeparator("=").join(mapping));
         }
     }
 }
