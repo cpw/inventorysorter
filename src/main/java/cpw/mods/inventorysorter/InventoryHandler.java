@@ -169,9 +169,11 @@ public enum InventoryHandler
         int slotHigh;
         if (context.slot.inventory == context.player.inventory)
         {
+            boolean isPlayerContainer = context.player.openContainer == context.player.inventoryContainer;
             boolean sourceHotBar = context.slot.getSlotIndex() < 9;
+            int offset = isPlayerContainer ? 4 : 0;
             InventoryMapping m = context.mapping.get(context.player.inventory);
-            slotLow = sourceHotBar ? m.end - 8 : m.begin + 4;
+            slotLow = sourceHotBar ? m.end - 8 : m.begin + offset;
             slotHigh = sourceHotBar ? m.end + 1: m.end - 8;
         }
         else
