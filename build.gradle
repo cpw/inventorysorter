@@ -93,6 +93,66 @@ processResources
         exclude 'mcmod.info'
     }
 }
+
+
+uploadArchives {
+    repositories.mavenDeployer {
+        dependsOn 'build'
+
+        if (project.hasProperty('forgeMavenPass'))
+        {
+            repository(url: "http://files.minecraftforge.net/maven/manage/upload") {
+                authentication(userName: "forge", password: project.getProperty('forgeMavenPass')) // the elvis operator. look it up.
+            }
+        }
+        else
+        {
+            // local repo folder. Might wanna juset use  gradle install   if you wanans end it to maven-local
+            repository(url: 'file://localhost/' + project.file('repo').getAbsolutePath())
+        }
+        // This is just the pom data for the maven repo
+        pom {
+            groupId = project.group
+            // Force the maven upload to use the <mcversion>-<version> syntax preferred at files
+            version = "${project.minecraft.version}-${project.version}"
+            artifactId = project.archivesBaseName
+            project {
+                name project.archivesBaseName
+                packaging 'jar'
+                description 'InventorySorter'
+                url 'https://github.com/cpw/InventorySorter'
+
+                scm {
+                    url 'https://github.com/cpw/InventorySorter'
+                    connection 'scm:git:git://github.com/cpw/InventorySorter.git'
+                    developerConnection 'scm:git:git@github.com:cpw/InventorySorter.git'
+                }
+
+                issueManagement {
+                    system 'github'
+                    url 'https://github.com/cpw/InventorySorter/issues'
+                }
+
+                licenses {
+                    license {
+                        name 'GNU Public License (GPL), Version 3.0'
+                        url 'http://www.gnu.org/licenses/gpl-3.0.txt'
+                        distribution 'repo'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'cpw'
+                        name 'cpw'
+                        roles { role 'developer' }
+                    }
+                }
+            }
+        }
+    }
+}
+
 // This is a special task for pulling the version information from git and the environment (for BUILD_NUMBER)
 def getGitVersion()
 {

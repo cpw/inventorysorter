@@ -5,7 +5,7 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
-import org.apache.commons.logging.Log;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 
@@ -19,7 +19,7 @@ public class InventorySorter
     @Mod.Instance("inventorysorter")
     public static InventorySorter INSTANCE;
 
-    public Log log;
+    public Logger log;
     public SimpleNetworkWrapper channel;
 
 
