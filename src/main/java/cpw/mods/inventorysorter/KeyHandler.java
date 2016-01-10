@@ -5,6 +5,7 @@ import net.minecraft.client.gui.inventory.GuiContainerCreative;
 import net.minecraft.inventory.Slot;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import org.apache.logging.log4j.Level;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
@@ -21,6 +22,7 @@ public class KeyHandler
         {
             Slot slot = ((GuiContainer)evt.gui).getSlotUnderMouse();
             if (slot == null) return;
+            InventorySorter.INSTANCE.log.log(Level.DEBUG, "Sending action %s slot %d", action, slot.slotNumber);
             InventorySorter.INSTANCE.channel.sendToServer(action.message(slot));
             evt.setCanceled(true);
         }

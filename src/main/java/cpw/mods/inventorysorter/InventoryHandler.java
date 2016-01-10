@@ -156,7 +156,7 @@ public enum InventoryHandler
         {
             boolean sourceHotBar = context.slot.getSlotIndex() < 9;
             InventoryMapping m = context.mapping.get(context.player.inventory);
-            slotLow = sourceHotBar ? m.end - 8 : m.begin;
+            slotLow = sourceHotBar ? m.end - 8 : m.begin + 4;
             slotHigh = sourceHotBar ? m.end + 1: m.end - 8;
         }
         else
