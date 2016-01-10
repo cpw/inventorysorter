@@ -14,7 +14,7 @@ public class ServerHandler implements IMessageHandler<Network.ActionMessage, IMe
     @Override
     public IMessage onMessage(Network.ActionMessage message, MessageContext ctx)
     {
-        InventorySorter.INSTANCE.log.log(Level.DEBUG, "Got action %s slot %d", message.action, message.slotIndex);
+        InventorySorter.INSTANCE.log.log(Level.DEBUG, "Got action {} slot {}", message.action, message.slotIndex);
         Slot slot = ctx.getServerHandler().playerEntity.openContainer.getSlot(message.slotIndex);
         message.action.execute(new Action.ActionContext(slot, ctx.getServerHandler().playerEntity));
         return null;

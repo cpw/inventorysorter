@@ -29,7 +29,6 @@ public enum ScrollWheelHandler implements Function<Action.ActionContext, Void>
     {
         ItemStack is = InventoryHandler.INSTANCE.getItemStack(context);
         final Map<IInventory, InventoryHandler.InventoryMapping> mapping = context.mapping;
-
         if (is == null) return null;
         Slot source;
         if (moveAmount == -1)

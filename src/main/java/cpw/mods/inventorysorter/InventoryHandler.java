@@ -1,11 +1,7 @@
 package cpw.mods.inventorysorter;
 
 import com.google.common.base.Objects;
-import com.google.common.collect.LinkedHashMultiset;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
-import com.google.common.collect.Multisets;
-import com.google.common.collect.Ordering;
 import com.google.common.collect.SortedMultiset;
 import com.google.common.collect.TreeMultiset;
 import com.google.common.primitives.Ints;
@@ -13,13 +9,11 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
+import net.minecraftforge.fml.relauncher.ReflectionHelper;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Created by cpw on 09/01/16.
@@ -33,7 +27,7 @@ public enum InventoryHandler
     {
         try
         {
-            Method m = Container.class.getDeclaredMethod("mergeItemStack", ItemStack.class, int.class, int.class, boolean.class);
+            Method m = ReflectionHelper.findMethod(Container.class, null, new String[] { "func_"+"75135_a","mergeItemStack" }, ItemStack.class, int.class, int.class, boolean.class);
             m.setAccessible(true);
             return m;
         }
@@ -68,7 +62,6 @@ public enum InventoryHandler
     {
         int targetLow = 0;
         int targetHigh = 0;
-
         boolean forcedSlot = false;
         if (!rev && ctx.slot.getStack().getMaxStackSize() > ctx.slot.getStack().stackSize)
         {
@@ -108,7 +101,10 @@ public enum InventoryHandler
             {
                 continue;
             }
-            mergeStack(ctx.player.openContainer, is, slNum, slNum+1, !rev);
+            if (mergeStack(ctx.player.openContainer, is, slNum, slNum+1, !rev))
+            {
+                break;
+            }
         }
     }
 

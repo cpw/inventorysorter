@@ -22,7 +22,7 @@ public class KeyHandler
         {
             Slot slot = ((GuiContainer)evt.gui).getSlotUnderMouse();
             if (slot == null) return;
-            InventorySorter.INSTANCE.log.log(Level.DEBUG, "Sending action %s slot %d", action, slot.slotNumber);
+            InventorySorter.INSTANCE.log.log(Level.DEBUG, "Sending action {} slot {}", action, slot.slotNumber);
             InventorySorter.INSTANCE.channel.sendToServer(action.message(slot));
             evt.setCanceled(true);
         }
