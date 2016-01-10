@@ -13,6 +13,10 @@ buildscript {
     }
 }
 apply plugin: 'net.minecraftforge.gradle.forge'
+apply plugin: 'maven'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+
 
 /*
 // for people who want stable - not yet functional for MC 1.8.8 - we require the forgegradle 2.1 snapshot
@@ -20,7 +24,16 @@ plugins {
     id "net.minecraftforge.gradle.forge" version "2.0.2"
 }
 */
-version = "1.0"
+
+repositories {
+    flatDir {
+        name "fileRepo"
+        dirs "repo"
+    }
+}
+
+def versionInfo = getGitVersion()
+version = "${versionInfo['inventorysorter.version']}"
 group= "cpw.mods" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "inventorysorter"
 
@@ -79,4 +92,34 @@ processResources
     from(sourceSets.main.resources.srcDirs) {
         exclude 'mcmod.info'
     }
+}
+// This is a special task for pulling the version information from git and the environment (for BUILD_NUMBER)
+def getGitVersion()
+{
+    def out = [:]
+
+    // call git command.
+    def outStream = new ByteArrayOutputStream()
+    def result = exec {
+        executable = 'git'
+        args = [ 'describe', '--long', "--match=[^(jenkins)]*"]
+        standardOutput = outStream
+    }
+
+    def fullVersion = outStream.toString().trim()
+    def matcher = fullVersion =~ /(\d+).(\d+)-(\d+)-(.*)/
+
+    def maj = matcher[0][1]
+    def min = matcher[0][2]
+    def rev = matcher[0][3]
+    def bn = System.getenv("BUILD_NUMBER") ?: "1"
+
+    out['inventorysorter.build.major.number'] = maj.toString()
+    out['inventorysorter.build.minor.number'] = min.toString()
+    out['inventorysorter.build.revision.number'] = rev.toString()
+    out['inventorysorter.build.githash'] = matcher[0][4].toString()
+    out['inventorysorter.build.number' ] = bn.toString()
+    out['inventorysorter.version' ] = "${maj}.${min}.${rev}.${bn}".toString()
+
+    return out
 }
