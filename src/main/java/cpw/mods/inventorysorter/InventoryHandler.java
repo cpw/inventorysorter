@@ -106,10 +106,8 @@ public enum InventoryHandler
             int slNum = rev ? targetHigh - i - 1 : targetLow + i;
             if (!ctx.player.openContainer.getSlot(slNum).isItemValid(is))
             {
-                System.out.printf("Skipping %d\n", slNum);
                 continue;
             }
-            System.out.printf("Mergestack %s %s %d %b\n", ctx.player.openContainer, is, slNum, !rev);
             mergeStack(ctx.player.openContainer, is, slNum, slNum+1, !rev);
         }
     }
@@ -120,7 +118,7 @@ public enum InventoryHandler
 
         if (ctx.player.inventoryContainer == ctx.player.openContainer)
         {
-            boolean sourceHotBar = origin.slotNumber < 9;
+            boolean sourceHotBar = origin.getSlotIndex() < 9;
             int searchLow = sourceHotBar ? 9 : 36;
             int searchHigh = sourceHotBar ? 36 : 45;
             for (int i = searchLow; i < searchHigh; i++)
@@ -167,21 +165,13 @@ public enum InventoryHandler
             slotLow = m.begin;
             slotHigh = m.end + 1;
         }
-        System.out.printf("Slot %d to %d\n", slotLow, slotHigh);
         SortedMultiset<ItemStackHolder> itemcounts = TreeMultiset.create(new InventoryHandler.ItemStackComparator());
-        HashMap<ItemStackHolder,ItemStackHolder> map = Maps.newHashMap();
         for (int i = slotLow; i < slotHigh; i++)
         {
             ItemStack stack = context.player.openContainer.getSlot(i).getStack();
             if (stack != null && stack.getItem() != null)
             {
                 ItemStackHolder ish = new ItemStackHolder(stack.copy());
-                ItemStackHolder other = map.get(ish);
-                if (other != null)
-                {
-                    System.out.printf("YO\n");
-                }
-                map.put(ish,ish);
                 itemcounts.add(ish, stack.stackSize);
             }
         }

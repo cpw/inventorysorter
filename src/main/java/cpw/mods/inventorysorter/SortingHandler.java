@@ -40,7 +40,7 @@ public enum SortingHandler implements Function<Action.ActionContext,Void>
         {
             boolean sourceHotBar = context.slot.getSlotIndex() < 9;
             InventoryHandler.InventoryMapping m = context.mapping.get(context.player.inventory);
-            slotLow = sourceHotBar ? m.end - 8 : m.begin;
+            slotLow = sourceHotBar ? m.end - 8 : m.begin + 4;
             slotHigh = sourceHotBar ? m.end + 1: m.end - 8;
         }
         else
@@ -59,11 +59,9 @@ public enum SortingHandler implements Function<Action.ActionContext,Void>
             if (itemCount > 0)
             {
                 target = stackHolder.getElement().is.copy();
-                System.out.printf("t %x %s %d", System.identityHashCode(target), target, itemCount);
                 target.stackSize = itemCount > target.getMaxStackSize() ? target.getMaxStackSize() : itemCount;
                 itemCount-= target.stackSize;
             }
-            System.out.printf("Putting %s in %s (%d)\n", target, slot, slot.slotNumber);
             slot.putStack(target);
             if (itemCount ==0)
             {

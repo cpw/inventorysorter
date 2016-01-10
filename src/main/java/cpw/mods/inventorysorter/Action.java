@@ -48,7 +48,6 @@ public enum Action
 
     public void execute(ActionContext context)
     {
-        System.out.println(this+" got a click on the server, slot "+context.slot+" id "+context.slot.slotNumber + " idx " +context.slot.getSlotIndex());
         this.worker.apply(context);
     }
 
@@ -73,7 +72,6 @@ public enum Action
                 mapping.get(sl.inventory).end = Math.max(sl.slotNumber, mapping.get(sl.inventory).end);
             }
             this.mapping = ImmutableMap.copyOf(mapping);
-            System.out.println(Joiner.on("\n").withKeyValueSeparator("=").join(mapping));
         }
     }
 }

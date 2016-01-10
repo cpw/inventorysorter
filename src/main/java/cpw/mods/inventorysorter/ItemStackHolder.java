@@ -12,7 +12,6 @@ public class ItemStackHolder
     public ItemStackHolder(ItemStack stack)
     {
         this.is = stack;
-        System.out.printf("IS: %s %s\n", stack, stack.getTagCompound());
     }
 
     @Override
@@ -26,7 +25,6 @@ public class ItemStackHolder
     {
         if (!(obj instanceof ItemStackHolder)) return false;
         ItemStackHolder ish = (ItemStackHolder)obj;
-        System.out.println("="+is.getTagCompound()+" "+ish.is.getTagCompound());
         return is.getItem() == ish.is.getItem() && is.getMetadata() == ish.is.getMetadata() && ItemStack.areItemStackTagsEqual(is, ish.is);
     }
 }
