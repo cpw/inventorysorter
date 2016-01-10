@@ -27,7 +27,7 @@ public class InventorySorter
     public void preinit(FMLPreInitializationEvent evt)
     {
         loadConfig(evt.getSuggestedConfigurationFile());
-
+        log = evt.getModLog();
         channel = NetworkRegistry.INSTANCE.newSimpleChannel("inventorysorter");
         channel.registerMessage(ServerHandler.class, Network.ActionMessage.class, 1, Side.SERVER);
         SideProxy.INSTANCE.bindKeys();
