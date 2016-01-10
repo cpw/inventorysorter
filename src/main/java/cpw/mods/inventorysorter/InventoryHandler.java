@@ -1,3 +1,21 @@
+/*
+ *     Copyright
+ *     This file is part of inventorysorter.
+ *
+ *     Foobar is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     Foobar is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with inventorysorter.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package cpw.mods.inventorysorter;
 
 import com.google.common.base.Objects;
@@ -41,6 +59,7 @@ public enum InventoryHandler
     {
         try
         {
+            //noinspection ConstantConditions
             return (Boolean)mergeStack.invoke(container, stack, low, high, rev);
         } catch (Exception e)
         {
@@ -146,8 +165,8 @@ public enum InventoryHandler
 
     public Multiset<ItemStackHolder> getInventoryContent(Action.ActionContext context)
     {
-        int slotLow = 0;
-        int slotHigh = 0;
+        int slotLow;
+        int slotHigh;
         if (context.slot.inventory == context.player.inventory)
         {
             boolean sourceHotBar = context.slot.getSlotIndex() < 9;

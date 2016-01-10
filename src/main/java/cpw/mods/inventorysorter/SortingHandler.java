@@ -1,25 +1,32 @@
+/*
+ *     Copyright
+ *     This file is part of inventorysorter.
+ *
+ *     Foobar is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     Foobar is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with inventorysorter.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package cpw.mods.inventorysorter;
 
 import com.google.common.base.Function;
-import com.google.common.collect.ImmutableMultiset;
-import com.google.common.collect.LinkedHashMultiset;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Multisets;
-import com.google.common.collect.SortedMultiset;
-import com.google.common.collect.TreeMultiset;
 import com.google.common.collect.UnmodifiableIterator;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTUtil;
-import net.minecraft.util.JsonUtils;
-import scala.swing.ListView;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by cpw on 08/01/16.
@@ -31,11 +38,12 @@ public enum SortingHandler implements Function<Action.ActionContext,Void>
     @Override
     public Void apply(@Nullable Action.ActionContext context)
     {
+        if (context == null) throw new NullPointerException("WHUT");
         IInventory inv = context.slot.inventory;
         final Multiset<ItemStackHolder> itemcounts = InventoryHandler.INSTANCE.getInventoryContent(context);
         final UnmodifiableIterator<Multiset.Entry<ItemStackHolder>> itemsIterator = Multisets.copyHighestCountFirst(itemcounts).entrySet().iterator();
-        int slotLow = 0;
-        int slotHigh = 0;
+        int slotLow;
+        int slotHigh;
         if (inv == context.player.inventory)
         {
             boolean sourceHotBar = context.slot.getSlotIndex() < 9;
@@ -56,7 +64,7 @@ public enum SortingHandler implements Function<Action.ActionContext,Void>
         {
             final Slot slot = context.player.openContainer.getSlot(i);
             ItemStack target = null;
-            if (itemCount > 0)
+            if (itemCount > 0 && stackHolder != null)
             {
                 target = stackHolder.getElement().is.copy();
                 target.stackSize = itemCount > target.getMaxStackSize() ? target.getMaxStackSize() : itemCount;

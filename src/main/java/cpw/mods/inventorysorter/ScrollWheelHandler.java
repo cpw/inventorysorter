@@ -1,13 +1,29 @@
+/*
+ *     Copyright
+ *     This file is part of inventorysorter.
+ *
+ *     Foobar is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     Foobar is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with inventorysorter.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package cpw.mods.inventorysorter;
 
 import com.google.common.base.Function;
-import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 
 import javax.annotation.Nullable;
-import java.lang.reflect.Method;
 import java.util.Map;
 
 /**
@@ -27,6 +43,7 @@ public enum ScrollWheelHandler implements Function<Action.ActionContext, Void>
     @Override
     public Void apply(@Nullable Action.ActionContext context)
     {
+        if (context == null) throw new NullPointerException("WHUT");
         ItemStack is = InventoryHandler.INSTANCE.getItemStack(context);
         final Map<IInventory, InventoryHandler.InventoryMapping> mapping = context.mapping;
         if (is == null) return null;
