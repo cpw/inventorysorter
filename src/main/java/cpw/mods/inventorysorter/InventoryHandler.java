@@ -164,7 +164,9 @@ public enum InventoryHandler
         SortedMultiset<ItemStackHolder> itemcounts = TreeMultiset.create(new InventoryHandler.ItemStackComparator());
         for (int i = slotLow; i < slotHigh; i++)
         {
-            ItemStack stack = context.player.openContainer.getSlot(i).getStack();
+            final Slot slot = context.player.openContainer.getSlot(i);
+            if (!slot.canTakeStack(context.player)) continue;
+            ItemStack stack = slot.getStack();
             if (stack != null && stack.getItem() != null)
             {
                 ItemStackHolder ish = new ItemStackHolder(stack.copy());
