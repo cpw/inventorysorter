@@ -12,20 +12,21 @@ public class ItemStackHolder
     public ItemStackHolder(ItemStack stack)
     {
         this.is = stack;
+        System.out.printf("IS: %s %s\n", stack, stack.getTagCompound());
     }
 
     @Override
     public int hashCode()
     {
-        return is.getItem().hashCode() * 31 + (is.hasTagCompound() ? is.getTagCompound().hashCode() : 0);
+        return is.getItem().hashCode() * 31 + (is.getMetadata() * 31 * 31 ) + (is.hasTagCompound() ? is.getTagCompound().hashCode() : 0);
     }
 
     @Override
     public boolean equals(Object obj)
     {
         if (!(obj instanceof ItemStackHolder)) return false;
-        if (is.getMaxStackSize() == 1) return false;
         ItemStackHolder ish = (ItemStackHolder)obj;
-        return is.getItem() == ish.is.getItem() && ItemStack.areItemStackTagsEqual(is, ish.is);
+        System.out.println("="+is.getTagCompound()+" "+ish.is.getTagCompound());
+        return is.getItem() == ish.is.getItem() && is.getMetadata() == ish.is.getMetadata() && ItemStack.areItemStackTagsEqual(is, ish.is);
     }
 }

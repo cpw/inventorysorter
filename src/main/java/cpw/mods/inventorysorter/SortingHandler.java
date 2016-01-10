@@ -1,17 +1,24 @@
 package cpw.mods.inventorysorter;
 
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableMultiset;
 import com.google.common.collect.LinkedHashMultiset;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Multisets;
+import com.google.common.collect.SortedMultiset;
+import com.google.common.collect.TreeMultiset;
+import com.google.common.collect.UnmodifiableIterator;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTUtil;
+import net.minecraft.util.JsonUtils;
 import scala.swing.ListView;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -24,28 +31,46 @@ public enum SortingHandler implements Function<Action.ActionContext,Void>
     @Override
     public Void apply(@Nullable Action.ActionContext context)
     {
-
         IInventory inv = context.slot.inventory;
-        int invSize = inv.getSizeInventory();
-        Multiset<ItemStackHolder> itemcounts = LinkedHashMultiset.create();
-        for (int i = 0; i < invSize; i++)
+        final Multiset<ItemStackHolder> itemcounts = InventoryHandler.INSTANCE.getInventoryContent(context);
+        final UnmodifiableIterator<Multiset.Entry<ItemStackHolder>> itemsIterator = Multisets.copyHighestCountFirst(itemcounts).entrySet().iterator();
+        int slotLow = 0;
+        int slotHigh = 0;
+        if (inv == context.player.inventory)
         {
-            ItemStack stack = inv.getStackInSlot(i);
-            if (stack != null && stack.getItem() != null)
+            boolean sourceHotBar = context.slot.getSlotIndex() < 9;
+            InventoryHandler.InventoryMapping m = context.mapping.get(context.player.inventory);
+            slotLow = sourceHotBar ? m.end - 8 : m.begin;
+            slotHigh = sourceHotBar ? m.end + 1: m.end - 8;
+        }
+        else
+        {
+            InventoryHandler.InventoryMapping m = context.mapping.get(context.slot.inventory);
+            slotLow = m.begin;
+            slotHigh = m.end + 1;
+        }
+
+        Multiset.Entry<ItemStackHolder> stackHolder = itemsIterator.hasNext() ? itemsIterator.next() : null;
+        int itemCount = stackHolder != null ? stackHolder.getCount() : 0;
+        for (int i = slotLow; i < slotHigh; i++)
+        {
+            final Slot slot = context.player.openContainer.getSlot(i);
+            ItemStack target = null;
+            if (itemCount > 0)
             {
-                ItemStackHolder ish = new ItemStackHolder(stack);
-                itemcounts.add(ish, ish.is.stackSize);
+                target = stackHolder.getElement().is.copy();
+                System.out.printf("t %x %s %d", System.identityHashCode(target), target, itemCount);
+                target.stackSize = itemCount > target.getMaxStackSize() ? target.getMaxStackSize() : itemCount;
+                itemCount-= target.stackSize;
+            }
+            System.out.printf("Putting %s in %s (%d)\n", target, slot, slot.slotNumber);
+            slot.putStack(target);
+            if (itemCount ==0)
+            {
+                stackHolder = itemsIterator.hasNext() ? itemsIterator.next() : null;
+                itemCount = stackHolder != null ? stackHolder.getCount() : 0;
             }
         }
-
-        for (Multiset.Entry<ItemStackHolder> ish : Multisets.copyHighestCountFirst(itemcounts).entrySet())
-        {
-            int count = ish.getCount();
-            ItemStackHolder itemStackHolder = ish.getElement();
-            int stacks = count / itemStackHolder.is.getMaxStackSize();
-            System.out.printf("Sorting %s %s for (%d) %d stacks %d leftover\n", itemStackHolder, itemStackHolder.is, count, stacks, count % itemStackHolder.is.getMaxStackSize());
-        }
-
         return null;
     }
 }

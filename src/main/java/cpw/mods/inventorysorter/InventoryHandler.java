@@ -1,7 +1,14 @@
 package cpw.mods.inventorysorter;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.LinkedHashMultiset;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multiset;
+import com.google.common.collect.Multisets;
+import com.google.common.collect.Ordering;
+import com.google.common.collect.SortedMultiset;
+import com.google.common.collect.TreeMultiset;
+import com.google.common.primitives.Ints;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
@@ -9,6 +16,8 @@ import net.minecraft.item.ItemStack;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -141,6 +150,60 @@ public enum InventoryHandler
         return null;
     }
 
+    public Multiset<ItemStackHolder> getInventoryContent(Action.ActionContext context)
+    {
+        int slotLow = 0;
+        int slotHigh = 0;
+        if (context.slot.inventory == context.player.inventory)
+        {
+            boolean sourceHotBar = context.slot.getSlotIndex() < 9;
+            InventoryMapping m = context.mapping.get(context.player.inventory);
+            slotLow = sourceHotBar ? m.end - 8 : m.begin;
+            slotHigh = sourceHotBar ? m.end + 1: m.end - 8;
+        }
+        else
+        {
+            InventoryMapping m = context.mapping.get(context.slot.inventory);
+            slotLow = m.begin;
+            slotHigh = m.end + 1;
+        }
+        System.out.printf("Slot %d to %d\n", slotLow, slotHigh);
+        SortedMultiset<ItemStackHolder> itemcounts = TreeMultiset.create(new InventoryHandler.ItemStackComparator());
+        HashMap<ItemStackHolder,ItemStackHolder> map = Maps.newHashMap();
+        for (int i = slotLow; i < slotHigh; i++)
+        {
+            ItemStack stack = context.player.openContainer.getSlot(i).getStack();
+            if (stack != null && stack.getItem() != null)
+            {
+                ItemStackHolder ish = new ItemStackHolder(stack.copy());
+                ItemStackHolder other = map.get(ish);
+                if (other != null)
+                {
+                    System.out.printf("YO\n");
+                }
+                map.put(ish,ish);
+                itemcounts.add(ish, stack.stackSize);
+            }
+        }
+
+        return itemcounts;
+    }
+
+    public static class ItemStackComparator implements Comparator<ItemStackHolder>
+    {
+
+        @Override
+        public int compare(ItemStackHolder o1, ItemStackHolder o2)
+        {
+            if (o1.is.getItem() != o2.is.getItem())
+                return o1.is.getItem().getRegistryName().compareTo(o2.is.getItem().getRegistryName());
+            if (o1.is.getMetadata() != o2.is.getMetadata())
+                return Ints.compare(o1.is.getMetadata(), o2.is.getMetadata());
+            if (ItemStack.areItemStackTagsEqual(o1.is, o2.is))
+                return 0;
+            return -1;
+        }
+    }
     public static class InventoryMapping
     {
         int begin = Integer.MAX_VALUE;
