@@ -62,6 +62,9 @@ curseforge {
     }
 }
 
+afterEvaluate {
+    tasks.curseforge240633.dependsOn.remove(reobfJar)
+}
 dependencies {
     // you may put jars on which you depend on in ./libs
     // or you may define them like so..
