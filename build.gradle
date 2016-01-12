@@ -195,7 +195,7 @@ def getGitVersion()
     def maj = matcher[0][1]
     def min = matcher[0][2]
     def rev = matcher[0][3]
-    def bn = System.getenv("BUILD_NUMBER") ?: "1"
+    def bn = System.getenv("PROMOTED_NUMBER") ?: System.getenv("BUILD_NUMBER") ?: "1"
 
     out['inventorysorter.build.major.number'] = maj.toString()
     out['inventorysorter.build.minor.number'] = min.toString()
