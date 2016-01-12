@@ -10,17 +10,16 @@ buildscript {
     }
     dependencies {
         classpath 'net.minecraftforge.gradle:ForgeGradle:2.1-SNAPSHOT'
-        classpath 'com.matthewprenger:CurseGradle:<VERSION>-SNAPSHOT'
     }
+}
+plugins {
+    id "com.matthewprenger.cursegradle" version "1.0.7"
 }
 apply plugin: 'net.minecraftforge.gradle.forge'
 apply plugin: 'maven'
 apply plugin: 'eclipse'
 apply plugin: 'idea'
 
-plugins {
-    id "com.matthewprenger.cursegradle" version "1.0.7"
-}
 
 /*
 // for people who want stable - not yet functional for MC 1.8.8 - we require the forgegradle 2.1 snapshot
@@ -54,14 +53,13 @@ minecraft {
     // makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
 }
 
-curse {
-    dependsOn 'reobf'
-    onlyIf { return project.hasProperty('curseforge_apikey') }
-
-    projectId = project.hasProperty('curseforge_projectid') ? project.curseforge_projectid : ''
-    apiKey = project.hasProperty('curseforge_apikey') ? project.curseforge_apikey : ''
-    changelog = 'Empty'
-    releaseType = 'beta'
+curseforge {
+    project {
+        id = project.hasProperty('curseforge_projectid') ? project.curseforge_projectid : '0'
+        changelog = 'Empty'
+        releaseType = 'beta'
+    }
+    apiKey = project.hasProperty('curseforge_apikey') ? project.curseforge_apikey : '0'
 }
 
 dependencies {
