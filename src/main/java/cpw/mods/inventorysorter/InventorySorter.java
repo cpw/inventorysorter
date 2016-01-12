@@ -26,12 +26,13 @@ import net.minecraftforge.fml.relauncher.Side;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
+import java.util.Properties;
 
 /**
  * Created by cpw on 08/01/16.
  */
 
-@Mod(modid="inventorysorter",name="Inventory Sorter", version="1.0")
+@Mod(modid="inventorysorter",name="Inventory Sorter")
 public class InventorySorter
 {
     @Mod.Instance("inventorysorter")
@@ -44,6 +45,15 @@ public class InventorySorter
     @Mod.EventHandler
     public void preinit(FMLPreInitializationEvent evt)
     {
+        final Properties versionProperties = evt.getVersionProperties();
+        if (versionProperties != null)
+        {
+            evt.getModMetadata().version = versionProperties.getProperty("inventorysorter.version");
+        }
+        else
+        {
+            evt.getModMetadata().version = "1.0";
+        }
         loadConfig(evt.getSuggestedConfigurationFile());
         log = evt.getModLog();
         channel = NetworkRegistry.INSTANCE.newSimpleChannel("inventorysorter");
