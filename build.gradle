@@ -56,7 +56,7 @@ minecraft {
 curseforge {
     apiKey = project.hasProperty('curseforge_apikey') ? project.curseforge_apikey : '0'
     project {
-        id = project.hasProperty('curseforge_projectid') ? project.curseforge_projectid : '0'
+        id = '240633'
         changelog = 'Empty'
         releaseType = 'beta'
     }
