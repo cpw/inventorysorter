@@ -113,6 +113,7 @@ processResources
     }
 }
 
+curseforge.dependsOn 'uploadArchives'
 
 uploadArchives {
     repositories.mavenDeployer {
