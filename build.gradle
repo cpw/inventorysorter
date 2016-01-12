@@ -55,11 +55,11 @@ minecraft {
 
 curseforge {
     project {
-        id = project.hasProperty('curseforge_projectid') ? project.getProperty('curseforge_projectid') : '0'
+        id = project.hasProperty('curseforge_projectid') ? project.curseforge_projectid : '0'
         changelog = 'Empty'
         releaseType = 'beta'
     }
-    apiKey = project.hasProperty('curseforge_apikey') ? project.getProperty('curseforge_apikey') : '0'
+    apiKey = project.hasProperty('curseforge_apikey') ? project.curseforge_apikey : '0'
 }
 
 dependencies {
