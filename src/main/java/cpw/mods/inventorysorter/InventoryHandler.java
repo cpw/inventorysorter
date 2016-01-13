@@ -210,7 +210,7 @@ public enum InventoryHandler
                 return Ints.compare(o1.is.getMetadata(), o2.is.getMetadata());
             if (ItemStack.areItemStackTagsEqual(o1.is, o2.is))
                 return 0;
-            return -1;
+            return Ints.compare(System.identityHashCode(o1), System.identityHashCode(o2));
         }
     }
     public static class InventoryMapping

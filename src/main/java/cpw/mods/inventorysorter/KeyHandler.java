@@ -22,6 +22,7 @@ import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.gui.inventory.GuiContainerCreative;
 import net.minecraft.inventory.Slot;
 import net.minecraftforge.client.event.GuiScreenEvent;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.apache.logging.log4j.Level;
 import org.lwjgl.input.Keyboard;
@@ -32,17 +33,21 @@ import org.lwjgl.input.Mouse;
  */
 public class KeyHandler
 {
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onKey(GuiScreenEvent.MouseInputEvent.Pre evt)
     {
         Action action = Action.interpret(new KeyStates());
         if (action != null && evt.gui instanceof GuiContainer && !(evt.gui instanceof GuiContainerCreative))
         {
-            Slot slot = ((GuiContainer)evt.gui).getSlotUnderMouse();
+            final GuiContainer guiContainer = (GuiContainer)evt.gui;
+            Slot slot = guiContainer.getSlotUnderMouse();
             if (slot == null) return;
-            InventorySorter.INSTANCE.log.log(Level.DEBUG, "Sending action {} slot {}", action, slot.slotNumber);
-            InventorySorter.INSTANCE.channel.sendToServer(action.message(slot));
-            evt.setCanceled(true);
+            if (guiContainer.inventorySlots != null && guiContainer.inventorySlots.inventorySlots != null && guiContainer.inventorySlots.inventorySlots.contains(slot))
+            {
+                InventorySorter.INSTANCE.log.log(Level.DEBUG, "Sending action {} slot {}", action, slot.slotNumber);
+                InventorySorter.INSTANCE.channel.sendToServer(action.message(slot));
+                evt.setCanceled(true);
+            }
         }
     }
 
