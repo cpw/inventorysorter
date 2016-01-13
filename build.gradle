@@ -41,7 +41,7 @@ group= "cpw.mods" // http://maven.apache.org/guides/mini/guide-naming-convention
 archivesBaseName = "inventorysorter"
 
 minecraft {
-    version = "1.8.9-11.15.0.1689"
+    version = "1.8.9-11.15.0.1691"
     runDir = "run"
     
     // the mappings can be changed at any time, and must be in the following format.
@@ -117,6 +117,9 @@ processResources
     }
 }
 
+jar {
+    appendix = project.minecraft.version
+}
 
 uploadArchives {
     repositories.mavenDeployer {
@@ -146,7 +149,7 @@ uploadArchives {
                 url 'https://github.com/cpw/inventorysorter'
 
                 scm {
-                    url 'https://github.com/cpw/InventorySorter'
+                    url 'https://github.com/cpw/inventorysorter'
                     connection 'scm:git:git://github.com/cpw/inventorysorter.git'
                     developerConnection 'scm:git:git@github.com:cpw/inventorysorter.git'
                 }
@@ -202,7 +205,7 @@ def getGitVersion()
     out['inventorysorter.build.revision.number'] = rev.toString()
     out['inventorysorter.build.githash'] = matcher[0][4].toString()
     out['inventorysorter.build.number' ] = bn.toString()
-    out['inventorysorter.version' ] = "${maj}.${min}.${rev}.${bn}".toString()
+    out['inventorysorter.version' ] = "${maj}.${min}.${rev}+${bn}".toString()
 
     return out
 }
