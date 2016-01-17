@@ -71,7 +71,7 @@ public enum SortingHandler implements Function<Action.ActionContext,Void>
                 target = stackHolder.getElement().is.copy();
                 target.stackSize = itemCount > target.getMaxStackSize() ? target.getMaxStackSize() : itemCount;
             }
-            if (!slot.isItemValid(target) || !slot.canTakeStack(context.player)) continue;
+            if ((target != null && !slot.isItemValid(target)) || !slot.canTakeStack(context.player)) continue;
             slot.putStack(target);
             itemCount-= (target != null ? target.stackSize : 0);
             if (itemCount ==0)

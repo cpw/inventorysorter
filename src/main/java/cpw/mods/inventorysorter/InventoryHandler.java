@@ -115,7 +115,7 @@ public enum InventoryHandler
         int rng = targetHigh - targetLow;
         for (int i = 0; i < rng; i++)
         {
-            int slNum = rev ? targetHigh - i - 1 : targetLow + i;
+            int slNum = rev ? targetHigh - i : targetLow + i;
             if (!ctx.player.openContainer.getSlot(slNum).isItemValid(is))
             {
                 continue;
