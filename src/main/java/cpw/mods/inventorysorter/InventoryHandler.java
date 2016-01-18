@@ -91,8 +91,8 @@ public enum InventoryHandler
         if (ctx.player.inventoryContainer == ctx.player.openContainer && !forcedSlot)
         {
             boolean sourceHotBar = origin.slotNumber >= 36 && origin.slotNumber < 45;
-            targetLow = sourceHotBar ? 9 : 36;
-            targetHigh = sourceHotBar ? 36 : 45;
+            targetLow = sourceHotBar ? 9 : 35;
+            targetHigh = sourceHotBar ? 35 : 44;
         }
         else if (origin.inventory == ctx.player.inventory && !forcedSlot)
         {
