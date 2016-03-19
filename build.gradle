@@ -41,7 +41,7 @@ group= "cpw.mods" // http://maven.apache.org/guides/mini/guide-naming-convention
 archivesBaseName = "inventorysorter"
 
 minecraft {
-    version = "1.8.9-11.15.0.1691"
+    version = "1.8.9-11.15.1.1765"
     runDir = "run"
     
     // the mappings can be changed at any time, and must be in the following format.
