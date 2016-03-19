@@ -19,6 +19,7 @@
 package cpw.mods.inventorysorter;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.SortedMultiset;
 import com.google.common.collect.TreeMultiset;
@@ -194,8 +195,12 @@ public enum InventoryHandler
                 itemcounts.add(ish, stack.stackSize);
             }
         }
-
-        return itemcounts;
+        final HashMultiset<ItemStackHolder> entries = HashMultiset.create();
+        for (Multiset.Entry<ItemStackHolder> entry : itemcounts.descendingMultiset().entrySet())
+        {
+            entries.add(entry.getElement(),entry.getCount());
+        }
+        return entries;
     }
 
     public static class ItemStackComparator implements Comparator<ItemStackHolder>
@@ -204,6 +209,7 @@ public enum InventoryHandler
         @Override
         public int compare(ItemStackHolder o1, ItemStackHolder o2)
         {
+            if (o1 == o2) return 0;
             if (o1.is.getItem() != o2.is.getItem())
                 return o1.is.getItem().getRegistryName().compareTo(o2.is.getItem().getRegistryName());
             if (o1.is.getMetadata() != o2.is.getMetadata())

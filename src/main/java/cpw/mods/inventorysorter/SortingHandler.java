@@ -25,11 +25,13 @@ import com.google.common.collect.UnmodifiableIterator;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
+import net.minecraftforge.fml.common.FMLLog;
+import org.apache.logging.log4j.Level;
 
 import javax.annotation.Nullable;
 
 /**
- * Created by cpw on 08/01/16.
+ * @author cpw
  */
 public enum SortingHandler implements Function<Action.ActionContext,Void>
 {
@@ -41,7 +43,16 @@ public enum SortingHandler implements Function<Action.ActionContext,Void>
         if (context == null) throw new NullPointerException("WHUT");
         IInventory inv = context.slot.inventory;
         final Multiset<ItemStackHolder> itemcounts = InventoryHandler.INSTANCE.getInventoryContent(context);
-        final UnmodifiableIterator<Multiset.Entry<ItemStackHolder>> itemsIterator = Multisets.copyHighestCountFirst(itemcounts).entrySet().iterator();
+        final UnmodifiableIterator<Multiset.Entry<ItemStackHolder>> itemsIterator;
+        try
+        {
+            itemsIterator = Multisets.copyHighestCountFirst(itemcounts).entrySet().iterator();
+        }
+        catch (Exception e)
+        {
+            FMLLog.log(Level.WARN, e, "Weird, the sorting didn't quite work!");
+            return null;
+        }
         int slotLow;
         int slotHigh;
         if (inv == context.player.inventory)
