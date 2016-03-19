@@ -27,7 +27,7 @@ import javax.annotation.Nullable;
 import java.util.Map;
 
 /**
- * Created by cpw on 08/01/16.
+ * @author cpw
  */
 public enum ScrollWheelHandler implements Function<Action.ActionContext, Void>
 {
@@ -59,6 +59,8 @@ public enum ScrollWheelHandler implements Function<Action.ActionContext, Void>
 
         if (source == null) return null;
 
+        if (!source.canTakeStack(context.player)) return null;
+        if (!source.isItemValid(is)) return null;
         ItemStack sourceStack = InventoryHandler.INSTANCE.getItemStack(source);
         ItemStack iscopy = sourceStack.copy();
         iscopy.stackSize = 1;

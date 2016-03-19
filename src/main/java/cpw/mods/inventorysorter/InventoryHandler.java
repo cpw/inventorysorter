@@ -34,7 +34,7 @@ import java.util.Comparator;
 import java.util.Map;
 
 /**
- * Created by cpw on 09/01/16.
+ * @author cpw
  */
 public enum InventoryHandler
 {
@@ -154,7 +154,7 @@ public enum InventoryHandler
             {
                 if (inv.getStackInSlot(i) == null) continue;
                 ItemStack sis = inv.getStackInSlot(i);
-                if (sis.getItem() == is.getItem() && ItemStack.areItemStackTagsEqual(sis, is))
+                if (sis.getItem() == is.getItem() && ItemStack.areItemStackTagsEqual(sis, is) && ctx.player.openContainer.getSlotFromInventory(inv, i).canTakeStack(ctx.player))
                 {
                     return ctx.player.openContainer.getSlotFromInventory(inv, i);
                 }
