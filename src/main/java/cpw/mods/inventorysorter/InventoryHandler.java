@@ -75,6 +75,7 @@ public enum InventoryHandler
 
     public ItemStack getItemStack(Slot slot)
     {
+        if (slot.getSlotIndex() < 0) return null;
         return slot.inventory.getStackInSlot(slot.getSlotIndex());
     }
 

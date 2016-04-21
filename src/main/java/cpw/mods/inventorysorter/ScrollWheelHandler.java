@@ -45,8 +45,8 @@ public enum ScrollWheelHandler implements Function<Action.ActionContext, Void>
     {
         if (context == null) throw new NullPointerException("WHUT");
         ItemStack is = InventoryHandler.INSTANCE.getItemStack(context);
-        final Map<IInventory, InventoryHandler.InventoryMapping> mapping = context.mapping;
         if (is == null) return null;
+        final Map<IInventory, InventoryHandler.InventoryMapping> mapping = context.mapping;
         Slot source;
         if (moveAmount == -1)
         {
