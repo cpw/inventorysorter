@@ -211,7 +211,7 @@ public enum InventoryHandler
         {
             if (o1 == o2) return 0;
             if (o1.is.getItem() != o2.is.getItem())
-                return o1.is.getItem().getRegistryName().compareTo(o2.is.getItem().getRegistryName());
+                return o1.is.getItem().getRegistryName().toString().compareTo(o2.is.getItem().getRegistryName().toString());
             if (o1.is.getMetadata() != o2.is.getMetadata())
                 return Ints.compare(o1.is.getMetadata(), o2.is.getMetadata());
             if (ItemStack.areItemStackTagsEqual(o1.is, o2.is))
