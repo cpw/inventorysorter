@@ -19,11 +19,14 @@
 package cpw.mods.inventorysorter;
 
 import com.google.common.base.Function;
+import com.google.common.collect.Lists;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 
 import javax.annotation.Nullable;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -48,13 +51,17 @@ public enum ScrollWheelHandler implements Function<Action.ActionContext, Void>
         if (is == null) return null;
         final Map<IInventory, InventoryHandler.InventoryMapping> mapping = context.mapping;
         Slot source;
-        if (moveAmount == -1)
+        if (moveAmount < 0 && is.getMaxStackSize() > is.stackSize)
         {
-            source = InventoryHandler.INSTANCE.findStackWithItem(is, context, mapping, context.slot);
+            source = InventoryHandler.INSTANCE.findStackWithItem(is, context);
+        }
+        else if (moveAmount > 0)
+        {
+            source = context.slot;
         }
         else
         {
-            source = context.slot;
+            return null;
         }
 
         if (source == null) return null;
@@ -62,19 +69,84 @@ public enum ScrollWheelHandler implements Function<Action.ActionContext, Void>
         if (!source.canTakeStack(context.player)) return null;
         if (!source.isItemValid(is)) return null;
         ItemStack sourceStack = InventoryHandler.INSTANCE.getItemStack(source);
+        if (sourceStack == null) return null; // null detection
         ItemStack iscopy = sourceStack.copy();
         iscopy.stackSize = 1;
-        InventoryHandler.INSTANCE.moveItemToOtherInventory(source, context, mapping, iscopy, moveAmount != -1);
-        if (iscopy.stackSize == 0)
+
+        List<InventoryHandler.InventoryMapping> mappingCandidates = Lists.newArrayList();
+        if (moveAmount < 0)
         {
-            sourceStack.stackSize--;
-            if (sourceStack.stackSize == 0)
+            final InventoryHandler.InventoryMapping inventoryMapping = new InventoryHandler.InventoryMapping(context.slot.inventory, context.player.openContainer);
+            mappingCandidates.add(inventoryMapping);
+            inventoryMapping.begin = context.slot.slotNumber;
+            inventoryMapping.end = context.slot.slotNumber;
+        }
+        else
+        {
+            if (context.player.openContainer == context.player.inventoryContainer)
             {
-                source.putStack(null);
+                if (InventoryHandler.preferredOrders.containsKey(context.slotMapping.inv)) {
+                    mappingCandidates.addAll(Lists.transform(InventoryHandler.preferredOrders.get(context.slotMapping.inv),new Function<IInventory, InventoryHandler.InventoryMapping>()
+                    {
+                        @Nullable
+                        @Override
+                        public InventoryHandler.InventoryMapping apply(@Nullable IInventory input)
+                        {
+                            return mapping.get(input);
+                        }
+                    }));
+                }
+                Collections.reverse(mappingCandidates);
             }
             else
             {
-                source.onSlotChanged();
+                for (Map.Entry<IInventory, InventoryHandler.InventoryMapping> entry : InventoryHandler.INSTANCE.getSortedMapping(context))
+                {
+                    if (entry.getValue().proxy == context.slot.inventory) continue;
+                    mappingCandidates.add(entry.getValue());
+                }
+            }
+        }
+        Collections.reverse(mappingCandidates);
+        for (InventoryHandler.InventoryMapping mappingCandidate : mappingCandidates)
+        {
+            if (mappingCandidate.inv == Action.ActionContext.PLAYER_OFFHAND && moveAmount > 0) {
+                boolean empty = true;
+                for (ItemStack itemStack : context.player.inventory.offHandInventory)
+                {
+                    if (itemStack != null) empty = false;
+                }
+                if (empty) continue;
+            }
+            if (mappingCandidate.inv == Action.ActionContext.PLAYER_HOTBAR && moveAmount > 0) {
+                boolean hasTarget = false, found = false;
+                for (int i = 0; i < 9; i++)
+                {
+                    ItemStack itemStack = context.player.inventory.mainInventory[i];
+                    if (ItemStack.areItemsEqual(itemStack,sourceStack) && itemStack.stackSize < itemStack.getMaxStackSize())
+                    {
+                        hasTarget = true;
+                    }
+                    else if (ItemStack.areItemsEqual(itemStack,sourceStack))
+                    {
+                        found = true;
+                    }
+                }
+                if (!hasTarget && found) continue;
+            }
+            InventoryHandler.INSTANCE.moveItemToOtherInventory(context, iscopy, mappingCandidate.begin, mappingCandidate.end+1, moveAmount < 0);
+            if (iscopy.stackSize == 0)
+            {
+                sourceStack.stackSize--;
+                if (sourceStack.stackSize == 0)
+                {
+                    source.putStack(null);
+                }
+                else
+                {
+                    source.onSlotChanged();
+                }
+                break;
             }
         }
         return null;

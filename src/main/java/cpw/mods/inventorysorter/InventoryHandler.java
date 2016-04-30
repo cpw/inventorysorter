@@ -20,6 +20,9 @@ package cpw.mods.inventorysorter;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.HashMultiset;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.SortedMultiset;
 import com.google.common.collect.TreeMultiset;
@@ -31,7 +34,9 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 
 import java.lang.reflect.Method;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -79,111 +84,70 @@ public enum InventoryHandler
         return slot.inventory.getStackInSlot(slot.getSlotIndex());
     }
 
-    public void moveItemToOtherInventory(Slot origin, Action.ActionContext ctx, Map<IInventory,InventoryMapping> mapping, ItemStack is, boolean rev)
+    public void moveItemToOtherInventory(Action.ActionContext ctx, ItemStack is, int targetLow, int targetHigh, boolean slotIsDestination)
     {
-        int targetLow = 0;
-        int targetHigh = 0;
-        boolean forcedSlot = false;
-        if (!rev && ctx.slot.getStack().getMaxStackSize() > ctx.slot.getStack().stackSize)
+        for (int i = targetLow; i < targetHigh; i++)
         {
-            targetLow = ctx.slot.slotNumber;
-            targetHigh = ctx.slot.slotNumber+1;
-            forcedSlot = true;
-        }
-        if (ctx.player.inventoryContainer == ctx.player.openContainer && !forcedSlot)
-        {
-            boolean sourceHotBar = origin.slotNumber >= 36 && origin.slotNumber < 45;
-            targetLow = sourceHotBar ? 9 : 35;
-            targetHigh = sourceHotBar ? 35 : 44;
-        }
-        else if (origin.inventory == ctx.player.inventory && !forcedSlot)
-        {
-            for (Map.Entry<IInventory, InventoryMapping> m : mapping.entrySet())
-            {
-                if (m.getKey() != ctx.player.inventory)
-                {
-                    targetLow = m.getValue().begin;
-                    targetHigh = m.getValue().end;
-                }
-            }
-        }
-        else if (!forcedSlot)
-        {
-            InventoryMapping m = mapping.get(ctx.player.inventory);
-            targetLow = m.begin;
-            targetHigh = m.end;
-        }
-
-        int rng = targetHigh - targetLow;
-        for (int i = 0; i < rng; i++)
-        {
-            int slNum = rev ? targetHigh - i : targetLow + i;
-            if (!ctx.player.openContainer.getSlot(slNum).isItemValid(is))
+            if (!ctx.player.openContainer.getSlot(i).isItemValid(is))
             {
                 continue;
             }
-            if (mergeStack(ctx.player.openContainer, is, slNum, slNum+1, !rev))
+            if (mergeStack(ctx.player.openContainer, is, i, i+1, slotIsDestination))
             {
                 break;
             }
         }
     }
 
-    public Slot findStackWithItem(ItemStack is, Action.ActionContext ctx, Map<IInventory,InventoryMapping> mapping, Slot origin)
+    static Map<IInventory,ImmutableList<IInventory>> preferredOrders = ImmutableMap.of(
+            Action.ActionContext.PLAYER_HOTBAR, ImmutableList.of(Action.ActionContext.PLAYER_OFFHAND, Action.ActionContext.PLAYER_MAIN),
+            Action.ActionContext.PLAYER_OFFHAND, ImmutableList.of(Action.ActionContext.PLAYER_HOTBAR, Action.ActionContext.PLAYER_MAIN),
+            Action.ActionContext.PLAYER_MAIN, ImmutableList.of(Action.ActionContext.PLAYER_OFFHAND, Action.ActionContext.PLAYER_HOTBAR)
+    );
+    public Slot findStackWithItem(ItemStack is, final Action.ActionContext ctx)
     {
         if (is.getMaxStackSize() == 1) return null;
 
-        if (ctx.player.inventoryContainer == ctx.player.openContainer)
-        {
-            boolean sourceHotBar = origin.getSlotIndex() < 9;
-            int searchLow = sourceHotBar ? 9 : 36;
-            int searchHigh = sourceHotBar ? 36 : 45;
-            for (int i = searchLow; i < searchHigh; i++)
-            {
-                ItemStack sis = ctx.player.inventoryContainer.getSlot(i).getStack();
-                if (sis != null && sis.getItem() == is.getItem() && ItemStack.areItemStackTagsEqual(sis, is))
-                {
-                    return ctx.player.openContainer.getSlot(i);
-                }
-            }
-            return null;
-        }
-        for (Map.Entry<IInventory, InventoryMapping> ent : ctx.mapping.entrySet())
+        List<Map.Entry<IInventory, InventoryMapping>> entries = getSortedMapping(ctx);
+        for (Map.Entry<IInventory, InventoryMapping> ent : entries)
         {
             IInventory inv = ent.getKey();
-            if (inv == origin.inventory) continue;
-            for (int i = 0; i < inv.getSizeInventory(); i++)
+            if (inv == ctx.slotMapping.inv) continue;
+            for (int i = ent.getValue().begin; i <= ent.getValue().end; i++)
             {
-                if (inv.getStackInSlot(i) == null) continue;
-                ItemStack sis = inv.getStackInSlot(i);
-                if (sis.getItem() == is.getItem() && ItemStack.areItemStackTagsEqual(sis, is) && ctx.player.openContainer.getSlotFromInventory(inv, i).canTakeStack(ctx.player))
+                final Slot slot = ctx.player.openContainer.getSlot(i);
+                if (!slot.canTakeStack(ctx.player)) continue;
+                ItemStack sis = slot.getStack();
+                if (sis != null && sis.getItem() == is.getItem() && ItemStack.areItemStackTagsEqual(sis, is))
                 {
-                    return ctx.player.openContainer.getSlotFromInventory(inv, i);
+                    return slot;
                 }
             }
         }
         return null;
     }
 
+    List<Map.Entry<IInventory, InventoryMapping>> getSortedMapping(final Action.ActionContext ctx)
+    {
+        List<Map.Entry<IInventory, InventoryMapping>> entries = Lists.newArrayList(ctx.mapping.entrySet());
+        if (preferredOrders.containsKey(ctx.slotMapping.inv)) {
+            Collections.sort(entries, new Comparator<Map.Entry<IInventory, InventoryMapping>>()
+            {
+                public int compare(Map.Entry<IInventory, InventoryMapping> o1, Map.Entry<IInventory, InventoryMapping> o2)
+                {
+                    int idx1 = preferredOrders.get(ctx.slotMapping.inv).indexOf(o1.getKey());
+                    int idx2 = preferredOrders.get(ctx.slotMapping.inv).indexOf(o2.getKey());
+                    return Ints.compare(idx1,idx2);
+                }
+            });
+        }
+        return entries;
+    }
+
     public Multiset<ItemStackHolder> getInventoryContent(Action.ActionContext context)
     {
-        int slotLow;
-        int slotHigh;
-        if (context.slot.inventory == context.player.inventory)
-        {
-            boolean isPlayerContainer = context.player.openContainer == context.player.inventoryContainer;
-            boolean sourceHotBar = context.slot.getSlotIndex() < 9;
-            int offset = isPlayerContainer ? 4 : 0;
-            InventoryMapping m = context.mapping.get(context.player.inventory);
-            slotLow = sourceHotBar ? m.end - 8 : m.begin + offset;
-            slotHigh = sourceHotBar ? m.end + 1: m.end - 8;
-        }
-        else
-        {
-            InventoryMapping m = context.mapping.get(context.slot.inventory);
-            slotLow = m.begin;
-            slotHigh = m.end + 1;
-        }
+        int slotLow = context.slotMapping.begin;
+        int slotHigh = context.slotMapping.end + 1;
         SortedMultiset<ItemStackHolder> itemcounts = TreeMultiset.create(new InventoryHandler.ItemStackComparator());
         for (int i = slotLow; i < slotHigh; i++)
         {
@@ -225,12 +189,18 @@ public enum InventoryHandler
         int begin = Integer.MAX_VALUE;
         int end = 0;
         final IInventory inv;
+        final IInventory proxy;
         final Container container;
 
-        InventoryMapping(IInventory inv, Container container)
+        InventoryMapping(IInventory inv, Container container, IInventory proxy)
         {
             this.inv = inv;
             this.container = container;
+            this.proxy = proxy;
+        }
+        InventoryMapping(IInventory inv, Container container)
+        {
+            this(inv,container,inv);
         }
 
         @Override

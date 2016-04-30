@@ -53,23 +53,8 @@ public enum SortingHandler implements Function<Action.ActionContext,Void>
             FMLLog.log(Level.WARN, e, "Weird, the sorting didn't quite work!");
             return null;
         }
-        int slotLow;
-        int slotHigh;
-        if (inv == context.player.inventory)
-        {
-            boolean isPlayerContainer = context.player.openContainer == context.player.inventoryContainer;
-            boolean sourceHotBar = context.slot.getSlotIndex() < 9;
-            InventoryHandler.InventoryMapping m = context.mapping.get(context.player.inventory);
-            int offset = isPlayerContainer ? 4 : 0;
-            slotLow = sourceHotBar ? m.end - 8 : m.begin + offset;
-            slotHigh = sourceHotBar ? m.end + 1: m.end - 8;
-        }
-        else
-        {
-            InventoryHandler.InventoryMapping m = context.mapping.get(context.slot.inventory);
-            slotLow = m.begin;
-            slotHigh = m.end + 1;
-        }
+        int slotLow = context.slotMapping.begin;
+        int slotHigh = context.slotMapping.end + 1;
 
         Multiset.Entry<ItemStackHolder> stackHolder = itemsIterator.hasNext() ? itemsIterator.next() : null;
         int itemCount = stackHolder != null ? stackHolder.getCount() : 0;

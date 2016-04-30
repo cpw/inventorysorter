@@ -19,10 +19,13 @@
 package cpw.mods.inventorysorter;
 
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
+import net.minecraft.inventory.InventoryBasic;
 import net.minecraft.inventory.Slot;
 
 import java.util.Map;
@@ -66,24 +69,79 @@ public enum Action
     public static class ActionContext
     {
         public final Slot slot;
+        public final InventoryHandler.InventoryMapping slotMapping;
         public final EntityPlayerMP player;
-        public final ImmutableMap<IInventory, InventoryHandler.InventoryMapping> mapping;
+        public final ImmutableBiMap<IInventory, InventoryHandler.InventoryMapping> mapping;
+
+        public static final IInventory PLAYER_HOTBAR = new InventoryBasic("Dummy Hotbar", false, 0);
+        public static final IInventory PLAYER_MAIN = new InventoryBasic("Dummy Main", false, 0);
+        public static final IInventory PLAYER_OFFHAND = new InventoryBasic("Dummy Offhand", false, 0);
 
         public ActionContext(Slot slot, EntityPlayerMP playerEntity)
         {
             this.slot = slot;
             this.player = playerEntity;
+            InventoryHandler.InventoryMapping slotTarget = null;
             Map<IInventory, InventoryHandler.InventoryMapping> mapping = Maps.newHashMap();
-            for (Slot sl : playerEntity.openContainer.inventorySlots)
+            InventoryHandler.InventoryMapping inventoryMapping = null;
+            final Container openContainer = playerEntity.openContainer;
+            for (Slot sl : openContainer.inventorySlots)
             {
                 if (!mapping.containsKey(sl.inventory))
                 {
-                    mapping.put(sl.inventory, new InventoryHandler.InventoryMapping(sl.inventory, playerEntity.openContainer));
+                    mapping.put(sl.inventory, new InventoryHandler.InventoryMapping(sl.inventory, openContainer));
                 }
-                mapping.get(sl.inventory).begin = Math.min(sl.slotNumber, mapping.get(sl.inventory).begin);
-                mapping.get(sl.inventory).end = Math.max(sl.slotNumber, mapping.get(sl.inventory).end);
+                inventoryMapping = mapping.get(sl.inventory);
+                inventoryMapping.begin = Math.min(sl.slotNumber, inventoryMapping.begin);
+                inventoryMapping.end = Math.max(sl.slotNumber, inventoryMapping.end);
+                if (sl == slot)
+                {
+                    slotTarget = inventoryMapping;
+                }
             }
-            this.mapping = ImmutableMap.copyOf(mapping);
+
+            if (mapping.containsKey(playerEntity.inventory)) {
+                final InventoryHandler.InventoryMapping playerMapping = mapping.remove(playerEntity.inventory);
+                int mainStart = 9;
+                int mainEnd = 36;
+                int offhandStart = 40;
+
+                InventoryHandler.InventoryMapping hotbarMapping = new InventoryHandler.InventoryMapping(PLAYER_HOTBAR, openContainer, playerEntity.inventory);
+                InventoryHandler.InventoryMapping mainMapping = new InventoryHandler.InventoryMapping(PLAYER_MAIN, openContainer, playerEntity.inventory);
+                InventoryHandler.InventoryMapping offhandMapping = new InventoryHandler.InventoryMapping(PLAYER_OFFHAND, openContainer, playerEntity.inventory);
+
+                for (int i = playerMapping.begin; i<=playerMapping.end; i++)
+                {
+                    Slot s = openContainer.getSlot(i);
+                    if (s.getSlotIndex() < mainStart)
+                    {
+                        hotbarMapping.begin = Math.min(s.slotNumber, hotbarMapping.begin);
+                        hotbarMapping.end = Math.max(s.slotNumber, hotbarMapping.end);
+                        mapping.put(PLAYER_HOTBAR, hotbarMapping);
+                        inventoryMapping = hotbarMapping;
+                    }
+                    else if (s.getSlotIndex() < mainEnd)
+                    {
+                        mainMapping.begin = Math.min(s.slotNumber, mainMapping.begin);
+                        mainMapping.end = Math.max(s.slotNumber, mainMapping.end);
+                        mapping.put(PLAYER_MAIN, mainMapping);
+                        inventoryMapping = mainMapping;
+                    }
+                    else if (s.getSlotIndex() >= offhandStart)
+                    {
+                        offhandMapping.begin = Math.min(s.slotNumber, offhandMapping.begin);
+                        offhandMapping.end = Math.max(s.slotNumber, offhandMapping.end);
+                        mapping.put(PLAYER_OFFHAND, offhandMapping);
+                        inventoryMapping = offhandMapping;
+                    }
+                    if (s == slot)
+                    {
+                        slotTarget = inventoryMapping;
+                    }
+                }
+            }
+            this.slotMapping = slotTarget;
+            this.mapping = ImmutableBiMap.copyOf(mapping);
         }
     }
 }
