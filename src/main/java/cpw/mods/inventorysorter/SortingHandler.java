@@ -19,11 +19,15 @@
 package cpw.mods.inventorysorter;
 
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableMultiset;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Multisets;
+import com.google.common.collect.TreeMultiset;
 import com.google.common.collect.UnmodifiableIterator;
 import net.minecraft.inventory.IInventory;
+import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.inventory.Slot;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.common.FMLLog;
 import org.apache.logging.log4j.Level;
@@ -41,8 +45,74 @@ public enum SortingHandler implements Function<Action.ActionContext,Void>
     public Void apply(@Nullable Action.ActionContext context)
     {
         if (context == null) throw new NullPointerException("WHUT");
-        IInventory inv = context.slot.inventory;
         final Multiset<ItemStackHolder> itemcounts = InventoryHandler.INSTANCE.getInventoryContent(context);
+
+        if (context.slot.inventory instanceof InventoryCrafting)
+        {
+            distributeInventory(context, itemcounts);
+        }
+        else
+        {
+            compactInventory(context, itemcounts);
+        }
+        return null;
+    }
+
+    private void distributeInventory(Action.ActionContext context, Multiset<ItemStackHolder> itemcounts)
+    {
+        InventoryCrafting ic = (InventoryCrafting)context.slot.inventory;
+        Multiset<ItemStackHolder> slotCounts = TreeMultiset.create(new InventoryHandler.ItemStackComparator());
+        for (int x=0; x<ic.getWidth(); x++)
+        {
+            for (int y=0; y<ic.getHeight(); y++)
+            {
+                ItemStack is = ic.getStackInRowAndColumn(x, y);
+                if (is != null)
+                {
+                    slotCounts.add(new ItemStackHolder(is));
+                }
+            }
+        }
+
+        final ImmutableMultiset<ItemStackHolder> staticcounts = ImmutableMultiset.copyOf(itemcounts);
+        for (int x=0; x<ic.getWidth(); x++)
+        {
+            for (int y = 0; y < ic.getHeight(); y++)
+            {
+                ItemStack is = ic.getStackInRowAndColumn(x, y);
+                if (is != null)
+                {
+                    ItemStackHolder ish = new ItemStackHolder(is);
+                    int count = staticcounts.count(ish);
+                    int slotNum = slotCounts.count(ish);
+                    final int occurrences = count / slotNum;
+                    itemcounts.remove(ish, occurrences);
+                    is.stackSize = occurrences;
+                }
+            }
+        }
+        for (int x=0; x<ic.getWidth(); x++)
+        {
+            for (int y = 0; y < ic.getHeight(); y++)
+            {
+                ItemStack is = ic.getStackInRowAndColumn(x, y);
+                if (is != null)
+                {
+                    ItemStackHolder ish = new ItemStackHolder(is);
+                    if (itemcounts.count(ish) > 0)
+                    {
+                        is.stackSize+=itemcounts.setCount(ish,0);
+                    }
+                }
+            }
+        }
+        for (int slot = context.slotMapping.begin; slot < context.slotMapping.end + 1; slot++)
+        {
+            context.player.openContainer.getSlot(slot).onSlotChanged();
+        }
+    }
+    private void compactInventory(Action.ActionContext context, Multiset<ItemStackHolder> itemcounts)
+    {
         final UnmodifiableIterator<Multiset.Entry<ItemStackHolder>> itemsIterator;
         try
         {
@@ -51,7 +121,7 @@ public enum SortingHandler implements Function<Action.ActionContext,Void>
         catch (Exception e)
         {
             FMLLog.log(Level.WARN, e, "Weird, the sorting didn't quite work!");
-            return null;
+            return;
         }
         int slotLow = context.slotMapping.begin;
         int slotHigh = context.slotMapping.end + 1;
@@ -76,6 +146,5 @@ public enum SortingHandler implements Function<Action.ActionContext,Void>
                 itemCount = stackHolder != null ? stackHolder.getCount() : 0;
             }
         }
-        return null;
     }
 }
