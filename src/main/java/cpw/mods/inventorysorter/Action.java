@@ -125,6 +125,8 @@ public enum Action
             final Container openContainer = playerEntity.openContainer;
             for (Slot sl : openContainer.inventorySlots)
             {
+                // Skip slots without an inventory - they're probably dummy slots
+                if (sl.inventory == null) continue;
                 if (!mapping.containsKey(sl.inventory))
                 {
                     mapping.put(sl.inventory, new InventoryHandler.InventoryMapping(sl.inventory, openContainer));
