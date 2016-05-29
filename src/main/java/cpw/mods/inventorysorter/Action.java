@@ -29,6 +29,7 @@ import net.minecraft.inventory.InventoryBasic;
 import net.minecraft.inventory.Slot;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
+import net.minecraftforge.items.SlotItemHandler;
 
 import java.util.Map;
 
@@ -127,6 +128,8 @@ public enum Action
             {
                 // Skip slots without an inventory - they're probably dummy slots
                 if (sl.inventory == null) continue;
+                // Not supporting the itemhandler stuff just yet
+                if (sl instanceof SlotItemHandler) continue;
                 if (!mapping.containsKey(sl.inventory))
                 {
                     mapping.put(sl.inventory, new InventoryHandler.InventoryMapping(sl.inventory, openContainer));

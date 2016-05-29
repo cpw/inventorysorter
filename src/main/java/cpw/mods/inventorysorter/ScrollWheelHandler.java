@@ -47,6 +47,8 @@ public enum ScrollWheelHandler implements Function<Action.ActionContext, Void>
     public Void apply(@Nullable Action.ActionContext context)
     {
         if (context == null) throw new NullPointerException("WHUT");
+        // Skip if we can't find ourselves in the mapping table
+        if (context.slotMapping == null) return null;
         ItemStack is = InventoryHandler.INSTANCE.getItemStack(context);
         if (is == null) return null;
         final Map<IInventory, InventoryHandler.InventoryMapping> mapping = context.mapping;

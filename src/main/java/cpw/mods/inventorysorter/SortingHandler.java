@@ -45,6 +45,8 @@ public enum SortingHandler implements Function<Action.ActionContext,Void>
     public Void apply(@Nullable Action.ActionContext context)
     {
         if (context == null) throw new NullPointerException("WHUT");
+        // Ignore if we can't find ourselves in the slot set
+        if (context.slotMapping == null) return null;
         final Multiset<ItemStackHolder> itemcounts = InventoryHandler.INSTANCE.getInventoryContent(context);
 
         if (context.slot.inventory instanceof InventoryCrafting)
