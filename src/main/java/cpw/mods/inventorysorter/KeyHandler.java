@@ -37,7 +37,7 @@ public class KeyHandler
     public void onKey(GuiScreenEvent.MouseInputEvent.Pre evt)
     {
         Action action = Action.interpret(new KeyStates());
-        if (action != null && evt.getGui() instanceof GuiContainer && !(evt.getGui() instanceof GuiContainerCreative))
+        if (action != null && action.isActive() && evt.getGui() instanceof GuiContainer && !(evt.getGui() instanceof GuiContainerCreative))
         {
             final GuiContainer guiContainer = (GuiContainer)evt.getGui();
             Slot slot = guiContainer.getSlotUnderMouse();

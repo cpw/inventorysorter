@@ -19,18 +19,29 @@
 package cpw.mods.inventorysorter;
 
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.config.Configuration;
+import net.minecraftforge.common.config.Property;
+import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.SidedProxy;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+
+import java.io.File;
 
 /**
  * Created by cpw on 08/01/16.
  */
 public class SideProxy
 {
-    @SidedProxy(clientSide="cpw.mods.inventorysorter.SideProxy$ClientProxy", serverSide="cpw.mods.inventorysorter.SideProxy")
+    @SidedProxy(clientSide = "cpw.mods.inventorysorter.SideProxy$ClientProxy", serverSide = "cpw.mods.inventorysorter.SideProxy")
     static SideProxy INSTANCE;
+
     public void bindKeys()
     {
 
+    }
+
+    public void loadConfiguration(File suggestedConfigurationFile)
+    {
     }
 
     public static class ClientProxy extends SideProxy
@@ -39,6 +50,30 @@ public class SideProxy
         public void bindKeys()
         {
             MinecraftForge.EVENT_BUS.register(new KeyHandler());
+        }
+
+        @Override
+        public void loadConfiguration(File suggestedConfigurationFile)
+        {
+            final Configuration configuration = new Configuration(suggestedConfigurationFile);
+            Action.configure(configuration);
+            MinecraftForge.EVENT_BUS.register(new Object() {
+                @SubscribeEvent
+                public void onConfigChanged(ConfigChangedEvent.OnConfigChangedEvent evt)
+                {
+                    if (!"inventorysorter".equals(evt.getModID())) return;
+                    Action.configure(configuration);
+                    if (configuration.hasChanged())
+                    {
+                        configuration.save();
+                    }
+                }
+            });
+
+            if (configuration.hasChanged())
+            {
+                configuration.save();
+            }
         }
     }
 }

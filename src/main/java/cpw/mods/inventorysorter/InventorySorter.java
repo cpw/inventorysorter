@@ -18,6 +18,9 @@
 
 package cpw.mods.inventorysorter;
 
+import net.minecraftforge.common.config.ConfigCategory;
+import net.minecraftforge.common.config.Configuration;
+import net.minecraftforge.common.config.Property;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
@@ -32,7 +35,7 @@ import java.util.Properties;
  * Created by cpw on 08/01/16.
  */
 
-@Mod(modid="inventorysorter",name="Inventory Sorter")
+@Mod(modid="inventorysorter",name="Inventory Sorter", guiFactory = "cpw.mods.inventorysorter.GuiConfigFactory")
 public class InventorySorter
 {
     @Mod.Instance("inventorysorter")
@@ -54,15 +57,10 @@ public class InventorySorter
         {
             evt.getModMetadata().version = "1.0";
         }
-        loadConfig(evt.getSuggestedConfigurationFile());
+        SideProxy.INSTANCE.loadConfiguration(evt.getSuggestedConfigurationFile());
         log = evt.getModLog();
         channel = NetworkRegistry.INSTANCE.newSimpleChannel("inventorysorter");
         channel.registerMessage(ServerHandler.class, Network.ActionMessage.class, 1, Side.SERVER);
         SideProxy.INSTANCE.bindKeys();
-    }
-
-    private void loadConfig(File suggestedConfigurationFile)
-    {
-
     }
 }

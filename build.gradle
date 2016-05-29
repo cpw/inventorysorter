@@ -1,4 +1,3 @@
-
 // For those who want the bleeding edge
 buildscript {
     repositories {
@@ -9,7 +8,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:2.1-SNAPSHOT'
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.2-SNAPSHOT'
     }
 }
 plugins {
@@ -20,13 +19,6 @@ apply plugin: 'maven'
 apply plugin: 'eclipse'
 apply plugin: 'idea'
 
-
-/*
-// for people who want stable - not yet functional for MC 1.8.8 - we require the forgegradle 2.1 snapshot
-plugins {
-    id "net.minecraftforge.gradle.forge" version "2.0.2"
-}
-*/
 
 repositories {
     flatDir {
@@ -41,7 +33,7 @@ group= "cpw.mods" // http://maven.apache.org/guides/mini/guide-naming-convention
 archivesBaseName = "inventorysorter"
 
 minecraft {
-    version = "1.9-12.16.1.1887"
+    version = "1.9.4-12.17.0.1932-1.9.4"
     runDir = "run"
     
     // the mappings can be changed at any time, and must be in the following format.
@@ -49,7 +41,7 @@ minecraft {
     // stable_#            stables are built at the discretion of the MCP team.
     // Use non-default mappings at your own risk. they may not allways work.
     // simply re-run your setup task after changing the mappings to update your workspace.
-    mappings = "snapshot_20160318"
+    mappings = "snapshot_20160529"
     // makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
 }
 
@@ -90,6 +82,7 @@ dependencies {
 
 }
 
+//noinspection GroovyAssignabilityCheck
 processResources
 {
     // this will ensure that this task is redone when the versions change.
@@ -142,6 +135,7 @@ uploadArchives {
             // Force the maven upload to use the <mcversion>-<version> syntax preferred at files
             version = "${project.minecraft.version}-${project.version}"
             artifactId = project.archivesBaseName
+            //noinspection GroovyAssignabilityCheck
             project {
                 name project.archivesBaseName
                 packaging 'jar'
@@ -198,7 +192,7 @@ def getGitVersion()
     def maj = matcher[0][1]
     def min = matcher[0][2]
     def rev = matcher[0][3]
-    def bn = System.getenv("PROMOTED_NUMBER") ?: System.getenv("BUILD_NUMBER") ?: "1"
+    def bn = project.ext.properties.buildNumber ?: System.getenv("PROMOTED_NUMBER") ?: System.getenv("BUILD_NUMBER") ?: "1"
 
     out['inventorysorter.build.major.number'] = maj.toString()
     out['inventorysorter.build.minor.number'] = min.toString()

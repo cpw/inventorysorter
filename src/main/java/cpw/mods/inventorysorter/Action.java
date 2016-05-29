@@ -27,6 +27,8 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.InventoryBasic;
 import net.minecraft.inventory.Slot;
+import net.minecraftforge.common.config.Configuration;
+import net.minecraftforge.common.config.Property;
 
 import java.util.Map;
 
@@ -35,18 +37,39 @@ import java.util.Map;
  */
 public enum Action
 {
-    SORT(SortingHandler.INSTANCE),
-    ONEITEMIN(ScrollWheelHandler.ONEITEMIN),
-    ONEITEMOUT(ScrollWheelHandler.ONEITEMOUT),
-    ALL(AllItemsHandler.INSTANCE);
+    SORT(SortingHandler.INSTANCE, "middleClickSorting", "Middle-click sorting module", true),
+    ONEITEMIN(ScrollWheelHandler.ONEITEMIN, "mouseWheelMoving", "Mouse wheel movement module", true),
+    ONEITEMOUT(ScrollWheelHandler.ONEITEMOUT, "mouseWheelMoving", "Mouse wheel movement module", true),
+    ALL(AllItemsHandler.INSTANCE, "allMoving", "All items movement module - NYI", false);
 
     private final Function<ActionContext, Void> worker;
+    private final String configName;
+    private boolean actionActive;
+    private Property property;
+    private final String comment;
+    private final boolean implemented;
 
-    Action(Function<ActionContext, Void> worker)
+    Action(Function<ActionContext, Void> worker, String configName, String comment, boolean implemented)
     {
         this.worker = worker;
+        this.configName = configName;
+        this.comment = comment;
+        this.implemented = implemented;
     }
 
+    public static void configure(Configuration config)
+    {
+        for (Action a : values())
+        {
+            a.property = config.get(Configuration.CATEGORY_CLIENT, a.configName, true);
+            a.property.setRequiresMcRestart(false);
+            a.property.setRequiresWorldRestart(false);
+            a.property.setLanguageKey("inventorysorter.gui." + a.configName);
+            a.property.setShowInGui(a.implemented);
+            a.property.setComment(a.comment);
+            a.actionActive = a.property.getBoolean(true);
+        }
+    }
     public static Action interpret(KeyHandler.KeyStates keyStates)
     {
         if (keyStates.isDownClick()) return null;
@@ -64,6 +87,21 @@ public enum Action
     public void execute(ActionContext context)
     {
         this.worker.apply(context);
+    }
+
+    public Property getProperty()
+    {
+        return property;
+    }
+
+    public boolean isActive()
+    {
+        return actionActive;
+    }
+
+    public String getConfigName()
+    {
+        return configName;
     }
 
     public static class ActionContext
