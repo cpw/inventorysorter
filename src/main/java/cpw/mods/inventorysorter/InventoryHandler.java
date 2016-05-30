@@ -191,18 +191,16 @@ public enum InventoryHandler
         final IInventory inv;
         final IInventory proxy;
         final Container container;
+        final Class<? extends Slot> slotType;
+        boolean markForRemoval;
 
-        InventoryMapping(IInventory inv, Container container, IInventory proxy)
+        InventoryMapping(IInventory inv, Container container, IInventory proxy, Class<? extends Slot> slotType)
         {
             this.inv = inv;
             this.container = container;
             this.proxy = proxy;
+            this.slotType = slotType;
         }
-        InventoryMapping(IInventory inv, Container container)
-        {
-            this(inv,container,inv);
-        }
-
         @Override
         public String toString()
         {

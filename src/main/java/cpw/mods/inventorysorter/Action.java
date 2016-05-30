@@ -22,6 +22,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
@@ -31,6 +32,7 @@ import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
 import net.minecraftforge.items.SlotItemHandler;
 
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -132,9 +134,14 @@ public enum Action
                 if (sl instanceof SlotItemHandler) continue;
                 if (!mapping.containsKey(sl.inventory))
                 {
-                    mapping.put(sl.inventory, new InventoryHandler.InventoryMapping(sl.inventory, openContainer));
+                    mapping.put(sl.inventory, new InventoryHandler.InventoryMapping(sl.inventory, openContainer, sl.inventory, sl.getClass()));
                 }
                 inventoryMapping = mapping.get(sl.inventory);
+                if (inventoryMapping.slotType != sl.getClass())
+                {
+                    inventoryMapping.markForRemoval = true;
+                    continue;
+                }
                 inventoryMapping.begin = Math.min(sl.slotNumber, inventoryMapping.begin);
                 inventoryMapping.end = Math.max(sl.slotNumber, inventoryMapping.end);
                 if (sl == slot)
@@ -149,9 +156,9 @@ public enum Action
                 int mainEnd = 36;
                 int offhandStart = 40;
 
-                InventoryHandler.InventoryMapping hotbarMapping = new InventoryHandler.InventoryMapping(PLAYER_HOTBAR, openContainer, playerEntity.inventory);
-                InventoryHandler.InventoryMapping mainMapping = new InventoryHandler.InventoryMapping(PLAYER_MAIN, openContainer, playerEntity.inventory);
-                InventoryHandler.InventoryMapping offhandMapping = new InventoryHandler.InventoryMapping(PLAYER_OFFHAND, openContainer, playerEntity.inventory);
+                InventoryHandler.InventoryMapping hotbarMapping = new InventoryHandler.InventoryMapping(PLAYER_HOTBAR, openContainer, playerEntity.inventory, Slot.class);
+                InventoryHandler.InventoryMapping mainMapping = new InventoryHandler.InventoryMapping(PLAYER_MAIN, openContainer, playerEntity.inventory, Slot.class);
+                InventoryHandler.InventoryMapping offhandMapping = new InventoryHandler.InventoryMapping(PLAYER_OFFHAND, openContainer, playerEntity.inventory, Slot.class);
 
                 for (int i = playerMapping.begin; i<=playerMapping.end; i++)
                 {
@@ -182,6 +189,11 @@ public enum Action
                         slotTarget = inventoryMapping;
                     }
                 }
+            }
+            for (Map.Entry<IInventory, InventoryHandler.InventoryMapping> map : Sets.newLinkedHashSet(mapping.entrySet()))
+            {
+                if (map.getValue().markForRemoval) mapping.remove(map.getKey());
+                if (slotTarget == map.getValue()) slotTarget = null;
             }
             this.slotMapping = slotTarget;
             this.mapping = ImmutableBiMap.copyOf(mapping);

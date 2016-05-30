@@ -78,7 +78,7 @@ public enum ScrollWheelHandler implements Function<Action.ActionContext, Void>
         List<InventoryHandler.InventoryMapping> mappingCandidates = Lists.newArrayList();
         if (moveAmount < 0)
         {
-            final InventoryHandler.InventoryMapping inventoryMapping = new InventoryHandler.InventoryMapping(context.slot.inventory, context.player.openContainer);
+            final InventoryHandler.InventoryMapping inventoryMapping = new InventoryHandler.InventoryMapping(context.slot.inventory, context.player.openContainer, context.slot.inventory, context.slot.getClass());
             mappingCandidates.add(inventoryMapping);
             inventoryMapping.begin = context.slot.slotNumber;
             inventoryMapping.end = context.slot.slotNumber;
