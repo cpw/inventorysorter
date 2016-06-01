@@ -192,8 +192,10 @@ public enum Action
             }
             for (Map.Entry<IInventory, InventoryHandler.InventoryMapping> map : Sets.newLinkedHashSet(mapping.entrySet()))
             {
-                if (map.getValue().markForRemoval) mapping.remove(map.getKey());
-                if (slotTarget == map.getValue()) slotTarget = null;
+                if (map.getValue().markForRemoval) {
+                    mapping.remove(map.getKey());
+                    if (slotTarget == map.getValue()) slotTarget = null;
+                }
             }
             this.slotMapping = slotTarget;
             this.mapping = ImmutableBiMap.copyOf(mapping);
