@@ -48,22 +48,23 @@ minecraft {
 }
 
 task makeChangelog(type: se.bjurr.gitchangelog.plugin.gradle.GitChangelogTask) {
-    filePath = "CHANGELOG.md"
+    filePath = "CHANGELOG.html"
     untaggedName = "Current release ${project.version}"
 //    gitHubApi = "https://api.github.com/repos/cpw/inventorysorter"
     templateContent = """
-# Inventory sorter changelog history
-## Version ${project.version} for minecraft ${project.minecraft.version}
-
+<h1>Inventory sorter changelog history</h1>
+<h2>Version ${project.version} for minecraft ${project.minecraft.version}</h2>
+<ul>
 {{#tags}}
-## {{name}}
------------
-
-### {{name}}
+<li><h3>{{name}}</h3>
+<hr/>
+<ul>
 {{#commits}}
-* {{{message}}}
+<li>{{{message}}}</li>
 {{/commits}}
+</ul>
 {{/tags}}
+</ul>
     """
 }
 
@@ -71,7 +72,8 @@ curseforge {
     apiKey = project.hasProperty('curseforge_apikey') ? project.curseforge_apikey : '0'
     project {
         id = '240633'
-        changelog = file('CHANGELOG.md')
+        changelog = file('CHANGELOG.html')
+        changelogType = 'html'
         releaseType = 'beta'
     }
 }
