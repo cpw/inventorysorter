@@ -24,10 +24,13 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.InventoryBasic;
 import net.minecraft.inventory.Slot;
+import net.minecraft.tileentity.TileEntityBrewingStand;
+import net.minecraft.tileentity.TileEntityFurnace;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
 import net.minecraftforge.items.SlotItemHandler;
@@ -137,7 +140,7 @@ public enum Action
                     mapping.put(sl.inventory, new InventoryHandler.InventoryMapping(sl.inventory, openContainer, sl.inventory, sl.getClass()));
                 }
                 inventoryMapping = mapping.get(sl.inventory);
-                if (inventoryMapping.slotType != sl.getClass())
+                if (inventoryMapping.slotType != sl.getClass() && !(inventoryMapping.inv instanceof InventoryPlayer) && !(inventoryMapping.inv instanceof TileEntityFurnace) && !(inventoryMapping.inv instanceof TileEntityBrewingStand))
                 {
                     inventoryMapping.markForRemoval = true;
                     continue;
