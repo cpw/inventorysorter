@@ -157,7 +157,7 @@ public enum InventoryHandler
             if (stack != null && stack.getItem() != null)
             {
                 ItemStackHolder ish = new ItemStackHolder(stack.copy());
-                itemcounts.add(ish, stack.stackSize);
+                itemcounts.add(ish, stack.getCount());
             }
         }
         final HashMultiset<ItemStackHolder> entries = HashMultiset.create();
