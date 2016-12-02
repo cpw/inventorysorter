@@ -24,6 +24,7 @@ import com.google.common.collect.Multiset;
 import com.google.common.collect.Multisets;
 import com.google.common.collect.TreeMultiset;
 import com.google.common.collect.UnmodifiableIterator;
+import net.minecraft.block.Block;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.inventory.Slot;
@@ -89,7 +90,7 @@ public enum SortingHandler implements Function<Action.ActionContext,Void>
                     int slotNum = slotCounts.count(ish);
                     final int occurrences = count / slotNum;
                     itemcounts.remove(ish, occurrences);
-                    is.stackSize = occurrences;
+                    is.setCount(occurrences);
                 }
             }
         }
@@ -103,7 +104,7 @@ public enum SortingHandler implements Function<Action.ActionContext,Void>
                     ItemStackHolder ish = new ItemStackHolder(is);
                     if (itemcounts.count(ish) > 0)
                     {
-                        is.stackSize+=itemcounts.setCount(ish,0);
+                        is.setCount(is.getCount()+itemcounts.setCount(ish,0));
                     }
                 }
             }
@@ -137,11 +138,12 @@ public enum SortingHandler implements Function<Action.ActionContext,Void>
             if (itemCount > 0 && stackHolder != null)
             {
                 target = stackHolder.getElement().is.copy();
-                target.stackSize = itemCount > target.getMaxStackSize() ? target.getMaxStackSize() : itemCount;
+                target.setCount(itemCount > target.getMaxStackSize() ? target.getMaxStackSize() : itemCount);
             }
             if ((target != null && !slot.isItemValid(target)) || !slot.canTakeStack(context.player)) continue;
+            if (target == null)target = new ItemStack(Block.getBlockById(0));
             slot.putStack(target);
-            itemCount-= (target != null ? target.stackSize : 0);
+            itemCount-= (target != null ? target.getCount() : 0);
             if (itemCount ==0)
             {
                 stackHolder = itemsIterator.hasNext() ? itemsIterator.next() : null;

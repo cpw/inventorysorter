@@ -35,7 +35,7 @@ group= "cpw.mods" // http://maven.apache.org/guides/mini/guide-naming-convention
 archivesBaseName = "inventorysorter"
 
 minecraft {
-    version = "1.10-12.18.0.1984-1.10.0"
+    version = "1.11-13.19.0.2176"
     runDir = "run"
     
     // the mappings can be changed at any time, and must be in the following format.
@@ -43,7 +43,7 @@ minecraft {
     // stable_#            stables are built at the discretion of the MCP team.
     // Use non-default mappings at your own risk. they may not allways work.
     // simply re-run your setup task after changing the mappings to update your workspace.
-    mappings = "snapshot_20160529"
+    mappings = "snapshot_20161201"
     // makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
 }
 

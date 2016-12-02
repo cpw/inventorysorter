@@ -20,6 +20,7 @@ package cpw.mods.inventorysorter;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
+import net.minecraft.block.Block;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
@@ -53,7 +54,7 @@ public enum ScrollWheelHandler implements Function<Action.ActionContext, Void>
         if (is == null) return null;
         final Map<IInventory, InventoryHandler.InventoryMapping> mapping = context.mapping;
         Slot source;
-        if (moveAmount < 0 && is.getMaxStackSize() > is.stackSize)
+        if (moveAmount < 0 && is.getMaxStackSize() > is.getCount())
         {
             source = InventoryHandler.INSTANCE.findStackWithItem(is, context);
         }
@@ -73,7 +74,7 @@ public enum ScrollWheelHandler implements Function<Action.ActionContext, Void>
         ItemStack sourceStack = InventoryHandler.INSTANCE.getItemStack(source);
         if (sourceStack == null) return null; // null detection
         ItemStack iscopy = sourceStack.copy();
-        iscopy.stackSize = 1;
+        iscopy.setCount(1);
 
         List<InventoryHandler.InventoryMapping> mappingCandidates = Lists.newArrayList();
         if (moveAmount < 0)
@@ -124,8 +125,8 @@ public enum ScrollWheelHandler implements Function<Action.ActionContext, Void>
                 boolean hasTarget = false, found = false;
                 for (int i = 0; i < 9; i++)
                 {
-                    ItemStack itemStack = context.player.inventory.mainInventory[i];
-                    if (ItemStack.areItemsEqual(itemStack,sourceStack) && itemStack.stackSize < itemStack.getMaxStackSize())
+                    ItemStack itemStack = context.player.inventory.mainInventory.get(i);
+                    if (ItemStack.areItemsEqual(itemStack,sourceStack) && itemStack.getCount() < itemStack.getMaxStackSize())
                     {
                         hasTarget = true;
                     }
@@ -137,12 +138,12 @@ public enum ScrollWheelHandler implements Function<Action.ActionContext, Void>
                 if (!hasTarget && found) continue;
             }
             InventoryHandler.INSTANCE.moveItemToOtherInventory(context, iscopy, mappingCandidate.begin, mappingCandidate.end+1, moveAmount < 0);
-            if (iscopy.stackSize == 0)
+            if (iscopy.getCount() == 0)
             {
-                sourceStack.stackSize--;
-                if (sourceStack.stackSize == 0)
+                sourceStack.setCount(sourceStack.getCount()-1);
+                if (sourceStack.getCount() == 0)
                 {
-                    source.putStack(null);
+                    source.putStack(new ItemStack(Block.getBlockById(0)));
                 }
                 else
                 {

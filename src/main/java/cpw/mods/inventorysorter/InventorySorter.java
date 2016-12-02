@@ -35,7 +35,7 @@ import java.util.Properties;
  * Created by cpw on 08/01/16.
  */
 
-@Mod(modid="inventorysorter",name="Inventory Sorter", guiFactory = "cpw.mods.inventorysorter.GuiConfigFactory", acceptedMinecraftVersions = "[1.9.4,1.11)")
+@Mod(modid="inventorysorter",name="Inventory Sorter", guiFactory = "cpw.mods.inventorysorter.GuiConfigFactory")
 public class InventorySorter
 {
     @Mod.Instance("inventorysorter")
