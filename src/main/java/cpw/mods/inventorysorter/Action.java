@@ -155,6 +155,7 @@ public enum Action
 
             if (mapping.containsKey(playerEntity.inventory)) {
                 final InventoryHandler.InventoryMapping playerMapping = mapping.remove(playerEntity.inventory);
+                if (slotTarget == playerMapping) slotTarget = null;
                 int mainStart = 9;
                 int mainEnd = 36;
                 int offhandStart = 40;
@@ -186,6 +187,10 @@ public enum Action
                         offhandMapping.end = Math.max(s.slotNumber, offhandMapping.end);
                         mapping.put(PLAYER_OFFHAND, offhandMapping);
                         inventoryMapping = offhandMapping;
+                    }
+                    else
+                    {
+                        inventoryMapping = null;
                     }
                     if (s == slot)
                     {
