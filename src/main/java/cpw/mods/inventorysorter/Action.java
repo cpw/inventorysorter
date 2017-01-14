@@ -181,7 +181,7 @@ public enum Action
                         mapping.put(PLAYER_MAIN, mainMapping);
                         inventoryMapping = mainMapping;
                     }
-                    else if (s.getSlotIndex() >= offhandStart)
+                    else if (s.getSlotIndex() == offhandStart)
                     {
                         offhandMapping.begin = Math.min(s.slotNumber, offhandMapping.begin);
                         offhandMapping.end = Math.max(s.slotNumber, offhandMapping.end);
