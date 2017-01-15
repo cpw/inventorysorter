@@ -167,21 +167,21 @@ public enum Action
                 for (int i = playerMapping.begin; i<=playerMapping.end; i++)
                 {
                     Slot s = openContainer.getSlot(i);
-                    if (s.getSlotIndex() < mainStart)
+                    if (s.getSlotIndex() < mainStart && s.inventory == playerEntity.inventory)
                     {
                         hotbarMapping.begin = Math.min(s.slotNumber, hotbarMapping.begin);
                         hotbarMapping.end = Math.max(s.slotNumber, hotbarMapping.end);
                         mapping.put(PLAYER_HOTBAR, hotbarMapping);
                         inventoryMapping = hotbarMapping;
                     }
-                    else if (s.getSlotIndex() < mainEnd)
+                    else if (s.getSlotIndex() < mainEnd && s.inventory == playerEntity.inventory)
                     {
                         mainMapping.begin = Math.min(s.slotNumber, mainMapping.begin);
                         mainMapping.end = Math.max(s.slotNumber, mainMapping.end);
                         mapping.put(PLAYER_MAIN, mainMapping);
                         inventoryMapping = mainMapping;
                     }
-                    else if (s.getSlotIndex() == offhandStart)
+                    else if (s.getSlotIndex() >= offhandStart && s.inventory == playerEntity.inventory)
                     {
                         offhandMapping.begin = Math.min(s.slotNumber, offhandMapping.begin);
                         offhandMapping.end = Math.max(s.slotNumber, offhandMapping.end);
