@@ -145,6 +145,10 @@ public enum Action
                     inventoryMapping.markForRemoval = true;
                     continue;
                 }
+                if (inventoryMapping.slotType != sl.getClass())
+                {
+                    inventoryMapping.markAsHeterogeneous = true;
+                }
                 inventoryMapping.begin = Math.min(sl.slotNumber, inventoryMapping.begin);
                 inventoryMapping.end = Math.max(sl.slotNumber, inventoryMapping.end);
                 if (sl == slot)

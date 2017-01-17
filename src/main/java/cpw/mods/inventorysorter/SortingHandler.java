@@ -53,7 +53,7 @@ public enum SortingHandler implements Function<Action.ActionContext,Void>
         {
             distributeInventory(context, itemcounts);
         }
-        else
+        else if (!context.slotMapping.markAsHeterogeneous)
         {
             compactInventory(context, itemcounts);
         }

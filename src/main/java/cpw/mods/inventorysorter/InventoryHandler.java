@@ -193,6 +193,7 @@ public enum InventoryHandler
         final Container container;
         final Class<? extends Slot> slotType;
         boolean markForRemoval;
+        boolean markAsHeterogeneous;
 
         InventoryMapping(IInventory inv, Container container, IInventory proxy, Class<? extends Slot> slotType)
         {
