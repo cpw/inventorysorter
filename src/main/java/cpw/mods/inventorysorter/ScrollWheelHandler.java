@@ -68,6 +68,8 @@ public enum ScrollWheelHandler implements Function<Action.ActionContext, Void>
 
         if (source == null) return null;
 
+        if (InventorySorter.INSTANCE.slotblacklist.contains(source.getClass().getName())) return null; // Blacklist source
+        if (InventorySorter.INSTANCE.slotblacklist.contains(context.slot.getClass().getName())) return null; // Blacklist target
         if (!source.canTakeStack(context.player)) return null;
         if (!source.isItemValid(is)) return null;
         ItemStack sourceStack = InventoryHandler.INSTANCE.getItemStack(source);
@@ -105,6 +107,7 @@ public enum ScrollWheelHandler implements Function<Action.ActionContext, Void>
                 for (Map.Entry<IInventory, InventoryHandler.InventoryMapping> entry : InventoryHandler.INSTANCE.getSortedMapping(context))
                 {
                     if (entry.getValue().proxy == context.slot.inventory) continue;
+                    if (InventorySorter.INSTANCE.slotblacklist.contains(entry.getValue().slotType.getName())) continue; //remove blacklisted
                     mappingCandidates.add(entry.getValue());
                 }
             }

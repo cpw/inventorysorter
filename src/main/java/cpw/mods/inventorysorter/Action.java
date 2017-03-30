@@ -135,6 +135,7 @@ public enum Action
                 if (sl.inventory == null) continue;
                 // Not supporting the itemhandler stuff just yet
                 if (sl instanceof SlotItemHandler) continue;
+                if (InventorySorter.INSTANCE.slotblacklist.contains(sl.getClass().getName())) continue;
                 if (!mapping.containsKey(sl.inventory))
                 {
                     mapping.put(sl.inventory, new InventoryHandler.InventoryMapping(sl.inventory, openContainer, sl.inventory, sl.getClass()));

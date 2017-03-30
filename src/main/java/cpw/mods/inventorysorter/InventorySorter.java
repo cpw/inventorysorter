@@ -18,17 +18,16 @@
 
 package cpw.mods.inventorysorter;
 
-import net.minecraftforge.common.config.ConfigCategory;
-import net.minecraftforge.common.config.Configuration;
-import net.minecraftforge.common.config.Property;
+import com.google.common.collect.Lists;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.event.FMLInterModComms;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
 import org.apache.logging.log4j.Logger;
 
-import java.io.File;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -43,7 +42,18 @@ public class InventorySorter
 
     public Logger log;
     public SimpleNetworkWrapper channel;
+    final List slotblacklist = Lists.newArrayList();
 
+    @Mod.EventHandler
+    public void handleimc(FMLInterModComms.IMCEvent evt)
+    {
+        for (FMLInterModComms.IMCMessage msg : evt.getMessages())
+        {
+            if ("slotblacklist".equals(msg.key) && msg.isStringMessage()) {
+                slotblacklist.add(msg.getStringValue());
+            }
+        }
+    }
 
     @Mod.EventHandler
     public void preinit(FMLPreInitializationEvent evt)
@@ -62,5 +72,7 @@ public class InventorySorter
         channel = NetworkRegistry.INSTANCE.newSimpleChannel("inventorysorter");
         channel.registerMessage(ServerHandler.class, Network.ActionMessage.class, 1, Side.SERVER);
         SideProxy.INSTANCE.bindKeys();
+        // blacklist codechickencore because
+        FMLInterModComms.sendMessage("inventorysorter", "slotblacklist", "codechicken.core.inventory.SlotDummy");
     }
 }
