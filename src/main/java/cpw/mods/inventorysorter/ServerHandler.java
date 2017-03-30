@@ -18,6 +18,7 @@
 
 package cpw.mods.inventorysorter;
 
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraft.inventory.Slot;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
@@ -30,11 +31,16 @@ import org.apache.logging.log4j.Level;
 public class ServerHandler implements IMessageHandler<Network.ActionMessage, IMessage>
 {
     @Override
-    public IMessage onMessage(Network.ActionMessage message, MessageContext ctx)
+    public IMessage onMessage(final Network.ActionMessage message, final MessageContext ctx)
     {
-        InventorySorter.INSTANCE.log.log(Level.DEBUG, "Got action {} slot {}", message.action, message.slotIndex);
-        Slot slot = ctx.getServerHandler().playerEntity.openContainer.getSlot(message.slotIndex);
-        message.action.execute(new Action.ActionContext(slot, ctx.getServerHandler().playerEntity));
+        FMLCommonHandler.instance().getWorldThread(ctx.netHandler).addScheduledTask(new Runnable() {
+            @Override public void run()
+            {
+                InventorySorter.INSTANCE.log.log(Level.DEBUG, "Got action {} slot {}", message.action, message.slotIndex);
+                Slot slot = ctx.getServerHandler().playerEntity.openContainer.getSlot(message.slotIndex);
+                message.action.execute(new Action.ActionContext(slot, ctx.getServerHandler().playerEntity));
+            }
+        });
         return null;
     }
 }
