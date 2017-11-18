@@ -13,7 +13,7 @@ buildscript {
 }
 plugins {
     id "com.matthewprenger.cursegradle" version "1.0.9"
-    id "se.bjurr.gitchangelog.git-changelog-gradle-plugin" version "1.52"
+    id "se.bjurr.gitchangelog.git-changelog-gradle-plugin" version "1.48"
 }
 
 apply plugin: 'net.minecraftforge.gradle.forge'
@@ -48,9 +48,8 @@ minecraft {
 }
 
 task makeChangelog(type: se.bjurr.gitchangelog.plugin.gradle.GitChangelogTask) {
-    file = new File("CHANGELOG.html")
+    file = file("CHANGELOG.html")
     untaggedName = "Current release ${project.version}"
-//    gitHubApi = "https://api.github.com/repos/cpw/inventorysorter"
     templateContent = """
 <h1>Inventory sorter changelog history</h1>
 <h2>Version ${project.version} for minecraft ${project.minecraft.version}</h2>
