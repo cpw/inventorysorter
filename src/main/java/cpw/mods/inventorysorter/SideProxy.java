@@ -18,13 +18,14 @@
 
 package cpw.mods.inventorysorter;
 
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.config.Configuration;
-import net.minecraftforge.fml.client.event.ConfigChangedEvent;
-import net.minecraftforge.fml.common.SidedProxy;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraft.client.settings.*;
+import net.minecraftforge.common.*;
+import net.minecraftforge.common.config.*;
+import net.minecraftforge.fml.client.event.*;
+import net.minecraftforge.fml.common.*;
+import net.minecraftforge.fml.common.eventhandler.*;
 
-import java.io.File;
+import java.io.*;
 
 /**
  * Created by cpw on 08/01/16.

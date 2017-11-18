@@ -18,20 +18,17 @@
 
 package cpw.mods.inventorysorter;
 
-import com.google.common.base.Function;
-
-import javax.annotation.Nullable;
+import javax.annotation.*;
+import java.util.function.*;
 
 /**
  * Created by cpw on 08/01/16.
  */
-public enum AllItemsHandler implements Function<Action.ActionContext, Void>
+public enum AllItemsHandler implements Consumer<ContainerContext>
 {
     INSTANCE;
-    @Nullable
     @Override
-    public Void apply(@Nullable Action.ActionContext input)
+    public void accept(ContainerContext input)
     {
-        return null;
     }
 }

@@ -18,7 +18,7 @@
 
 package cpw.mods.inventorysorter;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.item.*;
 
 /**
  * Created by cpw on 08/01/16.
@@ -27,7 +27,7 @@ public class ItemStackHolder
 {
     public final ItemStack is;
 
-    public ItemStackHolder(ItemStack stack)
+    ItemStackHolder(ItemStack stack)
     {
         this.is = stack;
     }

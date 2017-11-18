@@ -18,26 +18,17 @@
 
 package cpw.mods.inventorysorter;
 
-import com.google.common.base.Objects;
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multiset;
-import com.google.common.collect.SortedMultiset;
-import com.google.common.collect.TreeMultiset;
-import com.google.common.primitives.Ints;
-import net.minecraft.inventory.Container;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.Slot;
-import net.minecraft.item.ItemStack;
-import net.minecraftforge.fml.relauncher.ReflectionHelper;
+import com.google.common.base.*;
+import com.google.common.collect.*;
+import com.google.common.primitives.*;
+import net.minecraft.entity.player.*;
+import net.minecraft.inventory.*;
+import net.minecraft.item.*;
+import net.minecraft.tileentity.*;
+import net.minecraftforge.fml.relauncher.*;
 
-import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.*;
+import java.util.*;
 
 /**
  * @author cpw
@@ -51,7 +42,7 @@ public enum InventoryHandler
     {
         try
         {
-            Method m = ReflectionHelper.findMethod(Container.class, null, new String[] { "func_"+"75135_a","mergeItemStack" }, ItemStack.class, int.class, int.class, boolean.class);
+            Method m = ReflectionHelper.findMethod(Container.class, "mergeItemStack", "func_"+"75135_a", ItemStack.class, int.class, int.class, boolean.class);
             m.setAccessible(true);
             return m;
         }
@@ -73,7 +64,7 @@ public enum InventoryHandler
         }
     }
 
-    public ItemStack getItemStack(Action.ActionContext ctx)
+    public ItemStack getItemStack(ContainerContext ctx)
     {
         return getItemStack(ctx.slot);
     }
@@ -84,7 +75,7 @@ public enum InventoryHandler
         return slot.inventory.getStackInSlot(slot.getSlotIndex());
     }
 
-    public void moveItemToOtherInventory(Action.ActionContext ctx, ItemStack is, int targetLow, int targetHigh, boolean slotIsDestination)
+    public void moveItemToOtherInventory(ContainerContext ctx, ItemStack is, int targetLow, int targetHigh, boolean slotIsDestination)
     {
         for (int i = targetLow; i < targetHigh; i++)
         {
@@ -100,11 +91,11 @@ public enum InventoryHandler
     }
 
     static Map<IInventory,ImmutableList<IInventory>> preferredOrders = ImmutableMap.of(
-            Action.ActionContext.PLAYER_HOTBAR, ImmutableList.of(Action.ActionContext.PLAYER_OFFHAND, Action.ActionContext.PLAYER_MAIN),
-            Action.ActionContext.PLAYER_OFFHAND, ImmutableList.of(Action.ActionContext.PLAYER_HOTBAR, Action.ActionContext.PLAYER_MAIN),
-            Action.ActionContext.PLAYER_MAIN, ImmutableList.of(Action.ActionContext.PLAYER_OFFHAND, Action.ActionContext.PLAYER_HOTBAR)
+            ContainerContext.PLAYER_HOTBAR, ImmutableList.of(ContainerContext.PLAYER_OFFHAND, ContainerContext.PLAYER_MAIN),
+            ContainerContext.PLAYER_OFFHAND, ImmutableList.of(ContainerContext.PLAYER_HOTBAR, ContainerContext.PLAYER_MAIN),
+            ContainerContext.PLAYER_MAIN, ImmutableList.of(ContainerContext.PLAYER_OFFHAND, ContainerContext.PLAYER_HOTBAR)
     );
-    public Slot findStackWithItem(ItemStack is, final Action.ActionContext ctx)
+    public Slot findStackWithItem(ItemStack is, final ContainerContext ctx)
     {
         if (is.getMaxStackSize() == 1) return null;
 
@@ -127,24 +118,20 @@ public enum InventoryHandler
         return null;
     }
 
-    List<Map.Entry<IInventory, InventoryMapping>> getSortedMapping(final Action.ActionContext ctx)
+    List<Map.Entry<IInventory, InventoryMapping>> getSortedMapping(final ContainerContext ctx)
     {
         List<Map.Entry<IInventory, InventoryMapping>> entries = Lists.newArrayList(ctx.mapping.entrySet());
         if (preferredOrders.containsKey(ctx.slotMapping.inv)) {
-            Collections.sort(entries, new Comparator<Map.Entry<IInventory, InventoryMapping>>()
-            {
-                public int compare(Map.Entry<IInventory, InventoryMapping> o1, Map.Entry<IInventory, InventoryMapping> o2)
-                {
-                    int idx1 = preferredOrders.get(ctx.slotMapping.inv).indexOf(o1.getKey());
-                    int idx2 = preferredOrders.get(ctx.slotMapping.inv).indexOf(o2.getKey());
-                    return Ints.compare(idx1,idx2);
-                }
+            Collections.sort(entries, (o1, o2) -> {
+                int idx1 = preferredOrders.get(ctx.slotMapping.inv).indexOf(o1.getKey());
+                int idx2 = preferredOrders.get(ctx.slotMapping.inv).indexOf(o2.getKey());
+                return Ints.compare(idx1,idx2);
             });
         }
         return entries;
     }
 
-    public Multiset<ItemStackHolder> getInventoryContent(Action.ActionContext context)
+    public Multiset<ItemStackHolder> getInventoryContent(ContainerContext context)
     {
         int slotLow = context.slotMapping.begin;
         int slotHigh = context.slotMapping.end + 1;
@@ -154,10 +141,10 @@ public enum InventoryHandler
             final Slot slot = context.player.openContainer.getSlot(i);
             if (!slot.canTakeStack(context.player)) continue;
             ItemStack stack = slot.getStack();
-            if (stack != null && stack.getItem() != null)
+            if (!stack.isEmpty())
             {
                 ItemStackHolder ish = new ItemStackHolder(stack.copy());
-                itemcounts.add(ish, stack.stackSize);
+                itemcounts.add(ish, stack.getCount());
             }
         }
         final HashMultiset<ItemStackHolder> entries = HashMultiset.create();
@@ -170,20 +157,21 @@ public enum InventoryHandler
 
     public static class ItemStackComparator implements Comparator<ItemStackHolder>
     {
-
         @Override
         public int compare(ItemStackHolder o1, ItemStackHolder o2)
         {
             if (o1 == o2) return 0;
+            if (o1.is == o2.is) return 0;
             if (o1.is.getItem() != o2.is.getItem())
-                return o1.is.getItem().getRegistryName().toString().compareTo(o2.is.getItem().getRegistryName().toString());
+                return String.valueOf(o1.is.getItem().getRegistryName()).compareTo(String.valueOf(o2.is.getItem().getRegistryName()));
             if (o1.is.getMetadata() != o2.is.getMetadata())
                 return Ints.compare(o1.is.getMetadata(), o2.is.getMetadata());
             if (ItemStack.areItemStackTagsEqual(o1.is, o2.is))
                 return 0;
-            return Ints.compare(System.identityHashCode(o1), System.identityHashCode(o2));
+            return Ints.compare(System.identityHashCode(o1.is), System.identityHashCode(o2.is));
         }
     }
+
     public static class InventoryMapping
     {
         int begin = Integer.MAX_VALUE;
@@ -205,7 +193,20 @@ public enum InventoryHandler
         @Override
         public String toString()
         {
-            return Objects.toStringHelper(this).add("i", inv).add("c", container).add("b",begin).add("e",end).toString();
+            return MoreObjects.toStringHelper(this).add("i", inv).add("c", container).add("b",begin).add("e",end).toString();
+        }
+
+        void addSlot(final Slot sl) {
+            if (this.slotType != sl.getClass() && !(this.inv instanceof InventoryPlayer) && !(this.inv instanceof TileEntityFurnace) && !(this.inv instanceof TileEntityBrewingStand)) {
+                this.markForRemoval = true;
+            }
+            if (this.slotType != sl.getClass())
+            {
+                this.markAsHeterogeneous = true;
+            }
+            this.begin = Math.min(sl.slotNumber, this.begin);
+            this.end = Math.max(sl.slotNumber, this.end);
+
         }
     }
 }

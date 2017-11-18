@@ -18,51 +18,42 @@
 
 package cpw.mods.inventorysorter;
 
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableBiMap;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.entity.player.InventoryPlayer;
-import net.minecraft.inventory.Container;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.InventoryBasic;
-import net.minecraft.inventory.Slot;
-import net.minecraft.tileentity.TileEntityBrewingStand;
-import net.minecraft.tileentity.TileEntityFurnace;
-import net.minecraftforge.common.config.Configuration;
-import net.minecraftforge.common.config.Property;
-import net.minecraftforge.items.SlotItemHandler;
+import net.minecraft.inventory.*;
+import net.minecraftforge.common.config.*;
 
-import java.util.Collections;
-import java.util.Map;
+import java.util.function.*;
 
 /**
  * Created by cpw on 08/01/16.
  */
 public enum Action
 {
-    SORT(SortingHandler.INSTANCE, "middleClickSorting", "Middle-click sorting module", true),
-    ONEITEMIN(ScrollWheelHandler.ONEITEMIN, "mouseWheelMoving", "Mouse wheel movement module", true),
-    ONEITEMOUT(ScrollWheelHandler.ONEITEMOUT, "mouseWheelMoving", "Mouse wheel movement module", true),
-    ALL(AllItemsHandler.INSTANCE, "allMoving", "All items movement module - NYI", false);
+    SORT(SortingHandler.INSTANCE, "key.inventorysorter.sort", -98, "middleClickSorting", "Middle-click sorting module", true),
+    ONEITEMIN(ScrollWheelHandler.ONEITEMIN, "key.inventorysorter.itemin", -200, "mouseWheelMoving", "Mouse wheel movement module", true),
+    ONEITEMOUT(ScrollWheelHandler.ONEITEMOUT, "key.inventorysorter.itemout", -201, "mouseWheelMoving", "Mouse wheel movement module", true);
 
-    private final Function<ActionContext, Void> worker;
+    private final Consumer<ContainerContext> worker;
+    private final String keyBindingName;
+    private final int defaultKeyCode;
     private final String configName;
     private boolean actionActive;
     private Property property;
     private final String comment;
     private final boolean implemented;
 
-    Action(Function<ActionContext, Void> worker, String configName, String comment, boolean implemented)
+    Action(Consumer<ContainerContext> worker, String keyBindingName, int defaultKeyCode, String configName, String comment, boolean implemented)
     {
         this.worker = worker;
+        this.keyBindingName = keyBindingName;
+        this.defaultKeyCode = defaultKeyCode;
         this.configName = configName;
         this.comment = comment;
         this.implemented = implemented;
     }
 
+    public String getKeyBindingName() {
+        return keyBindingName;
+    }
     public static void configure(Configuration config)
     {
         for (Action a : values())
@@ -76,23 +67,15 @@ public enum Action
             a.actionActive = a.property.getBoolean(true);
         }
     }
-    public static Action interpret(KeyHandler.KeyStates keyStates)
-    {
-        if (keyStates.isDownClick()) return null;
-        if (keyStates.isMiddleMouse()) return SORT;
-        if (keyStates.mouseWheelRollingDown()) return ONEITEMIN;
-        if (keyStates.mouseWheelRollingUp()) return ONEITEMOUT;
-        if (keyStates.isSpace()) return ALL;
-        return null;
-    }
+
     public Network.ActionMessage message(Slot slot)
     {
         return new Network.ActionMessage(this, slot.slotNumber);
     }
 
-    public void execute(ActionContext context)
+    public void execute(ContainerContext context)
     {
-        this.worker.apply(context);
+        this.worker.accept(context);
     }
 
     public Property getProperty()
@@ -110,108 +93,8 @@ public enum Action
         return configName;
     }
 
-    public static class ActionContext
-    {
-        public final Slot slot;
-        public final InventoryHandler.InventoryMapping slotMapping;
-        public final EntityPlayerMP player;
-        public final ImmutableBiMap<IInventory, InventoryHandler.InventoryMapping> mapping;
-
-        public static final IInventory PLAYER_HOTBAR = new InventoryBasic("Dummy Hotbar", false, 0);
-        public static final IInventory PLAYER_MAIN = new InventoryBasic("Dummy Main", false, 0);
-        public static final IInventory PLAYER_OFFHAND = new InventoryBasic("Dummy Offhand", false, 0);
-
-        public ActionContext(Slot slot, EntityPlayerMP playerEntity)
-        {
-            this.slot = slot;
-            this.player = playerEntity;
-            InventoryHandler.InventoryMapping slotTarget = null;
-            Map<IInventory, InventoryHandler.InventoryMapping> mapping = Maps.newHashMap();
-            InventoryHandler.InventoryMapping inventoryMapping = null;
-            final Container openContainer = playerEntity.openContainer;
-            for (Slot sl : openContainer.inventorySlots)
-            {
-                // Skip slots without an inventory - they're probably dummy slots
-                if (sl.inventory == null) continue;
-                // Not supporting the itemhandler stuff just yet
-                if (sl instanceof SlotItemHandler) continue;
-                if (InventorySorter.INSTANCE.slotblacklist.contains(sl.getClass().getName())) continue;
-                if (!mapping.containsKey(sl.inventory))
-                {
-                    mapping.put(sl.inventory, new InventoryHandler.InventoryMapping(sl.inventory, openContainer, sl.inventory, sl.getClass()));
-                }
-                inventoryMapping = mapping.get(sl.inventory);
-                if (inventoryMapping.slotType != sl.getClass() && !(inventoryMapping.inv instanceof InventoryPlayer) && !(inventoryMapping.inv instanceof TileEntityFurnace) && !(inventoryMapping.inv instanceof TileEntityBrewingStand))
-                {
-                    inventoryMapping.markForRemoval = true;
-                    continue;
-                }
-                if (inventoryMapping.slotType != sl.getClass())
-                {
-                    inventoryMapping.markAsHeterogeneous = true;
-                }
-                inventoryMapping.begin = Math.min(sl.slotNumber, inventoryMapping.begin);
-                inventoryMapping.end = Math.max(sl.slotNumber, inventoryMapping.end);
-                if (sl == slot)
-                {
-                    slotTarget = inventoryMapping;
-                }
-            }
-
-            if (mapping.containsKey(playerEntity.inventory)) {
-                final InventoryHandler.InventoryMapping playerMapping = mapping.remove(playerEntity.inventory);
-                if (slotTarget == playerMapping) slotTarget = null;
-                int mainStart = 9;
-                int mainEnd = 36;
-                int offhandStart = 40;
-
-                InventoryHandler.InventoryMapping hotbarMapping = new InventoryHandler.InventoryMapping(PLAYER_HOTBAR, openContainer, playerEntity.inventory, Slot.class);
-                InventoryHandler.InventoryMapping mainMapping = new InventoryHandler.InventoryMapping(PLAYER_MAIN, openContainer, playerEntity.inventory, Slot.class);
-                InventoryHandler.InventoryMapping offhandMapping = new InventoryHandler.InventoryMapping(PLAYER_OFFHAND, openContainer, playerEntity.inventory, Slot.class);
-
-                for (int i = playerMapping.begin; i<=playerMapping.end; i++)
-                {
-                    Slot s = openContainer.getSlot(i);
-                    if (s.getSlotIndex() < mainStart && s.inventory == playerEntity.inventory)
-                    {
-                        hotbarMapping.begin = Math.min(s.slotNumber, hotbarMapping.begin);
-                        hotbarMapping.end = Math.max(s.slotNumber, hotbarMapping.end);
-                        mapping.put(PLAYER_HOTBAR, hotbarMapping);
-                        inventoryMapping = hotbarMapping;
-                    }
-                    else if (s.getSlotIndex() < mainEnd && s.inventory == playerEntity.inventory)
-                    {
-                        mainMapping.begin = Math.min(s.slotNumber, mainMapping.begin);
-                        mainMapping.end = Math.max(s.slotNumber, mainMapping.end);
-                        mapping.put(PLAYER_MAIN, mainMapping);
-                        inventoryMapping = mainMapping;
-                    }
-                    else if (s.getSlotIndex() >= offhandStart && s.inventory == playerEntity.inventory)
-                    {
-                        offhandMapping.begin = Math.min(s.slotNumber, offhandMapping.begin);
-                        offhandMapping.end = Math.max(s.slotNumber, offhandMapping.end);
-                        mapping.put(PLAYER_OFFHAND, offhandMapping);
-                        inventoryMapping = offhandMapping;
-                    }
-                    else
-                    {
-                        inventoryMapping = null;
-                    }
-                    if (s == slot)
-                    {
-                        slotTarget = inventoryMapping;
-                    }
-                }
-            }
-            for (Map.Entry<IInventory, InventoryHandler.InventoryMapping> map : Sets.newLinkedHashSet(mapping.entrySet()))
-            {
-                if (map.getValue().markForRemoval) {
-                    mapping.remove(map.getKey());
-                    if (slotTarget == map.getValue()) slotTarget = null;
-                }
-            }
-            this.slotMapping = slotTarget;
-            this.mapping = ImmutableBiMap.copyOf(mapping);
-        }
+    public int getDefaultKeyCode() {
+        return defaultKeyCode;
     }
+
 }

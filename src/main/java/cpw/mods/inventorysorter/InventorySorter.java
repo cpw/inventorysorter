@@ -18,23 +18,21 @@
 
 package cpw.mods.inventorysorter;
 
-import com.google.common.collect.Lists;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.event.FMLInterModComms;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.fml.common.network.NetworkRegistry;
-import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
-import net.minecraftforge.fml.relauncher.Side;
-import org.apache.logging.log4j.Logger;
+import com.google.common.collect.*;
+import net.minecraftforge.fml.common.*;
+import net.minecraftforge.fml.common.event.*;
+import net.minecraftforge.fml.common.network.*;
+import net.minecraftforge.fml.common.network.simpleimpl.*;
+import net.minecraftforge.fml.relauncher.*;
+import org.apache.logging.log4j.*;
 
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * Created by cpw on 08/01/16.
  */
 
-@Mod(modid="inventorysorter",name="Inventory Sorter", guiFactory = "cpw.mods.inventorysorter.GuiConfigFactory", acceptedMinecraftVersions = "[1.9.4,1.11)")
+@Mod(modid="inventorysorter",name="Inventory Sorter", guiFactory = "cpw.mods.inventorysorter.GuiConfigFactory")
 public class InventorySorter
 {
     @Mod.Instance("inventorysorter")

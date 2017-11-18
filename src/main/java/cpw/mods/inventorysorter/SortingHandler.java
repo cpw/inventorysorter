@@ -18,35 +18,26 @@
 
 package cpw.mods.inventorysorter;
 
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableMultiset;
-import com.google.common.collect.Multiset;
-import com.google.common.collect.Multisets;
-import com.google.common.collect.TreeMultiset;
-import com.google.common.collect.UnmodifiableIterator;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.InventoryCrafting;
-import net.minecraft.inventory.Slot;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraftforge.fml.common.FMLLog;
-import org.apache.logging.log4j.Level;
+import com.google.common.base.*;
+import com.google.common.collect.*;
+import net.minecraft.inventory.*;
+import net.minecraft.item.*;
 
-import javax.annotation.Nullable;
+import javax.annotation.*;
+import java.util.function.*;
 
 /**
  * @author cpw
  */
-public enum SortingHandler implements Function<Action.ActionContext,Void>
+public enum SortingHandler implements Consumer<ContainerContext>
 {
     INSTANCE;
-    @Nullable
     @Override
-    public Void apply(@Nullable Action.ActionContext context)
+    public void accept(ContainerContext context)
     {
         if (context == null) throw new NullPointerException("WHUT");
         // Ignore if we can't find ourselves in the slot set
-        if (context.slotMapping == null) return null;
+        if (context.slotMapping == null) return;
         final Multiset<ItemStackHolder> itemcounts = InventoryHandler.INSTANCE.getInventoryContent(context);
 
         if (context.slot.inventory instanceof InventoryCrafting)
@@ -57,10 +48,10 @@ public enum SortingHandler implements Function<Action.ActionContext,Void>
         {
             compactInventory(context, itemcounts);
         }
-        return null;
+        return;
     }
 
-    private void distributeInventory(Action.ActionContext context, Multiset<ItemStackHolder> itemcounts)
+    private void distributeInventory(ContainerContext context, Multiset<ItemStackHolder> itemcounts)
     {
         InventoryCrafting ic = (InventoryCrafting)context.slot.inventory;
         Multiset<ItemStackHolder> slotCounts = TreeMultiset.create(new InventoryHandler.ItemStackComparator());
@@ -69,7 +60,7 @@ public enum SortingHandler implements Function<Action.ActionContext,Void>
             for (int y=0; y<ic.getHeight(); y++)
             {
                 ItemStack is = ic.getStackInRowAndColumn(x, y);
-                if (is != null)
+                if (!is.isEmpty())
                 {
                     slotCounts.add(new ItemStackHolder(is));
                 }
@@ -82,14 +73,14 @@ public enum SortingHandler implements Function<Action.ActionContext,Void>
             for (int y = 0; y < ic.getHeight(); y++)
             {
                 ItemStack is = ic.getStackInRowAndColumn(x, y);
-                if (is != null)
+                if (!is.isEmpty())
                 {
                     ItemStackHolder ish = new ItemStackHolder(is);
                     int count = staticcounts.count(ish);
                     int slotNum = slotCounts.count(ish);
                     final int occurrences = count / slotNum;
                     itemcounts.remove(ish, occurrences);
-                    is.stackSize = occurrences;
+                    is.setCount(occurrences);
                 }
             }
         }
@@ -98,12 +89,12 @@ public enum SortingHandler implements Function<Action.ActionContext,Void>
             for (int y = 0; y < ic.getHeight(); y++)
             {
                 ItemStack is = ic.getStackInRowAndColumn(x, y);
-                if (is != null)
+                if (!is.isEmpty())
                 {
                     ItemStackHolder ish = new ItemStackHolder(is);
                     if (itemcounts.count(ish) > 0)
                     {
-                        is.stackSize+=itemcounts.setCount(ish,0);
+                        is.grow(itemcounts.setCount(ish,0));
                     }
                 }
             }
@@ -113,7 +104,7 @@ public enum SortingHandler implements Function<Action.ActionContext,Void>
             context.player.openContainer.getSlot(slot).onSlotChanged();
         }
     }
-    private void compactInventory(Action.ActionContext context, Multiset<ItemStackHolder> itemcounts)
+    private void compactInventory(ContainerContext context, Multiset<ItemStackHolder> itemcounts)
     {
         final UnmodifiableIterator<Multiset.Entry<ItemStackHolder>> itemsIterator;
         try
@@ -122,7 +113,7 @@ public enum SortingHandler implements Function<Action.ActionContext,Void>
         }
         catch (Exception e)
         {
-            FMLLog.log(Level.WARN, e, "Weird, the sorting didn't quite work!");
+            InventorySorter.INSTANCE.log.warn("Weird, the sorting didn't quite work!", e);
             return;
         }
         int slotLow = context.slotMapping.begin;
@@ -133,16 +124,16 @@ public enum SortingHandler implements Function<Action.ActionContext,Void>
         for (int i = slotLow; i < slotHigh; i++)
         {
             final Slot slot = context.player.openContainer.getSlot(i);
-            ItemStack target = null;
+            ItemStack target = ItemStack.EMPTY;
             if (itemCount > 0 && stackHolder != null)
             {
                 target = stackHolder.getElement().is.copy();
-                target.stackSize = itemCount > target.getMaxStackSize() ? target.getMaxStackSize() : itemCount;
+                target.setCount(itemCount > target.getMaxStackSize() ? target.getMaxStackSize() : itemCount);
             }
-            if ((target != null && !slot.isItemValid(target)) || !slot.canTakeStack(context.player)) continue;
-            slot.putStack(target);
-            itemCount-= (target != null ? target.stackSize : 0);
-            if (itemCount ==0)
+            if ((!target.isEmpty() && !slot.isItemValid(target)) || !slot.canTakeStack(context.player)) continue;
+            slot.putStack(target.isEmpty() ? ItemStack.EMPTY : target);
+            itemCount -= !target.isEmpty() ? target.getCount() : 0;
+            if (itemCount == 0)
             {
                 stackHolder = itemsIterator.hasNext() ? itemsIterator.next() : null;
                 itemCount = stackHolder != null ? stackHolder.getCount() : 0;

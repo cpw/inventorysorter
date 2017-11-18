@@ -18,8 +18,8 @@
 
 package cpw.mods.inventorysorter;
 
-import io.netty.buffer.ByteBuf;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import io.netty.buffer.*;
+import net.minecraftforge.fml.common.network.simpleimpl.*;
 
 /**
  * Created by cpw on 08/01/16.
