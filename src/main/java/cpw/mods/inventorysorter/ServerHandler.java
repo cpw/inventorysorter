@@ -34,7 +34,7 @@ public class ServerHandler implements IMessageHandler<Network.ActionMessage, IMe
         ctx.getServerHandler().player.getServer().addScheduledTask(() -> {
             InventorySorter.INSTANCE.log.log(Level.DEBUG, "Got action {} slot {}", message.action, message.slotIndex);
             Slot slot = ctx.getServerHandler().player.openContainer.getSlot(message.slotIndex);
-            message.action.execute(new ContainerContext(slot, ctx.getServerHandler().player));
+            message.action.execute( new ContainerContext(slot, ctx.getServerHandler().player));
         });
         return null;
     }

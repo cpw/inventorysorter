@@ -22,6 +22,7 @@ import com.google.common.base.*;
 import com.google.common.collect.*;
 import net.minecraft.inventory.*;
 import net.minecraft.item.*;
+import org.apache.logging.log4j.*;
 
 import javax.annotation.*;
 import java.util.function.*;
@@ -130,7 +131,16 @@ public enum SortingHandler implements Consumer<ContainerContext>
                 target = stackHolder.getElement().is.copy();
                 target.setCount(itemCount > target.getMaxStackSize() ? target.getMaxStackSize() : itemCount);
             }
-            if ((!target.isEmpty() && !slot.isItemValid(target)) || !slot.canTakeStack(context.player)) continue;
+            // The item isn't valid for this slot
+            if (!target.isEmpty() && !slot.isItemValid(target)) {
+                final ItemStack trg = target;
+                InventorySorter.INSTANCE.log.log(Level.DEBUG, "Item {} is not valid in slot {} of container {}", ()->trg, ()->slot.slotNumber, ()->context.player.openContainer.getClass().getName());
+                continue;
+            }
+            if (!slot.canTakeStack(context.player) && slot.getHasStack()) {
+                InventorySorter.INSTANCE.log.log(Level.DEBUG, "Slot {} of container {} disallows canTakeStack", ()->slot.slotNumber, ()->context.player.openContainer.getClass().getName());
+                continue;
+            }
             slot.putStack(target.isEmpty() ? ItemStack.EMPTY : target);
             itemCount -= !target.isEmpty() ? target.getCount() : 0;
             if (itemCount == 0)

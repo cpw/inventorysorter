@@ -23,8 +23,6 @@ class ContainerContext
     private boolean validSlot(Slot slot) {
         // Skip slots without an inventory - they're probably dummy slots
         return slot.inventory != null
-                // Not supporting the itemhandler stuff just yet
-                && !(slot instanceof SlotItemHandler)
                 // Skip blacklisted slots
                 && !InventorySorter.INSTANCE.slotblacklist.contains(slot.getClass().getName());
     }
