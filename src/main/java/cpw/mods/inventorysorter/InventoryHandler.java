@@ -26,6 +26,7 @@ import net.minecraft.inventory.*;
 import net.minecraft.item.*;
 import net.minecraft.tileentity.*;
 import net.minecraftforge.fml.relauncher.*;
+import net.minecraftforge.items.*;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -71,8 +72,8 @@ public enum InventoryHandler
 
     public ItemStack getItemStack(Slot slot)
     {
-        if (slot.getSlotIndex() < 0) return null;
-        return slot.inventory.getStackInSlot(slot.getSlotIndex());
+        if (slot.getSlotIndex() < 0) return ItemStack.EMPTY;
+        return slot.getStack();
     }
 
     public void moveItemToOtherInventory(ContainerContext ctx, ItemStack is, int targetLow, int targetHigh, boolean slotIsDestination)
