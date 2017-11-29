@@ -20,6 +20,7 @@ package cpw.mods.inventorysorter;
 
 import net.minecraft.inventory.*;
 import net.minecraftforge.common.config.*;
+import org.apache.logging.log4j.*;
 
 import java.util.function.*;
 
@@ -28,9 +29,9 @@ import java.util.function.*;
  */
 public enum Action
 {
-    SORT(SortingHandler.INSTANCE, "key.inventorysorter.sort", -98, "middleClickSorting", "Middle-click sorting module", true),
-    ONEITEMIN(ScrollWheelHandler.ONEITEMIN, "key.inventorysorter.itemin", -200, "mouseWheelMoving", "Mouse wheel movement module", true),
-    ONEITEMOUT(ScrollWheelHandler.ONEITEMOUT, "key.inventorysorter.itemout", -201, "mouseWheelMoving", "Mouse wheel movement module", true);
+    SORT(SortingHandler.INSTANCE, "key.inventorysorter.sort", -98, "middleClickSorting", "Middle-click sorting module", true, InventorySorter.INSTANCE::sortingModConflicts),
+    ONEITEMIN(ScrollWheelHandler.ONEITEMIN, "key.inventorysorter.itemin", -200, "mouseWheelMoving", "Mouse wheel movement module", true, InventorySorter.INSTANCE::wheelModConflicts),
+    ONEITEMOUT(ScrollWheelHandler.ONEITEMOUT, "key.inventorysorter.itemout", -201, "mouseWheelMoving", "Mouse wheel movement module", true, InventorySorter.INSTANCE::wheelModConflicts);
 
     private final Consumer<ContainerContext> worker;
     private final String keyBindingName;
@@ -40,8 +41,9 @@ public enum Action
     private Property property;
     private final String comment;
     private final boolean implemented;
+    private final Supplier<Boolean> checkForConflicts;
 
-    Action(Consumer<ContainerContext> worker, String keyBindingName, int defaultKeyCode, String configName, String comment, boolean implemented)
+    Action(Consumer<ContainerContext> worker, String keyBindingName, int defaultKeyCode, String configName, String comment, boolean implemented, Supplier<Boolean> checkForConflicts)
     {
         this.worker = worker;
         this.keyBindingName = keyBindingName;
@@ -49,6 +51,7 @@ public enum Action
         this.configName = configName;
         this.comment = comment;
         this.implemented = implemented;
+        this.checkForConflicts = checkForConflicts;
     }
 
     public String getKeyBindingName() {
@@ -58,13 +61,20 @@ public enum Action
     {
         for (Action a : values())
         {
-            a.property = config.get(Configuration.CATEGORY_CLIENT, a.configName, true);
+            boolean shouldBeActive = true;
+            if (!config.hasKey(Configuration.CATEGORY_CLIENT, a.configName)) {
+                shouldBeActive = !a.checkForConflicts.get();
+            }
+            a.property = config.get(Configuration.CATEGORY_CLIENT, a.configName, shouldBeActive);
             a.property.setRequiresMcRestart(false);
             a.property.setRequiresWorldRestart(false);
             a.property.setLanguageKey("inventorysorter.gui." + a.configName);
             a.property.setShowInGui(a.implemented);
             a.property.setComment(a.comment);
-            a.actionActive = a.property.getBoolean(true);
+            a.actionActive = a.property.getBoolean(shouldBeActive);
+            if (!shouldBeActive) {
+                InventorySorter.INSTANCE.log.log(Level.INFO, "Module {} disabled due to potential mod conflict, enable manually in configuration screen", a.name());
+            }
         }
     }
 

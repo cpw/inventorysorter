@@ -65,12 +65,20 @@ public class InventorySorter
         {
             evt.getModMetadata().version = "1.0";
         }
-        SideProxy.INSTANCE.loadConfiguration(evt.getSuggestedConfigurationFile());
         log = evt.getModLog();
+        SideProxy.INSTANCE.loadConfiguration(evt.getSuggestedConfigurationFile());
         channel = NetworkRegistry.INSTANCE.newSimpleChannel("inventorysorter");
         channel.registerMessage(ServerHandler.class, Network.ActionMessage.class, 1, Side.SERVER);
         SideProxy.INSTANCE.bindKeys();
         // blacklist codechickencore because
         FMLInterModComms.sendMessage("inventorysorter", "slotblacklist", "codechicken.core.inventory.SlotDummy");
+    }
+
+    boolean wheelModConflicts() {
+        return Loader.isModLoaded("mousetweaks");
+    }
+
+    boolean sortingModConflicts() {
+        return false;
     }
 }
