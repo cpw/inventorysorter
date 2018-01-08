@@ -107,6 +107,7 @@ public enum SortingHandler implements Consumer<ContainerContext>
     }
     private void compactInventory(ContainerContext context, Multiset<ItemStackHolder> itemcounts)
     {
+        InventorySorter.INSTANCE.log.debug("Container {} being sorted", context.player.openContainer.getClass().getName());
         final UnmodifiableIterator<Multiset.Entry<ItemStackHolder>> itemsIterator;
         try
         {

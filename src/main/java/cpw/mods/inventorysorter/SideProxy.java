@@ -18,14 +18,15 @@
 
 package cpw.mods.inventorysorter;
 
-import net.minecraft.client.settings.*;
 import net.minecraftforge.common.*;
 import net.minecraftforge.common.config.*;
 import net.minecraftforge.fml.client.event.*;
 import net.minecraftforge.fml.common.*;
+import net.minecraftforge.fml.common.event.*;
 import net.minecraftforge.fml.common.eventhandler.*;
 
 import java.io.*;
+import java.util.function.*;
 
 /**
  * Created by cpw on 08/01/16.
@@ -40,8 +41,27 @@ public class SideProxy
 
     }
 
+    protected void doConfiguration(File suggestedConfigurationFile, Consumer<Configuration> thingsToDo) {
+        final Configuration configuration = new Configuration(suggestedConfigurationFile);
+        thingsToDo.accept(configuration);
+        if (configuration.hasChanged())
+        {
+            configuration.save();
+        }
+
+    }
+
+    protected Consumer<Configuration> blackList() {
+        return c-> {
+            final Property containerBlacklist = c.get(Configuration.CATEGORY_GENERAL, "containerBlacklist", new String[0]);
+            for (String blacklisted : containerBlacklist.getStringList()) {
+                FMLInterModComms.sendMessage("inventorysorter", "slotblacklist", blacklisted);
+            }
+        };
+    }
     public void loadConfiguration(File suggestedConfigurationFile)
     {
+        doConfiguration(suggestedConfigurationFile, blackList());
     }
 
     public static class ClientProxy extends SideProxy
@@ -55,25 +75,16 @@ public class SideProxy
         @Override
         public void loadConfiguration(File suggestedConfigurationFile)
         {
-            final Configuration configuration = new Configuration(suggestedConfigurationFile);
-            Action.configure(configuration);
+            doConfiguration(suggestedConfigurationFile, blackList().andThen(Action::configure));
             MinecraftForge.EVENT_BUS.register(new Object() {
                 @SubscribeEvent
                 public void onConfigChanged(ConfigChangedEvent.OnConfigChangedEvent evt)
                 {
                     if (!"inventorysorter".equals(evt.getModID())) return;
-                    Action.configure(configuration);
-                    if (configuration.hasChanged())
-                    {
-                        configuration.save();
-                    }
+                    doConfiguration(suggestedConfigurationFile, Action::configure);
                 }
             });
 
-            if (configuration.hasChanged())
-            {
-                configuration.save();
-            }
         }
     }
 }
