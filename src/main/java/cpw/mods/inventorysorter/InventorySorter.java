@@ -147,7 +147,11 @@ public class InventorySorter
     }
 
     public static TextComponentTranslation showBlacklist() {
-        return new TextComponentTranslation("inventorysorter.commands.inventorysorter.list.message", InventorySorter.INSTANCE.containerblacklist.stream().map(s->"\"§a"+s+"§f\"").collect(Collectors.joining(",")));
+        if (InventorySorter.INSTANCE.containerblacklist.isEmpty()) {
+            return new TextComponentTranslation("inventorysorter.commands.inventorysorter.list.empty");
+        } else {
+            return new TextComponentTranslation("inventorysorter.commands.inventorysorter.list.message", InventorySorter.INSTANCE.containerblacklist.stream().map(s -> "\"§a" + s + "§f\"").collect(Collectors.joining(",")));
+        }
     }
 
     private static TextComponentString greenText(final String string) {

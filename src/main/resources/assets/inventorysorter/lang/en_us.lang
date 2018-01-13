@@ -18,4 +18,5 @@ inventorysorter.commands.inventorysorter.bladd.message=Added %1$s§f to containe
 inventorysorter.commands.inventorysorter.blremove.message=Removed %1$s§f from container blacklist
 inventorysorter.commands.inventorysorter.show.message=Last container sorted %1$s
 inventorysorter.commands.inventorysorter.list.message=Current blacklist %1$s
+inventorysorter.commands.inventorysorter.list.empty=The blacklist is empty
 inventorysorter.commands.inventorysorter.noop=§cThe last command had no effect (maybe try sorting a container?)

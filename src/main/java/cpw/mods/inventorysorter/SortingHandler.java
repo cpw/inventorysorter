@@ -133,6 +133,7 @@ public enum SortingHandler implements Consumer<ContainerContext>
         for (int i = slotLow; i < slotHigh; i++)
         {
             final Slot slot = context.player.openContainer.getSlot(i);
+            slot.putStack(ItemStack.EMPTY);
             ItemStack target = ItemStack.EMPTY;
             if (itemCount > 0 && stackHolder != null)
             {
