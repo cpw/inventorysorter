@@ -52,7 +52,7 @@ public enum SortingHandler implements Consumer<ContainerContext>
         return;
     }
 
-    private void distributeInventory(ContainerContext context, Multiset<ItemStackHolder> itemcounts)
+    private void distributeInventory(final ContainerContext context, final Multiset<ItemStackHolder> itemcounts)
     {
         InventoryCrafting ic = (InventoryCrafting)context.slot.inventory;
         Multiset<ItemStackHolder> slotCounts = TreeMultiset.create(new InventoryHandler.ItemStackComparator());
@@ -105,9 +105,16 @@ public enum SortingHandler implements Consumer<ContainerContext>
             context.player.openContainer.getSlot(slot).onSlotChanged();
         }
     }
-    private void compactInventory(ContainerContext context, Multiset<ItemStackHolder> itemcounts)
+    private void compactInventory(final ContainerContext context, final Multiset<ItemStackHolder> itemcounts)
     {
-        InventorySorter.INSTANCE.log.debug("Container {} being sorted", context.player.openContainer.getClass().getName());
+        final String containerClass = context.player.openContainer.getClass().getName();
+        InventorySorter.INSTANCE.containerTracking = containerClass;
+        if (InventorySorter.INSTANCE.containerblacklist.contains(containerClass)) {
+            InventorySorter.INSTANCE.debugLog("Container {} blacklisted", ()->new String[] {containerClass});
+            return;
+        }
+
+        InventorySorter.INSTANCE.debugLog("Container \"{}\" being sorted", ()->new String[] {containerClass});
         final UnmodifiableIterator<Multiset.Entry<ItemStackHolder>> itemsIterator;
         try
         {
@@ -135,11 +142,11 @@ public enum SortingHandler implements Consumer<ContainerContext>
             // The item isn't valid for this slot
             if (!target.isEmpty() && !slot.isItemValid(target)) {
                 final ItemStack trg = target;
-                InventorySorter.INSTANCE.log.log(Level.DEBUG, "Item {} is not valid in slot {} of container {}", ()->trg, ()->slot.slotNumber, ()->context.player.openContainer.getClass().getName());
+                InventorySorter.INSTANCE.log.log(Level.DEBUG, "Item {} is not valid in slot {} of container {}", ()->trg, ()->slot.slotNumber, ()-> containerClass);
                 continue;
             }
             if (!slot.canTakeStack(context.player) && slot.getHasStack()) {
-                InventorySorter.INSTANCE.log.log(Level.DEBUG, "Slot {} of container {} disallows canTakeStack", ()->slot.slotNumber, ()->context.player.openContainer.getClass().getName());
+                InventorySorter.INSTANCE.log.log(Level.DEBUG, "Slot {} of container {} disallows canTakeStack", ()->slot.slotNumber, ()-> containerClass);
                 continue;
             }
             slot.putStack(target.isEmpty() ? ItemStack.EMPTY : target);

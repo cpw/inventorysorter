@@ -26,6 +26,7 @@ public class GuiConfigFactory implements IModGuiFactory
         {
             List<IConfigElement> list = Lists.newArrayList();
 
+            list.add(new ConfigElement(SideProxy.INSTANCE.containerDebug));
             Set<String> actionNames = Sets.newHashSet();
             for (Action a : Action.values())
             {

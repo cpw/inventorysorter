@@ -18,7 +18,7 @@
 
 package cpw.mods.inventorysorter;
 
-import com.google.common.collect.*;
+import net.minecraft.util.text.*;
 import net.minecraftforge.fml.common.*;
 import net.minecraftforge.fml.common.event.*;
 import net.minecraftforge.fml.common.network.*;
@@ -27,6 +27,9 @@ import net.minecraftforge.fml.relauncher.*;
 import org.apache.logging.log4j.*;
 
 import java.util.*;
+import java.util.Optional;
+import java.util.function.*;
+import java.util.stream.*;
 
 /**
  * Created by cpw on 08/01/16.
@@ -39,16 +42,32 @@ public class InventorySorter
     public static InventorySorter INSTANCE;
 
     public Logger log;
+    boolean debugLog;
     public SimpleNetworkWrapper channel;
-    final List slotblacklist = Lists.newArrayList();
+    final Set<String> slotblacklist = new HashSet<>();
+    final Set<String> containerblacklist = new HashSet<>();
+    String containerTracking;
 
     @Mod.EventHandler
-    public void handleimc(FMLInterModComms.IMCEvent evt)
+    public void handleimc(final FMLInterModComms.IMCEvent evt)
     {
-        for (FMLInterModComms.IMCMessage msg : evt.getMessages())
-        {
-            if ("slotblacklist".equals(msg.key) && msg.isStringMessage()) {
-                slotblacklist.add(msg.getStringValue());
+        handleimcmessages(Optional.ofNullable(evt.getMessages()));
+    }
+
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private void handleimcmessages(final Optional<List<FMLInterModComms.IMCMessage>> messages) {
+        messages.ifPresent(m->m.forEach(this::handleimcmessage));
+    }
+
+    private void handleimcmessage(final FMLInterModComms.IMCMessage msg) {
+        if ("slotblacklist".equals(msg.key) && msg.isStringMessage()) {
+            if (slotblacklist.add(msg.getStringValue())) {
+                debugLog("SlotBlacklist added {}", ()->new String[] {msg.getStringValue()});
+            }
+        }
+        if ("containerblacklist".equals(msg.key) && msg.isStringMessage()) {
+            if (containerblacklist.add(msg.getStringValue())) {
+                debugLog("ContainerBlacklist added {}", () -> new String[]{msg.getStringValue()});
             }
         }
     }
@@ -74,11 +93,66 @@ public class InventorySorter
         FMLInterModComms.sendMessage("inventorysorter", "slotblacklist", "codechicken.core.inventory.SlotDummy");
     }
 
+    @Mod.EventHandler
+    public void onserverstarting(FMLServerStartingEvent evt) {
+        evt.registerServerCommand(new InventorySorterCommand());
+    }
     boolean wheelModConflicts() {
         return Loader.isModLoaded("mousetweaks");
     }
 
     boolean sortingModConflicts() {
         return false;
+    }
+
+    public final void debugLog(String message, Supplier<String[]> args) {
+        if (debugLog) {
+            log.error(message, (Object[]) args.get());
+        }
+    }
+
+    String modifyBlackList(Function<Set<String>, Boolean> modifier) {
+        if (containerTracking != null) {
+            if (modifier.apply(containerblacklist)) {
+                SideProxy.INSTANCE.updateConfiguration(containerblacklist);
+            }
+            return containerTracking;
+        }
+        return null;
+    }
+
+    public static TextComponentTranslation blackListAdd() {
+        final String blacklist = InventorySorter.INSTANCE.modifyBlackList(sa-> sa.add(InventorySorter.INSTANCE.containerTracking));
+        if (blacklist != null) {
+            return new TextComponentTranslation("inventorysorter.commands.inventorysorter.bladd.message", greenText(blacklist));
+        } else {
+            return InventorySorterCommand.NOOP_COMMAND;
+        }
+    }
+
+    public static TextComponentTranslation blackListRemove() {
+        final String blacklist = InventorySorter.INSTANCE.modifyBlackList(sa-> sa.remove(InventorySorter.INSTANCE.containerTracking));
+        if (blacklist != null) {
+            return new TextComponentTranslation("inventorysorter.commands.inventorysorter.blremove.message", greenText(blacklist));
+        } else {
+            return InventorySorterCommand.NOOP_COMMAND;
+        }
+    }
+
+    public static TextComponentTranslation showLast() {
+        if (InventorySorter.INSTANCE.containerTracking != null) {
+           return new TextComponentTranslation("inventorysorter.commands.inventorysorter.show.message", greenText(InventorySorter.INSTANCE.containerTracking));
+        }
+        return InventorySorterCommand.NOOP_COMMAND;
+    }
+
+    public static TextComponentTranslation showBlacklist() {
+        return new TextComponentTranslation("inventorysorter.commands.inventorysorter.list.message", InventorySorter.INSTANCE.containerblacklist.stream().map(s->"\"§a"+s+"§f\"").collect(Collectors.joining(",")));
+    }
+
+    private static TextComponentString greenText(final String string) {
+        final TextComponentString tcs = new TextComponentString(string);
+        tcs.getStyle().setColor(TextFormatting.GREEN);
+        return tcs;
     }
 }

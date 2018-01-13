@@ -26,6 +26,7 @@ import net.minecraftforge.fml.common.event.*;
 import net.minecraftforge.fml.common.eventhandler.*;
 
 import java.io.*;
+import java.util.*;
 import java.util.function.*;
 
 /**
@@ -35,6 +36,9 @@ public class SideProxy
 {
     @SidedProxy(clientSide = "cpw.mods.inventorysorter.SideProxy$ClientProxy", serverSide = "cpw.mods.inventorysorter.SideProxy")
     static SideProxy INSTANCE;
+    Property containerDebug;
+    Property containerBlacklist;
+    private Configuration configuration;
 
     public void bindKeys()
     {
@@ -42,7 +46,8 @@ public class SideProxy
     }
 
     protected void doConfiguration(File suggestedConfigurationFile, Consumer<Configuration> thingsToDo) {
-        final Configuration configuration = new Configuration(suggestedConfigurationFile);
+        if (configuration == null)
+            configuration = new Configuration(suggestedConfigurationFile);
         thingsToDo.accept(configuration);
         if (configuration.hasChanged())
         {
@@ -53,15 +58,25 @@ public class SideProxy
 
     protected Consumer<Configuration> blackList() {
         return c-> {
-            final Property containerBlacklist = c.get(Configuration.CATEGORY_GENERAL, "containerBlacklist", new String[0]);
+            containerBlacklist = c.get(Configuration.CATEGORY_GENERAL, "containerBlacklist", new String[0]);
             for (String blacklisted : containerBlacklist.getStringList()) {
-                FMLInterModComms.sendMessage("inventorysorter", "slotblacklist", blacklisted);
+                FMLInterModComms.sendMessage("inventorysorter", "containerblacklist", blacklisted);
             }
+            containerDebug = c.get(Configuration.CATEGORY_GENERAL, "containerDebug", false);
+            containerDebug.setLanguageKey("inventorysorter.gui.containerDebug");
+            containerDebug.setRequiresMcRestart(false);
+            containerDebug.setRequiresWorldRestart(false);
+            InventorySorter.INSTANCE.debugLog = containerDebug.getBoolean(false);
         };
     }
     public void loadConfiguration(File suggestedConfigurationFile)
     {
         doConfiguration(suggestedConfigurationFile, blackList());
+    }
+
+    public void updateConfiguration(final Set<String> cbl) {
+        containerBlacklist.set(cbl.toArray(new String[cbl.size()]));
+        configuration.save();
     }
 
     public static class ClientProxy extends SideProxy
@@ -81,7 +96,7 @@ public class SideProxy
                 public void onConfigChanged(ConfigChangedEvent.OnConfigChangedEvent evt)
                 {
                     if (!"inventorysorter".equals(evt.getModID())) return;
-                    doConfiguration(suggestedConfigurationFile, Action::configure);
+                    doConfiguration(suggestedConfigurationFile, blackList().andThen(Action::configure));
                 }
             });
 
