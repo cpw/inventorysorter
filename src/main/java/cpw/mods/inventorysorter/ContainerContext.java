@@ -3,7 +3,6 @@ package cpw.mods.inventorysorter;
 import com.google.common.collect.*;
 import net.minecraft.entity.player.*;
 import net.minecraft.inventory.*;
-import net.minecraftforge.items.*;
 import org.apache.logging.log4j.*;
 
 import java.util.*;
@@ -20,9 +19,9 @@ class ContainerContext
     static final IInventory PLAYER_MAIN = new InventoryBasic("Dummy Main", false, 0);
     static final IInventory PLAYER_OFFHAND = new InventoryBasic("Dummy Offhand", false, 0);
 
-    private boolean validSlot(Slot slot) {
+    static boolean validSlot(Slot slot) {
         // Skip slots without an inventory - they're probably dummy slots
-        return slot.inventory != null
+        return slot != null && slot.inventory != null
                 // Skip blacklisted slots
                 && !InventorySorter.INSTANCE.slotblacklist.contains(slot.getClass().getName());
     }
@@ -33,7 +32,7 @@ class ContainerContext
         this.player = playerEntity;
         Map<IInventory, InventoryHandler.InventoryMapping> mapping = new HashMap<>();
         final Container openContainer = playerEntity.openContainer;
-        openContainer.inventorySlots.stream().filter(this::validSlot).forEach(sl->
+        openContainer.inventorySlots.stream().filter(ContainerContext::validSlot).forEach(sl->
         {
             final InventoryHandler.InventoryMapping inventoryMapping = mapping.computeIfAbsent(sl.inventory, k -> new InventoryHandler.InventoryMapping(sl.inventory, openContainer, sl.inventory, sl.getClass()));
             inventoryMapping.addSlot(sl);

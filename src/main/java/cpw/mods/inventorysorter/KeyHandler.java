@@ -74,14 +74,17 @@ public class KeyHandler
         if (!(gui instanceof GuiContainer && !(gui instanceof GuiContainerCreative))) {
             return;
         }
+        final GuiContainer guiContainer = (GuiContainer) gui;
+        Slot slot = guiContainer.getSlotUnderMouse();
+        if (!ContainerContext.validSlot(slot)) {
+            InventorySorter.INSTANCE.log.log(Level.DEBUG, "Skipping action handling for blacklisted slot");
+            return;
+        }
         Action triggered = actionSupplier.get();
         if (triggered == null) return;
 
         if (triggered.isActive())
         {
-            final GuiContainer guiContainer = (GuiContainer) gui;
-            Slot slot = guiContainer.getSlotUnderMouse();
-            if (slot == null) return;
             if (guiContainer.inventorySlots != null && guiContainer.inventorySlots.inventorySlots != null && guiContainer.inventorySlots.inventorySlots.contains(slot))
             {
                 InventorySorter.INSTANCE.log.log(Level.DEBUG, "Sending action {} slot {}", triggered, slot.slotNumber);
