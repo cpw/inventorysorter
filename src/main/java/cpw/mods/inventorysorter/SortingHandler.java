@@ -133,6 +133,10 @@ public enum SortingHandler implements Consumer<ContainerContext>
         for (int i = slotLow; i < slotHigh; i++)
         {
             final Slot slot = context.player.openContainer.getSlot(i);
+            if (!slot.canTakeStack(context.player) && slot.getHasStack()) {
+                InventorySorter.INSTANCE.log.log(Level.DEBUG, "Slot {} of container {} disallows canTakeStack", ()->slot.slotNumber, ()-> containerClass);
+                continue;
+            }
             slot.putStack(ItemStack.EMPTY);
             ItemStack target = ItemStack.EMPTY;
             if (itemCount > 0 && stackHolder != null)
@@ -144,10 +148,6 @@ public enum SortingHandler implements Consumer<ContainerContext>
             if (!target.isEmpty() && !slot.isItemValid(target)) {
                 final ItemStack trg = target;
                 InventorySorter.INSTANCE.log.log(Level.DEBUG, "Item {} is not valid in slot {} of container {}", ()->trg, ()->slot.slotNumber, ()-> containerClass);
-                continue;
-            }
-            if (!slot.canTakeStack(context.player) && slot.getHasStack()) {
-                InventorySorter.INSTANCE.log.log(Level.DEBUG, "Slot {} of container {} disallows canTakeStack", ()->slot.slotNumber, ()-> containerClass);
                 continue;
             }
             slot.putStack(target.isEmpty() ? ItemStack.EMPTY : target);
