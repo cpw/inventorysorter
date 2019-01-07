@@ -19,14 +19,19 @@
 package cpw.mods.inventorysorter;
 
 import io.netty.buffer.*;
-import net.minecraftforge.fml.common.network.simpleimpl.*;
+import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.network.NetworkRegistry;
+import net.minecraftforge.fml.network.simple.*;
+
+import java.util.Objects;
 
 /**
  * Created by cpw on 08/01/16.
  */
 public final class Network
 {
-    public static class ActionMessage implements IMessage
+    private static ResourceLocation invsorter = new ResourceLocation("inventorysorter","net");
+    public static class ActionMessage
     {
         public Action action;
         public int slotIndex;
@@ -42,17 +47,31 @@ public final class Network
             this.slotIndex = slotIndex;
         }
 
-        @Override
-        public void fromBytes(ByteBuf buf)
+        public static ActionMessage fromBytes(ByteBuf buf)
         {
-            this.action = Action.values()[buf.readByte()];
-            this.slotIndex = buf.readInt();
+            return new ActionMessage(Action.values()[buf.readByte()],buf.readInt());
         }
-        @Override
+
         public void toBytes(ByteBuf buf)
         {
             buf.writeByte(action.ordinal());
             buf.writeInt(slotIndex);
         }
+    }
+
+
+    static SimpleChannel channel;
+    static {
+        channel = NetworkRegistry.ChannelBuilder.named(invsorter).
+                clientAcceptedVersions(s -> Objects.equals(s, "1")).
+                serverAcceptedVersions(s -> Objects.equals(s, "1")).
+                networkProtocolVersion(() -> "1").
+                simpleChannel();
+
+        channel.messageBuilder(ActionMessage.class, 1).
+                decoder(ActionMessage::fromBytes).
+                encoder(ActionMessage::toBytes).
+                consumer(ServerHandler::onMessage).
+                add();
     }
 }

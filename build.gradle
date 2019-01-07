@@ -1,14 +1,14 @@
-// For those who want the bleeding edge
 buildscript {
     repositories {
         jcenter()
+        mavenCentral()
         maven {
             name = "forge"
             url = "http://files.minecraftforge.net/maven"
         }
     }
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
     }
 }
 plugins {
@@ -16,17 +16,14 @@ plugins {
     id "se.bjurr.gitchangelog.git-changelog-gradle-plugin" version "1.48"
 }
 
-apply plugin: 'net.minecraftforge.gradle.forge'
-apply plugin: 'maven'
-apply plugin: 'eclipse'
-apply plugin: 'idea'
-
+apply plugin: 'net.minecraftforge.gradle'
 
 repositories {
     flatDir {
         name "fileRepo"
         dirs "repo"
     }
+    mavenLocal()
 }
 
 def versionInfo = getGitVersion()
@@ -35,18 +32,40 @@ group= "cpw.mods" // http://maven.apache.org/guides/mini/guide-naming-convention
 archivesBaseName = "inventorysorter"
 
 minecraft {
-    version = "1.12.2-14.23.1.2555"
-    runDir = "run"
-    
-    // the mappings can be changed at any time, and must be in the following format.
-    // snapshot_YYYYMMDD   snapshot are built nightly.
-    // stable_#            stables are built at the discretion of the MCP team.
-    // Use non-default mappings at your own risk. they may not allways work.
-    // simply re-run your setup task after changing the mappings to update your workspace.
-    mappings = "snapshot_20171115"
-    // makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
+    mappings channel: 'snapshot', version: '20180921-1.13'
+    runConfig {
+        name= "Minecraft Client"
+        main= "net.minecraftforge.userdev.UserdevLauncher"
+        ideaModuleName = "${project.name}_main"
+        workingDirectory = project.file("run").canonicalPath
+        environment "target", "fmluserdevclient"
+        environment "assetDirectory", downloadAssets.output.absolutePath
+        environment "FORGE_VERSION", "24.0.59-1.13-pre"
+        environment "FORGE_GROUP", "net.minecraftforge.test"
+        environment "MCP_VERSION", "20180921-1.13"
+        environment "MC_VERSION", "1.13"
+        environment "MOD_CLASSES", "${sourceSets.main.output.resourcesDir}${File.pathSeparator}${sourceSets.main.output.classesDirs.join(File.pathSeparator)}"
+    }
+
+    runConfig {
+        name= "Minecraft Server"
+        main= "net.minecraftforge.userdev.UserdevLauncher"
+        ideaModuleName = "${project.name}_main"
+        workingDirectory = project.file("run").canonicalPath
+        environment "target", "fmldevserver"
+        environment "assetDirectory", downloadAssets.output.absolutePath
+    }
 }
 
+
+dependencies {
+    // Specify the version of Minecraft to use, If this is any group other then 'net.minecraft' it is assumed
+    // that the dep is a ForgeGradle 'patcher' dependency. And it's patches will be applied.
+//    runtimeOnly 'net.minecraftforge.test:forge:1.13-24.0.53-1.13-pre:launcher'
+    minecraft 'net.minecraftforge.test:userdev:1.13-24.0.59-1.13-pre'
+    compile 'net.minecraftforge.test:forge:1.13-24.0.59-1.13-pre:launcher'
+}
+/*
 task makeChangelog(type: se.bjurr.gitchangelog.plugin.gradle.GitChangelogTask) {
     file = file("CHANGELOG.html")
     untaggedName = "Current release ${project.version}"
@@ -82,9 +101,11 @@ afterEvaluate {
     tasks.curseforge240633.dependsOn.remove(jar)
     tasks.curseforge240633.dependsOn.add(makeChangelog)
 }
+*/
 
 processResources
 {
+/*
     // this will ensure that this task is redone when the versions change.
     inputs.property "version", project.version
     inputs.property "mcversion", project.minecraft.version
@@ -109,69 +130,70 @@ processResources
         properties['inventorysorter.build.mcversion'] = project.minecraft.version
         properties.store(propsFile.newWriter(), null)
     }
+*/
 }
 
 jar {
-    appendix = project.minecraft.version
+    appendix = "1.13"
 }
 
 uploadArchives {
-    repositories.mavenDeployer {
-        dependsOn 'build'
-
-        if (project.hasProperty('forgeMavenPassword'))
-        {
-            repository(url: "http://files.minecraftforge.net/maven/manage/upload") {
-                authentication(userName: project.getProperty('forgeMavenUser'), password: project.getProperty('forgeMavenPassword')) // the elvis operator. look it up.
-            }
-        }
-        else
-        {
-            // local repo folder. Might wanna juset use  gradle install   if you wanans end it to maven-local
-            repository(url: 'file://localhost/' + project.file('repo').getAbsolutePath())
-        }
-        // This is just the pom data for the maven repo
-        pom {
-            groupId = project.group
-            // Force the maven upload to use the <mcversion>-<version> syntax preferred at files
-            version = "${project.minecraft.version}-${project.version}"
-            artifactId = project.archivesBaseName
-            //noinspection GroovyAssignabilityCheck
-            project {
-                name project.archivesBaseName
-                packaging 'jar'
-                description 'inventorysorter'
-                url 'https://github.com/cpw/inventorysorter'
-
-                scm {
-                    url 'https://github.com/cpw/inventorysorter'
-                    connection 'scm:git:git://github.com/cpw/inventorysorter.git'
-                    developerConnection 'scm:git:git@github.com:cpw/inventorysorter.git'
-                }
-
-                issueManagement {
-                    system 'github'
-                    url 'https://github.com/cpw/inventorysorter/issues'
-                }
-
-                licenses {
-                    license {
-                        name 'GNU Public License (GPL), Version 3.0'
-                        url 'http://www.gnu.org/licenses/gpl-3.0.txt'
-                        distribution 'repo'
-                    }
-                }
-
-                developers {
-                    developer {
-                        id 'cpw'
-                        name 'cpw'
-                        roles { role 'developer' }
-                    }
-                }
-            }
-        }
-    }
+//    repositories.mavenDeployer {
+//        dependsOn 'build'
+//
+//        if (project.hasProperty('forgeMavenPassword'))
+//        {
+//            repository(url: "http://files.minecraftforge.net/maven/manage/upload") {
+//                authentication(userName: project.getProperty('forgeMavenUser'), password: project.getProperty('forgeMavenPassword')) // the elvis operator. look it up.
+//            }
+//        }
+//        else
+//        {
+//            // local repo folder. Might wanna juset use  gradle install   if you wanans end it to maven-local
+//            repository(url: 'file://localhost/' + project.file('repo').getAbsolutePath())
+//        }
+//        // This is just the pom data for the maven repo
+//        pom {
+//            groupId = project.group
+//            // Force the maven upload to use the <mcversion>-<version> syntax preferred at files
+//            version = "${project.minecraft.version}-${project.version}"
+//            artifactId = project.archivesBaseName
+//            //noinspection GroovyAssignabilityCheck
+//            project {
+//                name project.archivesBaseName
+//                packaging 'jar'
+//                description 'inventorysorter'
+//                url 'https://github.com/cpw/inventorysorter'
+//
+//                scm {
+//                    url 'https://github.com/cpw/inventorysorter'
+//                    connection 'scm:git:git://github.com/cpw/inventorysorter.git'
+//                    developerConnection 'scm:git:git@github.com:cpw/inventorysorter.git'
+//                }
+//
+//                issueManagement {
+//                    system 'github'
+//                    url 'https://github.com/cpw/inventorysorter/issues'
+//                }
+//
+//                licenses {
+//                    license {
+//                        name 'GNU Public License (GPL), Version 3.0'
+//                        url 'http://www.gnu.org/licenses/gpl-3.0.txt'
+//                        distribution 'repo'
+//                    }
+//                }
+//
+//                developers {
+//                    developer {
+//                        id 'cpw'
+//                        name 'cpw'
+//                        roles { role 'developer' }
+//                    }
+//                }
+//            }
+//        }
+//    }
 }
 
 // This is a special task for pulling the version information from git and the environment (for BUILD_NUMBER)

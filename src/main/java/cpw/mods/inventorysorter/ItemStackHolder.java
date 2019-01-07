@@ -35,7 +35,7 @@ public class ItemStackHolder
     @Override
     public int hashCode()
     {
-        return is.getItem().hashCode() * 31 + (is.getMetadata() * 31 * 31 ) + (is.hasTagCompound() ? is.getTagCompound().hashCode() : 0);
+        return is.getItem().hashCode() * 31 + (is.hasTag() ? is.getTag().hashCode() : 0);
     }
 
     @Override
@@ -43,6 +43,6 @@ public class ItemStackHolder
     {
         if (!(obj instanceof ItemStackHolder)) return false;
         ItemStackHolder ish = (ItemStackHolder)obj;
-        return is.getItem() == ish.is.getItem() && is.getMetadata() == ish.is.getMetadata() && ItemStack.areItemStackTagsEqual(is, ish.is);
+        return is.getItem() == ish.is.getItem() && ItemStack.areItemStackTagsEqual(is, ish.is);
     }
 }

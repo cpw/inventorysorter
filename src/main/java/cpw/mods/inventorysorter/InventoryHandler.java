@@ -25,8 +25,6 @@ import net.minecraft.entity.player.*;
 import net.minecraft.inventory.*;
 import net.minecraft.item.*;
 import net.minecraft.tileentity.*;
-import net.minecraftforge.fml.relauncher.*;
-import net.minecraftforge.items.*;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -41,16 +39,18 @@ public enum InventoryHandler
 
     private Method getMergeStackMethod()
     {
-        try
-        {
-            Method m = ReflectionHelper.findMethod(Container.class, "mergeItemStack", "func_"+"75135_a", ItemStack.class, int.class, int.class, boolean.class);
-            m.setAccessible(true);
-            return m;
+        Method m;
+        try {
+            m = Container.class.getDeclaredMethod("func_"+"75135_a", ItemStack.class, int.class, int.class, boolean.class);
+        } catch (NoSuchMethodException e) {
+            try {
+            m = Container.class.getDeclaredMethod("mergeItemStack", ItemStack.class, int.class, int.class, boolean.class);
+            } catch (NoSuchMethodException e2) {
+                return null;
+            }
         }
-        catch (Exception e)
-        {
-            return null;
-        }
+        m.setAccessible(true);
+        return m;
     }
 
     public boolean mergeStack(Container container, ItemStack stack, int low, int high, boolean rev)
@@ -165,8 +165,6 @@ public enum InventoryHandler
             if (o1.is == o2.is) return 0;
             if (o1.is.getItem() != o2.is.getItem())
                 return String.valueOf(o1.is.getItem().getRegistryName()).compareTo(String.valueOf(o2.is.getItem().getRegistryName()));
-            if (o1.is.getMetadata() != o2.is.getMetadata())
-                return Ints.compare(o1.is.getMetadata(), o2.is.getMetadata());
             if (ItemStack.areItemStackTagsEqual(o1.is, o2.is))
                 return 0;
             return Ints.compare(System.identityHashCode(o1.is), System.identityHashCode(o2.is));

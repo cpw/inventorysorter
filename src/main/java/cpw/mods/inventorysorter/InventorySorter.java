@@ -19,15 +19,16 @@
 package cpw.mods.inventorysorter;
 
 import net.minecraft.util.text.*;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.fml.InterModComms;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.*;
 import net.minecraftforge.fml.common.event.*;
-import net.minecraftforge.fml.common.network.*;
-import net.minecraftforge.fml.common.network.simpleimpl.*;
-import net.minecraftforge.fml.relauncher.*;
+import net.minecraftforge.fml.javafmlmod.FMLModLoadingContext;
 import org.apache.logging.log4j.*;
 
 import java.util.*;
-import java.util.Optional;
 import java.util.function.*;
 import java.util.stream.*;
 
@@ -35,70 +36,64 @@ import java.util.stream.*;
  * Created by cpw on 08/01/16.
  */
 
-@Mod(modid="inventorysorter",name="Inventory Sorter", guiFactory = "cpw.mods.inventorysorter.GuiConfigFactory")
+@Mod("inventorysorter")
 public class InventorySorter
 {
-    @Mod.Instance("inventorysorter")
     public static InventorySorter INSTANCE;
 
-    public Logger log;
+    static SideProxy SIDEPROXY;
+
+    static final Logger LOGGER = LogManager.getLogger();
     boolean debugLog;
-    public SimpleNetworkWrapper channel;
     final Set<String> slotblacklist = new HashSet<>();
     final Set<String> containerblacklist = new HashSet<>();
     String containerTracking;
 
-    @Mod.EventHandler
-    public void handleimc(final FMLInterModComms.IMCEvent evt)
+
+    public InventorySorter() {
+        INSTANCE = this;
+        SIDEPROXY = DistExecutor.runForDist(()->()->new SideProxy.ClientProxy(), ()->()->new SideProxy());
+        FMLModLoadingContext.get().getModEventBus().addListener(this::preinit);
+        FMLModLoadingContext.get().getModEventBus().addListener(this::handleimc);
+    }
+
+    public void handleimc(final FMLPostInitializationEvent evt)
     {
-        handleimcmessages(Optional.ofNullable(evt.getMessages()));
+        final Stream<InterModComms.IMCMessage> imc = InterModComms.getMessages("inventorysorter");
+        imc.forEach(this::handleimcmessage);
+
     }
 
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    private void handleimcmessages(final Optional<List<FMLInterModComms.IMCMessage>> messages) {
-        messages.ifPresent(m->m.forEach(this::handleimcmessage));
-    }
-
-    private void handleimcmessage(final FMLInterModComms.IMCMessage msg) {
-        if ("slotblacklist".equals(msg.key) && msg.isStringMessage()) {
-            if (slotblacklist.add(msg.getStringValue())) {
-                debugLog("SlotBlacklist added {}", ()->new String[] {msg.getStringValue()});
+    private void handleimcmessage(final InterModComms.IMCMessage msg) {
+        if ("slotblacklist".equals(msg.getMethod())) {
+            final String slotBlacklistTarget = msg.<String>getMessageSupplier().get();
+            if (slotblacklist.add(slotBlacklistTarget)) {
+                debugLog("SlotBlacklist added {}", ()->new String[] {slotBlacklistTarget});
             }
         }
-        if ("containerblacklist".equals(msg.key) && msg.isStringMessage()) {
-            if (containerblacklist.add(msg.getStringValue())) {
-                debugLog("ContainerBlacklist added {}", () -> new String[]{msg.getStringValue()});
+
+        if ("containerblacklist".equals(msg.getMethod())) {
+            final String slotContainerTarget = msg.<String>getMessageSupplier().get();
+            if (containerblacklist.add(slotContainerTarget)) {
+                debugLog("ContainerBlacklist added {}", () -> new String[]{slotContainerTarget});
             }
         }
     }
 
-    @Mod.EventHandler
-    public void preinit(FMLPreInitializationEvent evt)
+    void preinit(FMLPreInitializationEvent evt)
     {
-        final Properties versionProperties = evt.getVersionProperties();
-        if (versionProperties != null)
-        {
-            evt.getModMetadata().version = versionProperties.getProperty("inventorysorter.version");
-        }
-        else
-        {
-            evt.getModMetadata().version = "1.0";
-        }
-        log = evt.getModLog();
-        SideProxy.INSTANCE.loadConfiguration(evt.getSuggestedConfigurationFile());
-        channel = NetworkRegistry.INSTANCE.newSimpleChannel("inventorysorter");
-        channel.registerMessage(ServerHandler.class, Network.ActionMessage.class, 1, Side.SERVER);
-        SideProxy.INSTANCE.bindKeys();
+//        SideProxy.INSTANCE.loadConfiguration(evt.getSuggestedConfigurationFile());
+        SIDEPROXY.bindKeys();
         // blacklist codechickencore because
-        FMLInterModComms.sendMessage("inventorysorter", "slotblacklist", "codechicken.core.inventory.SlotDummy");
+        InterModComms.sendTo("inventorysorter", "slotblacklist", ()->"codechicken.core.inventory.SlotDummy");
     }
 
-    @Mod.EventHandler
+    @SubscribeEvent
     public void onserverstarting(FMLServerStartingEvent evt) {
-        evt.registerServerCommand(new InventorySorterCommand());
+//        evt.registerServerCommand(new InventorySorterCommand());
     }
     boolean wheelModConflicts() {
-        return Loader.isModLoaded("mousetweaks");
+        return ModList.get().isLoaded("mousetweaks");
     }
 
     boolean sortingModConflicts() {
@@ -107,20 +102,21 @@ public class InventorySorter
 
     public final void debugLog(String message, Supplier<String[]> args) {
         if (debugLog) {
-            log.error(message, (Object[]) args.get());
+            LOGGER.error(message, (Object[]) args.get());
         }
     }
 
     String modifyBlackList(Function<Set<String>, Boolean> modifier) {
         if (containerTracking != null) {
             if (modifier.apply(containerblacklist)) {
-                SideProxy.INSTANCE.updateConfiguration(containerblacklist);
+                SIDEPROXY.updateConfiguration(containerblacklist);
             }
             return containerTracking;
         }
         return null;
     }
 
+/*
     public static TextComponentTranslation blackListAdd() {
         final String blacklist = InventorySorter.INSTANCE.modifyBlackList(sa-> sa.add(InventorySorter.INSTANCE.containerTracking));
         if (blacklist != null) {
@@ -145,6 +141,7 @@ public class InventorySorter
         }
         return InventorySorterCommand.NOOP_COMMAND;
     }
+*/
 
     public static TextComponentTranslation showBlacklist() {
         if (InventorySorter.INSTANCE.containerblacklist.isEmpty()) {

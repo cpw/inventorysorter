@@ -3,6 +3,7 @@ package cpw.mods.inventorysorter;
 import com.google.common.collect.*;
 import net.minecraft.entity.player.*;
 import net.minecraft.inventory.*;
+import net.minecraft.util.text.TextComponentString;
 import org.apache.logging.log4j.*;
 
 import java.util.*;
@@ -15,9 +16,9 @@ class ContainerContext
     final ImmutableBiMap<IInventory, InventoryHandler.InventoryMapping> mapping;
     private InventoryHandler.InventoryMapping slotTarget;
 
-    static final IInventory PLAYER_HOTBAR = new InventoryBasic("Dummy Hotbar", false, 0);
-    static final IInventory PLAYER_MAIN = new InventoryBasic("Dummy Main", false, 0);
-    static final IInventory PLAYER_OFFHAND = new InventoryBasic("Dummy Offhand", false, 0);
+    static final IInventory PLAYER_HOTBAR = new InventoryBasic(new TextComponentString("Dummy Hotbar"), 0);
+    static final IInventory PLAYER_MAIN = new InventoryBasic(new TextComponentString("Dummy Main"),0);
+    static final IInventory PLAYER_OFFHAND = new InventoryBasic(new TextComponentString("Dummy Offhand"), 0);
 
     static boolean validSlot(Slot slot) {
         // Skip slots without an inventory - they're probably dummy slots
@@ -96,7 +97,7 @@ class ContainerContext
         }
         this.slotMapping = slotTarget;
         this.mapping = ImmutableBiMap.copyOf(mapping);
-        InventorySorter.INSTANCE.log.log(Level.DEBUG, "Slot mapping {}", ()->this.mapping);
-        InventorySorter.INSTANCE.log.log(Level.DEBUG, "Action slot {}", ()->this.slotMapping);
+        InventorySorter.LOGGER.log(Level.DEBUG, "Slot mapping {}", ()->this.mapping);
+        InventorySorter.LOGGER.log(Level.DEBUG, "Action slot {}", ()->this.slotMapping);
     }
 }

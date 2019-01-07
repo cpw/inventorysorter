@@ -14,8 +14,9 @@ import java.util.*;
  * Created by cpw on 29/05/16.
  */
 @SuppressWarnings("unused")
-public class GuiConfigFactory implements IModGuiFactory
+public class GuiConfigFactory //implements IModGuiFactory
 {
+/*
     public static class ConfigGui extends GuiConfig {
         public ConfigGui(GuiScreen parent)
         {
@@ -60,4 +61,5 @@ public class GuiConfigFactory implements IModGuiFactory
     {
         return null;
     }
+*/
 }

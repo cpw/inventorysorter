@@ -19,23 +19,22 @@
 package cpw.mods.inventorysorter;
 
 import net.minecraft.inventory.*;
-import net.minecraft.server.*;
-import net.minecraftforge.fml.common.network.simpleimpl.*;
+import net.minecraftforge.fml.network.NetworkEvent;
 import org.apache.logging.log4j.*;
+
+import java.util.function.Supplier;
 
 /**
  * Created by cpw on 08/01/16.
  */
-public class ServerHandler implements IMessageHandler<Network.ActionMessage, IMessage>
+public class ServerHandler
 {
-    @Override
-    public IMessage onMessage(Network.ActionMessage message, MessageContext ctx)
+    static void onMessage(Network.ActionMessage message, Supplier<NetworkEvent.Context> ctx)
     {
-        ctx.getServerHandler().player.getServer().addScheduledTask(() -> {
-            InventorySorter.INSTANCE.log.log(Level.DEBUG, "Got action {} slot {}", message.action, message.slotIndex);
-            Slot slot = ctx.getServerHandler().player.openContainer.getSlot(message.slotIndex);
-            message.action.execute( new ContainerContext(slot, ctx.getServerHandler().player));
+        ctx.get().enqueueWork(() -> {
+            InventorySorter.LOGGER.log(Level.DEBUG, "Got action {} slot {}", message.action, message.slotIndex);
+            Slot slot = ctx.get().getSender().openContainer.getSlot(message.slotIndex);
+            message.action.execute( new ContainerContext(slot, ctx.get().getSender()));
         });
-        return null;
     }
 }

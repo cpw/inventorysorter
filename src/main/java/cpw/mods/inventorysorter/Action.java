@@ -73,7 +73,7 @@ public enum Action
             a.property.setComment(a.comment);
             a.actionActive = a.property.getBoolean(shouldBeActive);
             if (!shouldBeActive) {
-                InventorySorter.INSTANCE.log.log(Level.INFO, "Module {} disabled due to potential mod conflict, enable manually in configuration screen", a.name());
+                InventorySorter.LOGGER.log(Level.INFO, "Module {} disabled due to potential mod conflict, enable manually in configuration screen", a.name());
             }
         }
     }
@@ -95,7 +95,7 @@ public enum Action
 
     public boolean isActive()
     {
-        return actionActive;
+        return true;
     }
 
     public String getConfigName()

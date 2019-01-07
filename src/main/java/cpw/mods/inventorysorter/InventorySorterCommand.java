@@ -10,6 +10,7 @@ import java.util.*;
 import java.util.function.*;
 import java.util.stream.*;
 
+/*
 public class InventorySorterCommand extends CommandBase {
 
     public static final TextComponentTranslation NOOP_COMMAND = new TextComponentTranslation("inventorysorter.commands.inventorysorter.noop");
@@ -65,3 +66,4 @@ public class InventorySorterCommand extends CommandBase {
         sender.sendMessage(NOOP_COMMAND);
     }
 }
+*/

@@ -20,10 +20,7 @@ package cpw.mods.inventorysorter;
 
 import net.minecraftforge.common.*;
 import net.minecraftforge.common.config.*;
-import net.minecraftforge.fml.client.event.*;
-import net.minecraftforge.fml.common.*;
-import net.minecraftforge.fml.common.event.*;
-import net.minecraftforge.fml.common.eventhandler.*;
+import net.minecraftforge.fml.InterModComms;
 
 import java.io.*;
 import java.util.*;
@@ -34,8 +31,6 @@ import java.util.function.*;
  */
 public class SideProxy
 {
-    @SidedProxy(clientSide = "cpw.mods.inventorysorter.SideProxy$ClientProxy", serverSide = "cpw.mods.inventorysorter.SideProxy")
-    static SideProxy INSTANCE;
     Property containerDebug;
     Property containerBlacklist;
     private Configuration configuration;
@@ -60,7 +55,7 @@ public class SideProxy
         return c-> {
             containerBlacklist = c.get(Configuration.CATEGORY_GENERAL, "containerBlacklist", new String[0]);
             for (String blacklisted : containerBlacklist.getStringList()) {
-                FMLInterModComms.sendMessage("inventorysorter", "containerblacklist", blacklisted);
+                InterModComms.sendTo("inventorysorter", "containerblacklist", ()->blacklisted);
             }
             containerDebug = c.get(Configuration.CATEGORY_GENERAL, "containerDebug", false);
             containerDebug.setLanguageKey("inventorysorter.gui.containerDebug");
@@ -81,16 +76,19 @@ public class SideProxy
 
     public static class ClientProxy extends SideProxy
     {
+        private KeyHandler keyHandler;
+
         @Override
         public void bindKeys()
         {
-            MinecraftForge.EVENT_BUS.register(new KeyHandler());
+            keyHandler = new KeyHandler();
         }
 
         @Override
         public void loadConfiguration(File suggestedConfigurationFile)
         {
             doConfiguration(suggestedConfigurationFile, blackList().andThen(Action::configure));
+/*
             MinecraftForge.EVENT_BUS.register(new Object() {
                 @SubscribeEvent
                 public void onConfigChanged(ConfigChangedEvent.OnConfigChangedEvent evt)
@@ -99,6 +97,7 @@ public class SideProxy
                     doConfiguration(suggestedConfigurationFile, blackList().andThen(Action::configure));
                 }
             });
+*/
 
         }
     }
