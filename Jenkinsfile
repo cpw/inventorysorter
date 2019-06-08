@@ -37,8 +37,6 @@ pipeline {
                 sh './gradlew ${GRADLE_ARGS} publish -PcpwMavenUser=${CPW_MAVEN_USR} -PcpwMavenPassword=${CPW_MAVEN_PSW}'
                 sh 'curl --user ${FORGE_MAVEN} http://files.minecraftforge.net/maven/manage/promote/latest/cpw.mods.inventorysorter/${BUILD_NUMBER}'
             }
-            post {
-            }
         }
     }
     post {
