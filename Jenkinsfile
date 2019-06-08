@@ -42,8 +42,6 @@ pipeline {
     post {
         always {
             archiveArtifacts artifacts: 'build/libs/**/*.jar', fingerprint: true
-            junit 'build/test-results/*/*.xml'
-            jacoco sourcePattern: '**/src/*/java'
         }
         success {
             sh './gradlew ${GRADLE_ARGS} curseforge -Pcurseforge_projectid=240633 -Pcurseforge_apikey=${CPW_CURSEFORGEAPI}'
