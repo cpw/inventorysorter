@@ -13,8 +13,11 @@ buildscript {
     }
 }
 plugins {
-    id "com.matthewprenger.cursegradle" version "1.0.9"
-    id "se.bjurr.gitchangelog.git-changelog-gradle-plugin" version "1.48"
+    id 'com.matthewprenger.cursegradle' version '1.3.0'
+    id 'se.bjurr.gitchangelog.git-changelog-gradle-plugin' version '1.61'
+    id 'org.ajoberstar.reckon' version '0.11.0'
+    id 'org.ajoberstar.grgit' version '3.1.1'
+    id 'com.github.ben-manes.versions' version '0.21.0'
 }
 
 apply plugin: 'net.minecraftforge.gradle'
@@ -22,15 +25,18 @@ apply plugin: 'maven-publish'
 
 repositories {
     flatDir {
-        name "fileRepo"
-        dirs "repo"
+        name 'fileRepo'
+        dirs 'repo'
     }
 }
 
-def versionInfo = getGitVersion()
-version = "${versionInfo['inventorysorter.version']}"
-group= "cpw.mods" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = "inventorysorter"
+group= 'cpw.mods'
+archivesBaseName = 'inventorysorter'
+
+reckon {
+    scopeFromProp()
+    stageFromProp('milestone', 'final')
+}
 
 minecraft {
     mappings channel: 'snapshot', version: '20190608-1.14.2'
@@ -43,6 +49,7 @@ minecraft {
 
             // Recommended logging level for the console
             property 'forge.logging.console.level', 'info'
+            property 'forge.logging.noansi', 'false'
         }
 
         server {
@@ -53,6 +60,7 @@ minecraft {
 
             // Recommended logging level for the console
             property 'forge.logging.console.level', 'info'
+            property 'forge.logging.noansi', 'false'
         }
     }
 }
@@ -61,33 +69,34 @@ minecraft {
 dependencies {
     minecraft 'net.minecraftforge:forge:1.14.2-26.0.6'
 }
-/*
+
 task makeChangelog(type: se.bjurr.gitchangelog.plugin.gradle.GitChangelogTask) {
-    file = file("CHANGELOG.html")
-    untaggedName = "Current release ${project.version}"
+    file = file("CHANGELOG.md")
+    untaggedName = "Current release ${version}"
+    fromRef='13.0'
     templateContent = """
-<h1>Inventory sorter changelog history</h1>
-<h2>Version ${project.version} for minecraft ${project.minecraft.version}</h2>
-<ul>
+# Inventory sorter changelog history
+
+## Version ${version}
+
 {{#tags}}
-<li><h3>{{name}}</h3>
-<hr/>
-<ul>
-{{#commits}}
-<li>{{{message}}}</li>
-{{/commits}}
-</ul>
+* {{name}}
+  {{#commits}}
+  * {{{messageTitle}}}
+    {{#messageBodyItems}}
+     * {{.}}
+    {{/messageBodyItems}}
+  {{/commits}}
 {{/tags}}
-</ul>
-    """
+"""
 }
 
 curseforge {
     apiKey = project.hasProperty('curseforge_apikey') ? project.curseforge_apikey : '0'
     project {
         id = '240633'
-        changelog = file('CHANGELOG.html')
-        changelogType = 'html'
+        changelog = file('CHANGELOG.md')
+        changelogType = 'markdown'
         releaseType = 'beta'
     }
 }
@@ -97,46 +106,30 @@ afterEvaluate {
     tasks.curseforge240633.dependsOn.remove(jar)
     tasks.curseforge240633.dependsOn.add(makeChangelog)
 }
-*/
-
-processResources
-{
-}
 
 jar {
-    appendix = "1.14.2"
-}
-
-uploadArchives {
-}
-
-// This is a special task for pulling the version information from git and the environment (for BUILD_NUMBER)
-def getGitVersion()
-{
-    def out = [:]
-
-    // call git command.
-    def outStream = new ByteArrayOutputStream()
-    def result = exec {
-        executable = 'git'
-        args = [ 'describe', '--long', "--match=[^(jenkins)]*"]
-        standardOutput = outStream
+    manifest {
+        attributes([
+                "Specification-Title": "inventorysorter",
+                "Specification-Vendor": "cpwmods",
+                "Specification-Version": "1", // We are version 1 of ourselves
+                "Implementation-Title": project.name,
+                "Implementation-Version": "${version}",
+                "Implementation-Vendor" :"cpwmods",
+                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
     }
+}
 
-    def fullVersion = outStream.toString().trim()
-    def matcher = fullVersion =~ /(\d+).(\d+)-(\d+)-(.*)/
-
-    def maj = matcher[0][1]
-    def min = matcher[0][2]
-    def rev = matcher[0][3]
-    def bn = project.ext.properties.buildNumber ?: System.getenv("PROMOTED_NUMBER") ?: System.getenv("BUILD_NUMBER") ?: "1"
-
-    out['inventorysorter.build.major.number'] = maj.toString()
-    out['inventorysorter.build.minor.number'] = min.toString()
-    out['inventorysorter.build.revision.number'] = rev.toString()
-    out['inventorysorter.build.githash'] = matcher[0][4].toString()
-    out['inventorysorter.build.number' ] = bn.toString()
-    out['inventorysorter.version' ] = "${maj}.${min}.${rev}+${bn}".toString()
-
-    return out
+def reobfFile = file("$buildDir/reobfJar/output.jar")
+def reobfArtifact = artifacts.add('default', reobfFile) {
+    type 'jar'
+    builtBy 'reobfJar'
+}
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifact reobfArtifact
+        }
+    }
 }

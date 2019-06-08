@@ -99,7 +99,7 @@ public class KeyHandler
         {
             if (guiContainer.getContainer() != null && guiContainer.getContainer().inventorySlots != null && guiContainer.getContainer().inventorySlots.contains(slot))
             {
-                InventorySorter.LOGGER.fatal("Sending action {} slot {}", triggered, slot.slotNumber);
+                InventorySorter.LOGGER.debug("Sending action {} slot {}", triggered, slot.slotNumber);
                 Network.channel.sendToServer(triggered.message(slot));
                 evt.setCanceled(true);
             }
