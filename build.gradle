@@ -27,7 +27,13 @@ archivesBaseName = 'inventorysorter'
 
 reckon {
     scopeFromProp()
-    stageFromProp('milestone', 'final')
+    stageFromProp('ms', 'final')
+}
+
+ext {
+    MC_VERSION = '1.14.2'
+    FORGE_VERSION = '26.0.6'
+    DEP_VERSION = "${MC_VERSION}-${FORGE_VERSION}"
 }
 
 minecraft {
@@ -59,7 +65,7 @@ minecraft {
 
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.14.2-26.0.6'
+    minecraft "net.minecraftforge:forge:${DEP_VERSION}"
 }
 
 task makeChangelog(type: se.bjurr.gitchangelog.plugin.gradle.GitChangelogTask) {
@@ -69,15 +75,12 @@ task makeChangelog(type: se.bjurr.gitchangelog.plugin.gradle.GitChangelogTask) {
     templateContent = """
 # Inventory sorter changelog history
 
-## Version ${version}
+## Version ${version} for Minecraft ${MC_VERSION}
 
 {{#tags}}
 * {{name}}
   {{#commits}}
   * {{{messageTitle}}}
-    {{#messageBodyItems}}
-     * {{.}}
-    {{/messageBodyItems}}
   {{/commits}}
 {{/tags}}
 """
