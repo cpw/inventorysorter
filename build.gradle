@@ -2,10 +2,9 @@ buildscript {
     repositories {
         jcenter()
         mavenCentral()
-        mavenLocal()
         maven {
-            name = "forge"
-            url = "http://files.minecraftforge.net/maven"
+            name = 'forge'
+            url = 'http://files.minecraftforge.net/maven'
         }
     }
     dependencies {
@@ -22,13 +21,6 @@ plugins {
 
 apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'maven-publish'
-
-repositories {
-    flatDir {
-        name 'fileRepo'
-        dirs 'repo'
-    }
-}
 
 group= 'cpw.mods'
 archivesBaseName = 'inventorysorter'
@@ -71,9 +63,9 @@ dependencies {
 }
 
 task makeChangelog(type: se.bjurr.gitchangelog.plugin.gradle.GitChangelogTask) {
-    file = file("CHANGELOG.md")
+    file = file('CHANGELOG.md')
     untaggedName = "Current release ${version}"
-    fromRef='13.0'
+    fromRef = project.findProperty('changelogStart') ?: '13.0'
     templateContent = """
 # Inventory sorter changelog history
 
@@ -97,7 +89,7 @@ curseforge {
         id = '240633'
         changelog = file('CHANGELOG.md')
         changelogType = 'markdown'
-        releaseType = 'beta'
+        releaseType = project.findProperty('releaseType') ?: 'alpha'
     }
 }
 
@@ -110,12 +102,12 @@ afterEvaluate {
 jar {
     manifest {
         attributes([
-                "Specification-Title": "inventorysorter",
-                "Specification-Vendor": "cpwmods",
-                "Specification-Version": "1", // We are version 1 of ourselves
+                "Specification-Title": 'inventorysorter',
+                "Specification-Vendor": 'cpwmods',
+                "Specification-Version": '1', // We are version 1 of ourselves
                 "Implementation-Title": project.name,
                 "Implementation-Version": "${version}",
-                "Implementation-Vendor" :"cpwmods",
+                "Implementation-Vendor" :'cpwmods',
                 "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         ])
     }
@@ -126,6 +118,7 @@ def reobfArtifact = artifacts.add('default', reobfFile) {
     type 'jar'
     builtBy 'reobfJar'
 }
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
