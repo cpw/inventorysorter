@@ -21,6 +21,7 @@ package cpw.mods.inventorysorter;
 import com.google.common.base.*;
 import com.google.common.collect.*;
 import net.minecraft.inventory.*;
+import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.*;
 import org.apache.logging.log4j.*;
 
@@ -41,7 +42,7 @@ public enum SortingHandler implements Consumer<ContainerContext>
         if (context.slotMapping == null) return;
         final Multiset<ItemStackHolder> itemcounts = InventoryHandler.INSTANCE.getInventoryContent(context);
 
-        if (context.slot.inventory instanceof InventoryCrafting)
+        if (context.slot.inventory instanceof CraftingInventory)
         {
             distributeInventory(context, itemcounts);
         }

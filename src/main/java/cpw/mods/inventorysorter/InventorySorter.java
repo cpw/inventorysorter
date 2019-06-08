@@ -24,8 +24,10 @@ import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.InterModComms;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.*;
-import net.minecraftforge.fml.common.event.*;
-import net.minecraftforge.fml.javafmlmod.FMLModLoadingContext;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.*;
 
 import java.util.*;
@@ -41,8 +43,6 @@ public class InventorySorter
 {
     public static InventorySorter INSTANCE;
 
-    static SideProxy SIDEPROXY;
-
     static final Logger LOGGER = LogManager.getLogger();
     boolean debugLog;
     final Set<String> slotblacklist = new HashSet<>();
@@ -52,17 +52,21 @@ public class InventorySorter
 
     public InventorySorter() {
         INSTANCE = this;
-        SIDEPROXY = DistExecutor.runForDist(()->()->new SideProxy.ClientProxy(), ()->()->new SideProxy());
-        FMLModLoadingContext.get().getModEventBus().addListener(this::preinit);
-        FMLModLoadingContext.get().getModEventBus().addListener(this::handleimc);
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::preinit);
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::clientSetup);
+//        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::handleimc);
     }
 
-    public void handleimc(final FMLPostInitializationEvent evt)
-    {
-        final Stream<InterModComms.IMCMessage> imc = InterModComms.getMessages("inventorysorter");
-        imc.forEach(this::handleimcmessage);
 
+    void clientSetup(FMLClientSetupEvent evt) {
+        KeyHandler.init();
     }
+//    public void handleimc(final FMLPostInitializationEvent evt)
+//    {
+//        final Stream<InterModComms.IMCMessage> imc = InterModComms.getMessages("inventorysorter");
+//        imc.forEach(this::handleimcmessage);
+//
+//    }
 
     private void handleimcmessage(final InterModComms.IMCMessage msg) {
         if ("slotblacklist".equals(msg.getMethod())) {
@@ -80,10 +84,10 @@ public class InventorySorter
         }
     }
 
-    void preinit(FMLPreInitializationEvent evt)
+    void preinit(FMLCommonSetupEvent evt)
     {
 //        SideProxy.INSTANCE.loadConfiguration(evt.getSuggestedConfigurationFile());
-        SIDEPROXY.bindKeys();
+        Network.init();
         // blacklist codechickencore because
         InterModComms.sendTo("inventorysorter", "slotblacklist", ()->"codechicken.core.inventory.SlotDummy");
     }
@@ -104,16 +108,6 @@ public class InventorySorter
         if (debugLog) {
             LOGGER.error(message, (Object[]) args.get());
         }
-    }
-
-    String modifyBlackList(Function<Set<String>, Boolean> modifier) {
-        if (containerTracking != null) {
-            if (modifier.apply(containerblacklist)) {
-                SIDEPROXY.updateConfiguration(containerblacklist);
-            }
-            return containerTracking;
-        }
-        return null;
     }
 
 /*
@@ -143,16 +137,16 @@ public class InventorySorter
     }
 */
 
-    public static TextComponentTranslation showBlacklist() {
+    public static TranslationTextComponent showBlacklist() {
         if (InventorySorter.INSTANCE.containerblacklist.isEmpty()) {
-            return new TextComponentTranslation("inventorysorter.commands.inventorysorter.list.empty");
+            return new TranslationTextComponent("inventorysorter.commands.inventorysorter.list.empty");
         } else {
-            return new TextComponentTranslation("inventorysorter.commands.inventorysorter.list.message", InventorySorter.INSTANCE.containerblacklist.stream().map(s -> "\"§a" + s + "§f\"").collect(Collectors.joining(",")));
+            return new TranslationTextComponent("inventorysorter.commands.inventorysorter.list.message", InventorySorter.INSTANCE.containerblacklist.stream().map(s -> "\"§a" + s + "§f\"").collect(Collectors.joining(",")));
         }
     }
 
-    private static TextComponentString greenText(final String string) {
-        final TextComponentString tcs = new TextComponentString(string);
+    private static StringTextComponent greenText(final String string) {
+        final StringTextComponent tcs = new StringTextComponent(string);
         tcs.getStyle().setColor(TextFormatting.GREEN);
         return tcs;
     }

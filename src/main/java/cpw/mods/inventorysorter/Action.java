@@ -19,7 +19,7 @@
 package cpw.mods.inventorysorter;
 
 import net.minecraft.inventory.*;
-import net.minecraftforge.common.config.*;
+import net.minecraft.inventory.container.Slot;
 import org.apache.logging.log4j.*;
 
 import java.util.function.*;
@@ -38,7 +38,6 @@ public enum Action
     private final int defaultKeyCode;
     private final String configName;
     private boolean actionActive;
-    private Property property;
     private final String comment;
     private final boolean implemented;
     private final Supplier<Boolean> checkForConflicts;
@@ -57,26 +56,6 @@ public enum Action
     public String getKeyBindingName() {
         return keyBindingName;
     }
-    public static void configure(Configuration config)
-    {
-        for (Action a : values())
-        {
-            boolean shouldBeActive = true;
-            if (!config.hasKey(Configuration.CATEGORY_CLIENT, a.configName)) {
-                shouldBeActive = !a.checkForConflicts.get();
-            }
-            a.property = config.get(Configuration.CATEGORY_CLIENT, a.configName, shouldBeActive);
-            a.property.setRequiresMcRestart(false);
-            a.property.setRequiresWorldRestart(false);
-            a.property.setLanguageKey("inventorysorter.gui." + a.configName);
-            a.property.setShowInGui(a.implemented);
-            a.property.setComment(a.comment);
-            a.actionActive = a.property.getBoolean(shouldBeActive);
-            if (!shouldBeActive) {
-                InventorySorter.LOGGER.log(Level.INFO, "Module {} disabled due to potential mod conflict, enable manually in configuration screen", a.name());
-            }
-        }
-    }
 
     public Network.ActionMessage message(Slot slot)
     {
@@ -86,11 +65,6 @@ public enum Action
     public void execute(ContainerContext context)
     {
         this.worker.accept(context);
-    }
-
-    public Property getProperty()
-    {
-        return property;
     }
 
     public boolean isActive()

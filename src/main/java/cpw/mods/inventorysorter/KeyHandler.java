@@ -18,29 +18,23 @@
 
 package cpw.mods.inventorysorter;
 
-import net.minecraft.client.*;
-import net.minecraft.client.gui.*;
-import net.minecraft.client.gui.inventory.*;
-import net.minecraft.client.resources.*;
-import net.minecraft.client.settings.*;
-import net.minecraft.inventory.*;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.inventory.ContainerScreen;
+import net.minecraft.client.gui.screen.inventory.CreativeScreen;
+import net.minecraft.inventory.container.Slot;
 import net.minecraftforge.client.event.*;
-import net.minecraftforge.client.settings.*;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.*;
-import org.apache.commons.lang3.*;
 import org.apache.logging.log4j.*;
 
-import javax.annotation.*;
-import java.util.*;
 import java.util.function.*;
-import java.util.stream.*;
 
 /**
  * Created by cpw on 08/01/16.
  */
 public class KeyHandler
 {
+    private static KeyHandler keyHandler;
 //    private final Map<KeyBinding, Action> keyBindingMap;
 
     KeyHandler() {
@@ -59,6 +53,10 @@ public class KeyHandler
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, this::onKey);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, this::onMouse);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, this::onScroll);
+    }
+
+    static void init() {
+        keyHandler = new KeyHandler();
     }
 
     private void onKey(GuiScreenEvent.KeyboardKeyPressedEvent.Pre evt) {
@@ -84,11 +82,11 @@ public class KeyHandler
     }
 
     private <T extends GuiScreenEvent> void onInputEvent(T evt, Function<T,Action> actionSupplier) {
-        final GuiScreen gui = evt.getGui();
-        if (!(gui instanceof GuiContainer && !(gui instanceof GuiContainerCreative))) {
+        final Screen gui = evt.getGui();
+        if (!(gui instanceof ContainerScreen && !(gui instanceof CreativeScreen))) {
             return;
         }
-        final GuiContainer guiContainer = (GuiContainer) gui;
+        final ContainerScreen guiContainer = (ContainerScreen) gui;
         Slot slot = guiContainer.getSlotUnderMouse();
         if (!ContainerContext.validSlot(slot)) {
             InventorySorter.LOGGER.log(Level.DEBUG, "Skipping action handling for blacklisted slot");
@@ -99,9 +97,9 @@ public class KeyHandler
 
         if (triggered.isActive())
         {
-            if (guiContainer.inventorySlots != null && guiContainer.inventorySlots.inventorySlots != null && guiContainer.inventorySlots.inventorySlots.contains(slot))
+            if (guiContainer.getContainer() != null && guiContainer.getContainer().inventorySlots != null && guiContainer.getContainer().inventorySlots.contains(slot))
             {
-                InventorySorter.LOGGER.log(Level.DEBUG, "Sending action {} slot {}", triggered, slot.slotNumber);
+                InventorySorter.LOGGER.fatal("Sending action {} slot {}", triggered, slot.slotNumber);
                 Network.channel.sendToServer(triggered.message(slot));
                 evt.setCanceled(true);
             }

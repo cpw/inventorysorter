@@ -1,15 +1,5 @@
 package cpw.mods.inventorysorter;
 
-import com.google.common.collect.*;
-import net.minecraft.client.*;
-import net.minecraft.client.gui.*;
-import net.minecraft.client.resources.*;
-import net.minecraftforge.common.config.*;
-import net.minecraftforge.fml.client.*;
-import net.minecraftforge.fml.client.config.*;
-
-import java.util.*;
-
 /**
  * Created by cpw on 29/05/16.
  */

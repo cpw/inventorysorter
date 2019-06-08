@@ -19,6 +19,7 @@
 package cpw.mods.inventorysorter;
 
 import net.minecraft.inventory.*;
+import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.*;
 
 import javax.annotation.*;
@@ -84,7 +85,7 @@ public enum ScrollWheelHandler implements Consumer<ContainerContext>
         }
         else
         {
-            if (context.player.openContainer == context.player.inventoryContainer)
+            if (context.player.openContainer == context.player.container)
             {
                 if (InventoryHandler.preferredOrders.containsKey(context.slotMapping.inv)) {
                     mappingCandidates.addAll(InventoryHandler.preferredOrders.get(context.slotMapping.inv).stream().map(mapping::get).collect(Collectors.toList()));

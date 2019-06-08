@@ -19,6 +19,7 @@
 package cpw.mods.inventorysorter;
 
 import net.minecraft.inventory.*;
+import net.minecraft.inventory.container.Slot;
 import net.minecraftforge.fml.network.NetworkEvent;
 import org.apache.logging.log4j.*;
 

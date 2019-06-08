@@ -3,7 +3,8 @@ package cpw.mods.inventorysorter;
 import com.google.common.collect.*;
 import net.minecraft.entity.player.*;
 import net.minecraft.inventory.*;
-import net.minecraft.util.text.TextComponentString;
+import net.minecraft.inventory.container.Container;
+import net.minecraft.inventory.container.Slot;
 import org.apache.logging.log4j.*;
 
 import java.util.*;
@@ -12,13 +13,13 @@ class ContainerContext
 {
     final Slot slot;
     final InventoryHandler.InventoryMapping slotMapping;
-    final EntityPlayerMP player;
+    final ServerPlayerEntity player;
     final ImmutableBiMap<IInventory, InventoryHandler.InventoryMapping> mapping;
     private InventoryHandler.InventoryMapping slotTarget;
 
-    static final IInventory PLAYER_HOTBAR = new InventoryBasic(new TextComponentString("Dummy Hotbar"), 0);
-    static final IInventory PLAYER_MAIN = new InventoryBasic(new TextComponentString("Dummy Main"),0);
-    static final IInventory PLAYER_OFFHAND = new InventoryBasic(new TextComponentString("Dummy Offhand"), 0);
+    static final IInventory PLAYER_HOTBAR = new Inventory(0);
+    static final IInventory PLAYER_MAIN = new Inventory(0);
+    static final IInventory PLAYER_OFFHAND = new Inventory(0);
 
     static boolean validSlot(Slot slot) {
         // Skip slots without an inventory - they're probably dummy slots
@@ -27,7 +28,7 @@ class ContainerContext
                 && !InventorySorter.INSTANCE.slotblacklist.contains(slot.getClass().getName());
     }
 
-    public ContainerContext(Slot slot, EntityPlayerMP playerEntity)
+    public ContainerContext(Slot slot, ServerPlayerEntity playerEntity)
     {
         this.slot = slot;
         this.player = playerEntity;

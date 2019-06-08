@@ -31,6 +31,11 @@ import java.util.Objects;
 public final class Network
 {
     private static ResourceLocation invsorter = new ResourceLocation("inventorysorter","net");
+
+    public static void init() {
+
+    }
+
     public static class ActionMessage
     {
         public Action action;

@@ -2,6 +2,7 @@ buildscript {
     repositories {
         jcenter()
         mavenCentral()
+        mavenLocal()
         maven {
             name = "forge"
             url = "http://files.minecraftforge.net/maven"
@@ -17,13 +18,13 @@ plugins {
 }
 
 apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'maven-publish'
 
 repositories {
     flatDir {
         name "fileRepo"
         dirs "repo"
     }
-    mavenLocal()
 }
 
 def versionInfo = getGitVersion()
@@ -32,38 +33,33 @@ group= "cpw.mods" // http://maven.apache.org/guides/mini/guide-naming-convention
 archivesBaseName = "inventorysorter"
 
 minecraft {
-    mappings channel: 'snapshot', version: '20180921-1.13'
-    runConfig {
-        name= "Minecraft Client"
-        main= "net.minecraftforge.userdev.UserdevLauncher"
-        ideaModuleName = "${project.name}_main"
-        workingDirectory = project.file("run").canonicalPath
-        environment "target", "fmluserdevclient"
-        environment "assetDirectory", downloadAssets.output.absolutePath
-        environment "FORGE_VERSION", "24.0.59-1.13-pre"
-        environment "FORGE_GROUP", "net.minecraftforge.test"
-        environment "MCP_VERSION", "20180921-1.13"
-        environment "MC_VERSION", "1.13"
-        environment "MOD_CLASSES", "${sourceSets.main.output.resourcesDir}${File.pathSeparator}${sourceSets.main.output.classesDirs.join(File.pathSeparator)}"
-    }
+    mappings channel: 'snapshot', version: '20190608-1.14.2'
+    runs {
+        client {
+            workingDirectory project.file('run')
 
-    runConfig {
-        name= "Minecraft Server"
-        main= "net.minecraftforge.userdev.UserdevLauncher"
-        ideaModuleName = "${project.name}_main"
-        workingDirectory = project.file("run").canonicalPath
-        environment "target", "fmldevserver"
-        environment "assetDirectory", downloadAssets.output.absolutePath
+            // Recommended logging data for a userdev environment
+            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+
+            // Recommended logging level for the console
+            property 'forge.logging.console.level', 'info'
+        }
+
+        server {
+            workingDirectory project.file('run')
+
+            // Recommended logging data for a userdev environment
+            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+
+            // Recommended logging level for the console
+            property 'forge.logging.console.level', 'info'
+        }
     }
 }
 
 
 dependencies {
-    // Specify the version of Minecraft to use, If this is any group other then 'net.minecraft' it is assumed
-    // that the dep is a ForgeGradle 'patcher' dependency. And it's patches will be applied.
-//    runtimeOnly 'net.minecraftforge.test:forge:1.13-24.0.53-1.13-pre:launcher'
-    minecraft 'net.minecraftforge.test:userdev:1.13-24.0.59-1.13-pre'
-    compile 'net.minecraftforge.test:forge:1.13-24.0.59-1.13-pre:launcher'
+    minecraft 'net.minecraftforge:forge:1.14.2-26.0.6'
 }
 /*
 task makeChangelog(type: se.bjurr.gitchangelog.plugin.gradle.GitChangelogTask) {
@@ -105,95 +101,13 @@ afterEvaluate {
 
 processResources
 {
-/*
-    // this will ensure that this task is redone when the versions change.
-    inputs.property "version", project.version
-    inputs.property "mcversion", project.minecraft.version
-
-    // replace stuff in mcmod.info, nothing else
-    from(sourceSets.main.resources.srcDirs) {
-        include 'mcmod.info'
-                
-        // replace version and mcversion
-        expand 'version':project.version, 'mcversion':project.minecraft.version
-    }
-        
-    // copy everything else, thats not the mcmod.info
-    from(sourceSets.main.resources.srcDirs) {
-        exclude 'mcmod.info'
-    }
-
-    doLast {
-        def propsFile = new File(destinationDir, 'version.properties')
-        def properties = new Properties()
-        properties.putAll(versionInfo)
-        properties['inventorysorter.build.mcversion'] = project.minecraft.version
-        properties.store(propsFile.newWriter(), null)
-    }
-*/
 }
 
 jar {
-    appendix = "1.13"
+    appendix = "1.14.2"
 }
 
 uploadArchives {
-//    repositories.mavenDeployer {
-//        dependsOn 'build'
-//
-//        if (project.hasProperty('forgeMavenPassword'))
-//        {
-//            repository(url: "http://files.minecraftforge.net/maven/manage/upload") {
-//                authentication(userName: project.getProperty('forgeMavenUser'), password: project.getProperty('forgeMavenPassword')) // the elvis operator. look it up.
-//            }
-//        }
-//        else
-//        {
-//            // local repo folder. Might wanna juset use  gradle install   if you wanans end it to maven-local
-//            repository(url: 'file://localhost/' + project.file('repo').getAbsolutePath())
-//        }
-//        // This is just the pom data for the maven repo
-//        pom {
-//            groupId = project.group
-//            // Force the maven upload to use the <mcversion>-<version> syntax preferred at files
-//            version = "${project.minecraft.version}-${project.version}"
-//            artifactId = project.archivesBaseName
-//            //noinspection GroovyAssignabilityCheck
-//            project {
-//                name project.archivesBaseName
-//                packaging 'jar'
-//                description 'inventorysorter'
-//                url 'https://github.com/cpw/inventorysorter'
-//
-//                scm {
-//                    url 'https://github.com/cpw/inventorysorter'
-//                    connection 'scm:git:git://github.com/cpw/inventorysorter.git'
-//                    developerConnection 'scm:git:git@github.com:cpw/inventorysorter.git'
-//                }
-//
-//                issueManagement {
-//                    system 'github'
-//                    url 'https://github.com/cpw/inventorysorter/issues'
-//                }
-//
-//                licenses {
-//                    license {
-//                        name 'GNU Public License (GPL), Version 3.0'
-//                        url 'http://www.gnu.org/licenses/gpl-3.0.txt'
-//                        distribution 'repo'
-//                    }
-//                }
-//
-//                developers {
-//                    developer {
-//                        id 'cpw'
-//                        name 'cpw'
-//                        roles { role 'developer' }
-//                    }
-//                }
-//            }
-//        }
-//    }
 }
 
 // This is a special task for pulling the version information from git and the environment (for BUILD_NUMBER)

@@ -23,6 +23,8 @@ import com.google.common.collect.*;
 import com.google.common.primitives.*;
 import net.minecraft.entity.player.*;
 import net.minecraft.inventory.*;
+import net.minecraft.inventory.container.Container;
+import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.*;
 import net.minecraft.tileentity.*;
 
@@ -136,7 +138,7 @@ public enum InventoryHandler
     {
         int slotLow = context.slotMapping.begin;
         int slotHigh = context.slotMapping.end + 1;
-        SortedMultiset<ItemStackHolder> itemcounts = TreeMultiset.create(new InventoryHandler.ItemStackComparator());
+        SortedMultiset<ItemStackHolder> itemcounts = TreeMultiset.create(new ItemStackComparator());
         for (int i = slotLow; i < slotHigh; i++)
         {
             final Slot slot = context.player.openContainer.getSlot(i);
@@ -196,7 +198,7 @@ public enum InventoryHandler
         }
 
         void addSlot(final Slot sl) {
-            if (this.slotType != sl.getClass() && !(this.inv instanceof InventoryPlayer) && !(this.inv instanceof TileEntityFurnace) && !(this.inv instanceof TileEntityBrewingStand)) {
+            if (this.slotType != sl.getClass() && !(this.inv instanceof PlayerInventory) && !(this.inv instanceof FurnaceTileEntity) && !(this.inv instanceof BrewingStandTileEntity)) {
                 this.markForRemoval = true;
             }
             if (this.slotType != sl.getClass())
