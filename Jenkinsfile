@@ -37,14 +37,16 @@ pipeline {
                 sh './gradlew ${GRADLE_ARGS} publish -PcpwMavenUser=${CPW_MAVEN_USR} -PcpwMavenPassword=${CPW_MAVEN_PSW}'
                 sh 'curl --user ${CPW_MAVEN} http://files.minecraftforge.net/maven/manage/promote/latest/cpw.mods.inventorysorter/${BUILD_NUMBER}'
             }
+            post {
+                success {
+                    sh './gradlew ${GRADLE_ARGS} curseforge -Pcurseforge_projectid=240633 -Pcurseforge_apikey=${CPW_CURSEFORGEAPI} -PreleaseType=beta'
+                }
+            }
         }
     }
     post {
         always {
             archiveArtifacts artifacts: 'build/libs/**/*.jar', fingerprint: true
-        }
-        success {
-            sh './gradlew ${GRADLE_ARGS} curseforge -Pcurseforge_projectid=240633 -Pcurseforge_apikey=${CPW_CURSEFORGEAPI}'
         }
     }
 }

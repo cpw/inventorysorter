@@ -94,6 +94,11 @@ curseforge {
         changelogType = 'markdown'
         releaseType = project.findProperty('releaseType') ?: 'alpha'
     }
+    options {
+        javaVersionAutoDetect = true // defaults to true
+        javaIntegration = true // defaults to true
+        forgeGradleIntegration = true // defaults to true
+    }
 }
 
 afterEvaluate {
@@ -114,6 +119,7 @@ jar {
                 "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         ])
     }
+    appendix MC_VERSION
 }
 
 def reobfFile = file("$buildDir/reobfJar/output.jar")
