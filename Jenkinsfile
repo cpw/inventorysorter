@@ -7,6 +7,7 @@ pipeline {
     }
     environment {
         GRADLE_ARGS = '-Dorg.gradle.daemon.idletimeout=5000'
+        CPW_CURSEFORGEAPI = credentials('cpw-curseforge')
     }
 
     stages {
@@ -37,12 +38,6 @@ pipeline {
                 sh 'curl --user ${FORGE_MAVEN} http://files.minecraftforge.net/maven/manage/promote/latest/cpw.mods.inventorysorter/${BUILD_NUMBER}'
             }
             post {
-                environment {
-                    CPW_CURSEFORGEAPI = credentials('cpw-curseforge')
-                }
-                success {
-                    sh './gradlew ${GRADLE_ARGS} curseforge -Pcurseforge_projectid=240633 -Pcurseforge_apikey=${CPW_CURSEFORGEAPI}'
-                }
             }
         }
     }
@@ -51,6 +46,9 @@ pipeline {
             archiveArtifacts artifacts: 'build/libs/**/*.jar', fingerprint: true
             junit 'build/test-results/*/*.xml'
             jacoco sourcePattern: '**/src/*/java'
+        }
+        success {
+            sh './gradlew ${GRADLE_ARGS} curseforge -Pcurseforge_projectid=240633 -Pcurseforge_apikey=${CPW_CURSEFORGEAPI}'
         }
     }
 }

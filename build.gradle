@@ -125,4 +125,13 @@ publishing {
             artifact reobfArtifact
         }
     }
+    repositories {
+        maven {
+            credentials {
+                username project.properties.cpwMavenUser?:'spam'
+                password project.properties.cpwMavenPassword?:'bums'
+            }
+            url 'http://files.minecraftforge.net/maven/manage/upload'
+        }
+    }
 }
