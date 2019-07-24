@@ -21,13 +21,22 @@ package cpw.mods.inventorysorter;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.gui.screen.inventory.CreativeScreen;
+import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.client.util.InputMappings;
 import net.minecraft.inventory.container.Slot;
 import net.minecraftforge.client.event.*;
+import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.*;
+import net.minecraftforge.fml.client.registry.ClientRegistry;
 import org.apache.logging.log4j.*;
 
+import java.util.AbstractMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by cpw on 08/01/16.
@@ -35,21 +44,21 @@ import java.util.function.*;
 public class KeyHandler
 {
     private static KeyHandler keyHandler;
-//    private final Map<KeyBinding, Action> keyBindingMap;
+    private final Map<KeyBinding, Action> keyBindingMap;
 
     KeyHandler() {
-//        keyBindingMap = Stream.of(Action.values())
-//                .map(a -> new AbstractMap.SimpleEntry<>(a, new KeyBinding(a.getKeyBindingName(), KeyConflictContext.GUI, a.getDefaultKeyCode(), "keygroup.inventorysorter") {
-//                    @Override
-//                    @Nonnull
-//                    public String func_197978_k() {
-//                        if (getKey() == -200) return I18n.format("key.inventorysorter.mousewheelup");
-//                        else if (getKey() == -201) return I18n.format("key.inventorysorter.mousewheeldown");
-//                        else return super.func_197978_k();
-//                    }
-//                })).collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
-//
-//        Minecraft.getInstance().gameSettings.keyBindings = ArrayUtils.addAll(Minecraft.getInstance().gameSettings.keyBindings, keyBindingMap.keySet().toArray(new KeyBinding[0]));
+        // Custom input mapping for wheel up (-1)
+        InputMappings.Type.MOUSE.getOrMakeInput(99);
+        // Custom input mapping for wheel down (-1)
+        InputMappings.Type.MOUSE.getOrMakeInput(101);
+
+        keyBindingMap = Stream.of(Action.values())
+                .map(a -> new AbstractMap.SimpleEntry<>(a, new KeyBinding(a.getKeyBindingName(), KeyConflictContext.GUI,
+                        InputMappings.Type.MOUSE, a.getDefaultKeyCode(), "keygroup.inventorysorter")))
+                .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
+
+        keyBindingMap.keySet().forEach(ClientRegistry::registerKeyBinding);
+
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, this::onKey);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, this::onMouse);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, this::onScroll);
@@ -60,28 +69,32 @@ public class KeyHandler
     }
 
     private void onKey(GuiScreenEvent.KeyboardKeyPressedEvent.Pre evt) {
-        onInputEvent(evt, this::tryKeys);
+        onInputEvent(evt, this::keyEvaluate);
     }
 
     private void onMouse(GuiScreenEvent.MouseClickedEvent.Pre evt) {
-        onInputEvent(evt, this::tryMouseButtons);
+        onInputEvent(evt, this::mouseClickEvaluate);
     }
 
     private void onScroll(GuiScreenEvent.MouseScrollEvent.Post evt) {
-        onInputEvent(evt, this::tryMouseScroll);
+        onInputEvent(evt, this::mouseScrollEvaluate);
     }
 
-    private Action tryMouseScroll(GuiScreenEvent.MouseScrollEvent.Post evt) {
-        double dir = Math.signum(evt.getScrollDelta());
-        if (dir < 0.0) {
-            return Action.ONEITEMIN;
-        } else if (dir > 0.0) {
-            return Action.ONEITEMOUT;
-        }
-        return null;
+    private boolean keyEvaluate(final KeyBinding kb, final GuiScreenEvent.KeyboardKeyPressedEvent.Pre evt) {
+        return kb.matchesKey(evt.getKeyCode(), evt.getScanCode());
     }
 
-    private <T extends GuiScreenEvent> void onInputEvent(T evt, Function<T,Action> actionSupplier) {
+    private boolean mouseClickEvaluate(final KeyBinding kb, final GuiScreenEvent.MouseClickedEvent.Pre evt) {
+        return kb.matchesMouseKey(evt.getButton());
+    }
+
+    private boolean mouseScrollEvaluate(final KeyBinding kb, final GuiScreenEvent.MouseScrollEvent.Post evt) {
+        int dir = (int) Math.signum(evt.getScrollDelta());
+        int keycode = dir + 100;
+        return kb.matchesMouseKey(keycode);
+    }
+
+    private <T extends GuiScreenEvent> void onInputEvent(T evt, BiPredicate<KeyBinding, T> kbTest) {
         final Screen gui = evt.getGui();
         if (!(gui instanceof ContainerScreen && !(gui instanceof CreativeScreen))) {
             return;
@@ -92,43 +105,20 @@ public class KeyHandler
             InventorySorter.LOGGER.log(Level.DEBUG, "Skipping action handling for blacklisted slot");
             return;
         }
-        Action triggered = actionSupplier.apply(evt);
-        if (triggered == null) return;
+        final Optional<Action> action = keyBindingMap.entrySet().stream().filter(e -> kbTest.test(e.getKey(), evt)).
+                map(Map.Entry::getValue).findFirst();
+        if (!action.isPresent()) return;
 
-        if (triggered.isActive())
+        final Action triggeredAction = action.get();
+        if (triggeredAction.isActive())
         {
             if (guiContainer.getContainer() != null && guiContainer.getContainer().inventorySlots != null && guiContainer.getContainer().inventorySlots.contains(slot))
             {
-                InventorySorter.LOGGER.debug("Sending action {} slot {}", triggered, slot.slotNumber);
-                Network.channel.sendToServer(triggered.message(slot));
+                InventorySorter.LOGGER.debug("Sending action {} slot {}", triggeredAction, slot.slotNumber);
+                Network.channel.sendToServer(triggeredAction.message(slot));
                 evt.setCanceled(true);
             }
         }
 
-    }
-
-    private Action tryMouseButtons(GuiScreenEvent.MouseClickedEvent.Pre evt) {
-        if (evt.getButton() == 2) return Action.SORT;
-        return null;
-    }
-
-    private Action tryKeys(GuiScreenEvent.KeyboardKeyPressedEvent.Pre evt) {
-/*
-        // Not on key up
-        if (!Keyboard.getEventKeyState()) return null;
-        int key = Keyboard.getEventKey() == 0 ? Keyboard.getEventCharacter() + 256 : Keyboard.getEventKey();
-
-        Action triggered = null;
-        if (key != 0 && !Keyboard.isRepeatEvent()) {
-            for (Map.Entry<KeyBinding, Action> entry : keyBindingMap.entrySet()) {
-                if (entry.getKey().isActiveAndMatches(key)) {
-                    triggered = entry.getValue();
-                    break;
-                }
-            }
-        }
-        return triggered;
-*/
-        return null;
     }
 }
