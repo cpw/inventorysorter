@@ -18,16 +18,29 @@
 
 package cpw.mods.inventorysorter;
 
+import com.mojang.brigadier.context.CommandContext;
+import com.sun.java.accessibility.util.java.awt.TextComponentTranslator;
+import net.minecraft.command.CommandSource;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.*;
+import net.minecraftforge.common.ForgeConfigSpec;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.InterModComms;
 import net.minecraftforge.fml.ModList;
+import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.*;
+import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.GameData;
+import net.minecraftforge.registries.RegistryManager;
 import org.apache.logging.log4j.*;
 
 import java.util.*;
@@ -44,29 +57,33 @@ public class InventorySorter
     public static InventorySorter INSTANCE;
 
     static final Logger LOGGER = LogManager.getLogger();
+    ResourceLocation lastContainerType;
     boolean debugLog;
     final Set<String> slotblacklist = new HashSet<>();
-    final Set<String> containerblacklist = new HashSet<>();
-    String containerTracking;
+    final Set<ResourceLocation> containerblacklist = new HashSet<>();
 
 
     public InventorySorter() {
         INSTANCE = this;
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::preinit);
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::clientSetup);
-//        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::handleimc);
-    }
+        final IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
+        bus.addListener(this::preinit);
+        bus.addListener(this::clientSetup);
+        bus.addListener(this::handleimc);
+        bus.addListener(this::onConfigLoad);
+        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, Config.SPEC);
 
+        MinecraftForge.EVENT_BUS.addListener(this::onServerStarting);
+    }
 
     void clientSetup(FMLClientSetupEvent evt) {
         KeyHandler.init();
     }
-//    public void handleimc(final FMLPostInitializationEvent evt)
-//    {
-//        final Stream<InterModComms.IMCMessage> imc = InterModComms.getMessages("inventorysorter");
-//        imc.forEach(this::handleimcmessage);
-//
-//    }
+
+    public void handleimc(final InterModProcessEvent evt)
+    {
+        final Stream<InterModComms.IMCMessage> imc = InterModComms.getMessages("inventorysorter");
+        imc.forEach(this::handleimcmessage);
+    }
 
     private void handleimcmessage(final InterModComms.IMCMessage msg) {
         if ("slotblacklist".equals(msg.getMethod())) {
@@ -77,25 +94,34 @@ public class InventorySorter
         }
 
         if ("containerblacklist".equals(msg.getMethod())) {
-            final String slotContainerTarget = msg.<String>getMessageSupplier().get();
+            final ResourceLocation slotContainerTarget = msg.<ResourceLocation>getMessageSupplier().get();
             if (containerblacklist.add(slotContainerTarget)) {
-                debugLog("ContainerBlacklist added {}", () -> new String[]{slotContainerTarget});
+                debugLog("ContainerBlacklist added {}", () -> new String[] {slotContainerTarget.toString()});
             }
         }
+        updateConfig();
     }
 
-    void preinit(FMLCommonSetupEvent evt)
-    {
-//        SideProxy.INSTANCE.loadConfiguration(evt.getSuggestedConfigurationFile());
+    private void updateConfig() {
+        Config.CONFIG.containerBlacklist.set(containerblacklist.stream().map(Objects::toString).collect(Collectors.toList()));
+        Config.CONFIG.slotBlacklist.set(new ArrayList<>(slotblacklist));
+    }
+
+    void preinit(FMLCommonSetupEvent evt) {
         Network.init();
-        // blacklist codechickencore because
-        InterModComms.sendTo("inventorysorter", "slotblacklist", ()->"codechicken.core.inventory.SlotDummy");
     }
 
-    @SubscribeEvent
-    public void onserverstarting(FMLServerStartingEvent evt) {
-//        evt.registerServerCommand(new InventorySorterCommand());
+    public void onServerStarting(FMLServerStartingEvent evt) {
+        InventorySorterCommand.register(evt.getCommandDispatcher());
     }
+
+    void onConfigLoad(ModConfig.ModConfigEvent configEvent) {
+        this.slotblacklist.clear();
+        this.slotblacklist.addAll(Config.CONFIG.slotBlacklist.get());
+        this.containerblacklist.clear();
+        this.containerblacklist.addAll(Config.CONFIG.containerBlacklist.get().stream().map(ResourceLocation::new).collect(Collectors.toSet()));
+    }
+
     boolean wheelModConflicts() {
         return ModList.get().isLoaded("mousetweaks");
     }
@@ -110,44 +136,60 @@ public class InventorySorter
         }
     }
 
-/*
-    public static TextComponentTranslation blackListAdd() {
-        final String blacklist = InventorySorter.INSTANCE.modifyBlackList(sa-> sa.add(InventorySorter.INSTANCE.containerTracking));
-        if (blacklist != null) {
-            return new TextComponentTranslation("inventorysorter.commands.inventorysorter.bladd.message", greenText(blacklist));
-        } else {
-            return InventorySorterCommand.NOOP_COMMAND;
-        }
-    }
-
-    public static TextComponentTranslation blackListRemove() {
-        final String blacklist = InventorySorter.INSTANCE.modifyBlackList(sa-> sa.remove(InventorySorter.INSTANCE.containerTracking));
-        if (blacklist != null) {
-            return new TextComponentTranslation("inventorysorter.commands.inventorysorter.blremove.message", greenText(blacklist));
-        } else {
-            return InventorySorterCommand.NOOP_COMMAND;
-        }
-    }
-
-    public static TextComponentTranslation showLast() {
-        if (InventorySorter.INSTANCE.containerTracking != null) {
-           return new TextComponentTranslation("inventorysorter.commands.inventorysorter.show.message", greenText(InventorySorter.INSTANCE.containerTracking));
-        }
-        return InventorySorterCommand.NOOP_COMMAND;
-    }
-*/
-
-    public static TranslationTextComponent showBlacklist() {
-        if (InventorySorter.INSTANCE.containerblacklist.isEmpty()) {
-            return new TranslationTextComponent("inventorysorter.commands.inventorysorter.list.empty");
-        } else {
-            return new TranslationTextComponent("inventorysorter.commands.inventorysorter.list.message", InventorySorter.INSTANCE.containerblacklist.stream().map(s -> "\"§a" + s + "§f\"").collect(Collectors.joining(",")));
-        }
-    }
-
     private static StringTextComponent greenText(final String string) {
         final StringTextComponent tcs = new StringTextComponent(string);
         tcs.getStyle().setColor(TextFormatting.GREEN);
         return tcs;
+    }
+
+    public static int blackListAdd(final CommandContext<CommandSource> context) {
+        final ResourceLocation containerType = InventorySorterCommand.Arguments.CONTAINER.get(context);
+        if (ForgeRegistries.CONTAINERS.containsKey(containerType)) {
+            INSTANCE.containerblacklist.add(containerType);
+            INSTANCE.updateConfig();
+            context.getSource().sendFeedback(new TranslationTextComponent("inventorysorter.commands.inventorysorter.bladd.message", containerType), true);
+            return 1;
+        } else {
+            context.getSource().sendFeedback(new TranslationTextComponent("inventorysorter.commands.inventorysorter.badtype", containerType), true);
+            return 0;
+        }
+    }
+
+    public static int blackListRemove(final CommandContext<CommandSource> context) {
+        final ResourceLocation containerType = InventorySorterCommand.Arguments.BLACKLISTED.get(context);
+        if (ForgeRegistries.CONTAINERS.containsKey(containerType) && INSTANCE.containerblacklist.remove(containerType)) {
+            INSTANCE.updateConfig();
+            context.getSource().sendFeedback(new TranslationTextComponent("inventorysorter.commands.inventorysorter.blremove.message", containerType), true);
+            return 1;
+        } else {
+            context.getSource().sendFeedback(new TranslationTextComponent("inventorysorter.commands.inventorysorter.badtype", containerType), true);
+            return 0;
+        }
+    }
+
+    public static int showLast(final CommandContext<CommandSource> context) {
+        if (INSTANCE.lastContainerType != null) {
+            context.getSource().sendFeedback(new TranslationTextComponent("inventorysorter.commands.inventorysorter.showlast.message", INSTANCE.lastContainerType), true);
+        } else {
+            context.getSource().sendFeedback(new TranslationTextComponent("inventorysorter.commands.inventorysorter.showlast.nosort"), true);
+        }
+        return 0;
+    }
+
+    public static int showBlacklist(final CommandContext<CommandSource> context) {
+        if (INSTANCE.containerblacklist.isEmpty()) {
+            context.getSource().sendFeedback(new TranslationTextComponent("inventorysorter.commands.inventorysorter.showblacklist.empty"), true);
+        } else {
+            context.getSource().sendFeedback(new TranslationTextComponent("inventorysorter.commands.inventorysorter.showblacklist.message", listBlacklist().collect(Collectors.toList())), true);
+        }
+        return 0;
+    }
+
+    public static Stream<String> listContainers() {
+        return ForgeRegistries.CONTAINERS.getEntries().stream().map(e->e.getKey().toString());
+    }
+
+    static Stream<String> listBlacklist() {
+        return INSTANCE.containerblacklist.stream().map(Object::toString);
     }
 }

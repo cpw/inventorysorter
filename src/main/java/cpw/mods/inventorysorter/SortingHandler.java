@@ -23,6 +23,7 @@ import com.google.common.collect.*;
 import net.minecraft.inventory.*;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.*;
+import net.minecraft.util.ResourceLocation;
 import org.apache.logging.log4j.*;
 
 import javax.annotation.*;
@@ -110,14 +111,14 @@ public enum SortingHandler implements Consumer<ContainerContext>
     }
     private void compactInventory(final ContainerContext context, final Multiset<ItemStackHolder> itemcounts)
     {
-        final String containerClass = context.player.openContainer.getClass().getName();
-        InventorySorter.INSTANCE.containerTracking = containerClass;
+        final ResourceLocation containerClass = context.player.openContainer.getType().getRegistryName();
+        InventorySorter.INSTANCE.lastContainerType = containerClass;
         if (InventorySorter.INSTANCE.containerblacklist.contains(containerClass)) {
-            InventorySorter.INSTANCE.debugLog("Container {} blacklisted", ()->new String[] {containerClass});
+            InventorySorter.INSTANCE.debugLog("Container {} blacklisted", ()->new String[] {containerClass.toString()});
             return;
         }
 
-        InventorySorter.INSTANCE.debugLog("Container \"{}\" being sorted", ()->new String[] {containerClass});
+        InventorySorter.INSTANCE.debugLog("Container \"{}\" being sorted", ()->new String[] {containerClass.toString()});
         final UnmodifiableIterator<Multiset.Entry<ItemStackHolder>> itemsIterator;
         try
         {

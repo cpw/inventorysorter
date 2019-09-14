@@ -27,6 +27,7 @@ import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.*;
 import net.minecraft.tileentity.*;
+import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -41,16 +42,8 @@ public enum InventoryHandler
 
     private Method getMergeStackMethod()
     {
-        Method m;
-        try {
-            m = Container.class.getDeclaredMethod("func_"+"75135_a", ItemStack.class, int.class, int.class, boolean.class);
-        } catch (NoSuchMethodException e) {
-            try {
-            m = Container.class.getDeclaredMethod("mergeItemStack", ItemStack.class, int.class, int.class, boolean.class);
-            } catch (NoSuchMethodException e2) {
-                return null;
-            }
-        }
+
+        Method m = ObfuscationReflectionHelper.findMethod(Container.class, "func_"+"75135_a", ItemStack.class, int.class, int.class, boolean.class);
         m.setAccessible(true);
         return m;
     }
