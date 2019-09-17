@@ -38,26 +38,21 @@ public final class Network
 
     public static class ActionMessage
     {
-        public Action action;
-        public int slotIndex;
+        Action action;
+        int slotIndex;
 
-        public ActionMessage()
-        {
-
-        }
-
-        public ActionMessage(Action action, int slotIndex)
+        ActionMessage(Action action, int slotIndex)
         {
             this.action = action;
             this.slotIndex = slotIndex;
         }
 
-        public static ActionMessage fromBytes(ByteBuf buf)
+        static ActionMessage fromBytes(ByteBuf buf)
         {
             return new ActionMessage(Action.values()[buf.readByte()],buf.readInt());
         }
 
-        public void toBytes(ByteBuf buf)
+        void toBytes(ByteBuf buf)
         {
             buf.writeByte(action.ordinal());
             buf.writeInt(slotIndex);

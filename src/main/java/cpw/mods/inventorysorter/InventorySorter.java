@@ -19,19 +19,17 @@
 package cpw.mods.inventorysorter;
 
 import com.mojang.brigadier.context.CommandContext;
-import com.sun.java.accessibility.util.java.awt.TextComponentTranslator;
 import net.minecraft.command.CommandSource;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.*;
-import net.minecraftforge.common.ForgeConfigSpec;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.InterModComms;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.common.*;
+import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -39,13 +37,16 @@ import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.GameData;
-import net.minecraftforge.registries.RegistryManager;
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-import java.util.*;
-import java.util.function.*;
-import java.util.stream.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by cpw on 08/01/16.
@@ -75,11 +76,11 @@ public class InventorySorter
         MinecraftForge.EVENT_BUS.addListener(this::onServerStarting);
     }
 
-    void clientSetup(FMLClientSetupEvent evt) {
+    private void clientSetup(FMLClientSetupEvent evt) {
         KeyHandler.init();
     }
 
-    public void handleimc(final InterModProcessEvent evt)
+    private void handleimc(final InterModProcessEvent evt)
     {
         final Stream<InterModComms.IMCMessage> imc = InterModComms.getMessages("inventorysorter");
         imc.forEach(this::handleimcmessage);
@@ -107,11 +108,11 @@ public class InventorySorter
         Config.CONFIG.slotBlacklist.set(new ArrayList<>(slotblacklist));
     }
 
-    void preinit(FMLCommonSetupEvent evt) {
+    private void preinit(FMLCommonSetupEvent evt) {
         Network.init();
     }
 
-    public void onServerStarting(FMLServerStartingEvent evt) {
+    private void onServerStarting(FMLServerStartingEvent evt) {
         InventorySorterCommand.register(evt.getCommandDispatcher());
     }
 
@@ -130,7 +131,7 @@ public class InventorySorter
         return false;
     }
 
-    public final void debugLog(String message, Supplier<String[]> args) {
+    final void debugLog(String message, Supplier<String[]> args) {
         if (debugLog) {
             LOGGER.error(message, (Object[]) args.get());
         }
@@ -142,7 +143,7 @@ public class InventorySorter
         return tcs;
     }
 
-    public static int blackListAdd(final CommandContext<CommandSource> context) {
+    static int blackListAdd(final CommandContext<CommandSource> context) {
         final ResourceLocation containerType = InventorySorterCommand.Arguments.CONTAINER.get(context);
         if (ForgeRegistries.CONTAINERS.containsKey(containerType)) {
             INSTANCE.containerblacklist.add(containerType);
@@ -155,7 +156,7 @@ public class InventorySorter
         }
     }
 
-    public static int blackListRemove(final CommandContext<CommandSource> context) {
+    static int blackListRemove(final CommandContext<CommandSource> context) {
         final ResourceLocation containerType = InventorySorterCommand.Arguments.BLACKLISTED.get(context);
         if (ForgeRegistries.CONTAINERS.containsKey(containerType) && INSTANCE.containerblacklist.remove(containerType)) {
             INSTANCE.updateConfig();
@@ -167,7 +168,7 @@ public class InventorySorter
         }
     }
 
-    public static int showLast(final CommandContext<CommandSource> context) {
+    static int showLast(final CommandContext<CommandSource> context) {
         if (INSTANCE.lastContainerType != null) {
             context.getSource().sendFeedback(new TranslationTextComponent("inventorysorter.commands.inventorysorter.showlast.message", INSTANCE.lastContainerType), true);
         } else {
@@ -176,7 +177,7 @@ public class InventorySorter
         return 0;
     }
 
-    public static int showBlacklist(final CommandContext<CommandSource> context) {
+    static int showBlacklist(final CommandContext<CommandSource> context) {
         if (INSTANCE.containerblacklist.isEmpty()) {
             context.getSource().sendFeedback(new TranslationTextComponent("inventorysorter.commands.inventorysorter.showblacklist.empty"), true);
         } else {
@@ -185,7 +186,7 @@ public class InventorySorter
         return 0;
     }
 
-    public static Stream<String> listContainers() {
+    static Stream<String> listContainers() {
         return ForgeRegistries.CONTAINERS.getEntries().stream().map(e->e.getKey().toString());
     }
 

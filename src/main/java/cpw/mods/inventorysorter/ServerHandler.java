@@ -18,7 +18,7 @@
 
 package cpw.mods.inventorysorter;
 
-import net.minecraft.inventory.*;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.container.Slot;
 import net.minecraftforge.fml.network.NetworkEvent;
 import org.apache.logging.log4j.*;
@@ -30,12 +30,18 @@ import java.util.function.Supplier;
  */
 public class ServerHandler
 {
-    static void onMessage(Network.ActionMessage message, Supplier<NetworkEvent.Context> ctx)
+    static boolean onMessage(Network.ActionMessage message, Supplier<NetworkEvent.Context> ctx)
     {
-        ctx.get().enqueueWork(() -> {
-            InventorySorter.LOGGER.log(Level.DEBUG, "Got action {} slot {}", message.action, message.slotIndex);
-            Slot slot = ctx.get().getSender().openContainer.getSlot(message.slotIndex);
-            message.action.execute( new ContainerContext(slot, ctx.get().getSender()));
-        });
+        final ServerPlayerEntity sender = ctx.get().getSender();
+        if (sender != null) {
+            ctx.get().enqueueWork(() -> {
+                InventorySorter.LOGGER.log(Level.DEBUG, "Got action {} slot {}", message.action, message.slotIndex);
+                Slot slot = sender.openContainer.getSlot(message.slotIndex);
+                message.action.execute(new ContainerContext(slot, sender));
+            });
+            return true;
+        } else {
+            return false;
+        }
     }
 }
