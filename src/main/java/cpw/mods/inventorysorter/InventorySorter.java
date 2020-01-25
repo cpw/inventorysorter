@@ -62,7 +62,7 @@ public class InventorySorter
     boolean debugLog;
     final Set<String> slotblacklist = new HashSet<>();
     final Set<ResourceLocation> containerblacklist = new HashSet<>();
-
+    boolean configLoaded = false;
 
     public InventorySorter() {
         INSTANCE = this;
@@ -104,6 +104,7 @@ public class InventorySorter
     }
 
     private void updateConfig() {
+        if (!configLoaded) return;
         Config.CONFIG.containerBlacklist.set(containerblacklist.stream().map(Objects::toString).collect(Collectors.toList()));
         Config.CONFIG.slotBlacklist.set(new ArrayList<>(slotblacklist));
     }

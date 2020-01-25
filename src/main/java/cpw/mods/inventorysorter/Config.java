@@ -30,5 +30,6 @@ public class Config {
                 .comment("Slot type blacklist")
                 .translation("inventorysorter.config.slotblacklist")
                 .defineList("slotBlacklist", new ArrayList<>(), t -> true);
+        builder.pop();
     }
 }
