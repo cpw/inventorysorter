@@ -140,7 +140,7 @@ public class InventorySorter
 
     private static StringTextComponent greenText(final String string) {
         final StringTextComponent tcs = new StringTextComponent(string);
-        tcs.getStyle().setColor(TextFormatting.GREEN);
+        tcs.getStyle().func_240712_a_(TextFormatting.GREEN);
         return tcs;
     }
 
