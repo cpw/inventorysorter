@@ -114,7 +114,7 @@ public class InventorySorter
     }
 
     private void onServerStarting(FMLServerStartingEvent evt) {
-        InventorySorterCommand.register(evt.getCommandDispatcher());
+        InventorySorterCommand.register(evt.getServer().getCommandManager().getDispatcher());
     }
 
     void onConfigLoad(ModConfig.ModConfigEvent configEvent) {
