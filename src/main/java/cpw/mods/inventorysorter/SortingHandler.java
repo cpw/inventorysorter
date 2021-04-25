@@ -18,8 +18,8 @@
 
 package cpw.mods.inventorysorter;
 
-import com.google.common.base.*;
 import com.google.common.collect.*;
+import mezz.jei.api.ingredients.IIngredientType;
 import net.minecraft.inventory.*;
 import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.PlayerContainer;
@@ -28,7 +28,7 @@ import net.minecraft.item.*;
 import net.minecraft.util.ResourceLocation;
 import org.apache.logging.log4j.*;
 
-import javax.annotation.*;
+import java.util.Collection;
 import java.util.function.*;
 
 /**
@@ -61,6 +61,7 @@ public enum SortingHandler implements Consumer<ContainerContext>
 
     private void distributeInventory(final ContainerContext context, final Multiset<ItemStackHolder> itemcounts)
     {
+        System.out.println("distributeInventory");
         CraftingInventory ic = (CraftingInventory) context.slot.inventory;
         Multiset<ItemStackHolder> slotCounts = TreeMultiset.create(new InventoryHandler.ItemStackComparator());
         for (int x=0; x<ic.getWidth(); x++)
@@ -112,8 +113,20 @@ public enum SortingHandler implements Consumer<ContainerContext>
             context.player.openContainer.getSlot(slot).onSlotChanged();
         }
     }
+
     private void compactInventory(final ContainerContext context, final Multiset<ItemStackHolder> itemcounts)
     {
+        System.out.println("compactInventory");
+        final JeiInventorySorterPlugin jeiInventorySorterPlugin = new JeiInventorySorterPlugin();
+
+        Collection<IIngredientType<?>> ingredientTypes = jeiInventorySorterPlugin.ingredientTypes;
+        System.out.println(ingredientTypes.toString());
+
+        Collection<?> items = jeiInventorySorterPlugin.itemList;
+        System.out.println(items.toString());
+
+//        System.out.println(jeiInternalPlugin.ingredientManager.getAllIngredients(VanillaTypes.ITEM));
+
         final ResourceLocation containerTypeName = lookupContainerTypeName(context.player.container);
         InventorySorter.INSTANCE.lastContainerType = containerTypeName;
         if (InventorySorter.INSTANCE.containerblacklist.contains(containerTypeName)) {
