@@ -1,5 +1,6 @@
 package cpw.mods.inventorysorter;
 
+import com.google.common.collect.Multiset;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.constants.VanillaRecipeCategoryUid;
@@ -51,6 +52,9 @@ public class JeiInventorySorterPlugin implements IModPlugin {
     @Nullable
     public static Collection<IIngredientType<?>> ingredientTypes;
 
+    @Nullable
+    public static Multiset<ItemStack> test;
+
     @Override
     public void onRuntimeAvailable(IJeiRuntime jeiRuntime) {
         System.out.println("onRuntimeAvailable");
@@ -60,6 +64,8 @@ public class JeiInventorySorterPlugin implements IModPlugin {
 //        Collection<IIngredientType> ingredientTypes = ingredientManager.getRegisteredIngredientTypes();
 
         Collection<?> allIngredients = new ArrayList<>();
+
+        JeiInventorySorterPlugin.test = (Multiset<ItemStack>) ingredientManager.getAllIngredients(VanillaTypes.ITEM);
 
         ingredientTypes = ingredientManager.getRegisteredIngredientTypes();
 

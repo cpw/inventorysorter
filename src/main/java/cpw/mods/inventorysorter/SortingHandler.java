@@ -125,6 +125,9 @@ public enum SortingHandler implements Consumer<ContainerContext>
         Collection<?> items = jeiInventorySorterPlugin.itemList;
         System.out.println(items.toString());
 
+        Multiset<ItemStack> test = jeiInventorySorterPlugin.test;
+        System.out.println(test.toString());
+
 //        System.out.println(jeiInternalPlugin.ingredientManager.getAllIngredients(VanillaTypes.ITEM));
 
         final ResourceLocation containerTypeName = lookupContainerTypeName(context.player.container);
@@ -139,6 +142,10 @@ public enum SortingHandler implements Consumer<ContainerContext>
         try
         {
             itemsIterator = Multisets.copyHighestCountFirst(itemcounts).entrySet().iterator();
+            System.out.println(itemcounts.toString());
+            for(ItemStackHolder itemStack: itemcounts) {
+                System.out.println(itemStack.is.toString());
+            }
         }
         catch (Exception e)
         {
