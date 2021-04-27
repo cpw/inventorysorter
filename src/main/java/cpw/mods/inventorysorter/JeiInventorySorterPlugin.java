@@ -50,7 +50,7 @@ public class JeiInventorySorterPlugin implements IModPlugin {
                 }
                 JeiInventorySorterPlugin.allIngredients = ingredientList;
             } catch (Exception e) {
-                InventorySorter.LOGGER.warn("JEI is not installed, sorting will default to stack size.", e);
+                InventorySorter.LOGGER.warn("Something went wrong while initializing JeiInventorySorterPlugin.", e);
             }
         }
     }
