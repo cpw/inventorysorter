@@ -1,81 +1,97 @@
 package cpw.mods.inventorysorter;
 
-import com.google.common.collect.Multiset;
+import com.google.common.collect.*;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
-import mezz.jei.api.constants.VanillaRecipeCategoryUid;
-import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.ingredients.IIngredientType;
-import mezz.jei.api.ingredients.IIngredients;
-import mezz.jei.api.recipe.IRecipeManager;
-import mezz.jei.api.registration.IRecipeCatalystRegistration;
-import mezz.jei.api.registration.IRecipeCategoryRegistration;
-import mezz.jei.api.registration.IRecipeRegistration;
-import mezz.jei.api.registration.IRecipeTransferRegistration;
-import mezz.jei.api.registration.ISubtypeRegistration;
-import mezz.jei.api.registration.IVanillaCategoryExtensionRegistration;
 import mezz.jei.api.runtime.IIngredientManager;
 import mezz.jei.api.runtime.IJeiRuntime;
-import mezz.jei.api.runtime.IRecipesGui;
-import mezz.jei.api.gui.ingredient.IGuiIngredient;
-
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.inventory.ContainerScreen;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.Ingredient;
-import net.minecraft.item.crafting.RecipeManager;
-import net.minecraft.util.NonNullList;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.World;
+import net.minecraftforge.fml.ModList;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @JeiPlugin
 public class JeiInventorySorterPlugin implements IModPlugin {
     private static final ResourceLocation ID = new ResourceLocation("inventorysorter");
 
     @Nullable
-    public static IIngredientManager ingredientManager;
-
-    @Nullable
-    public static IJeiRuntime jeiRuntime;
-
-    @Nullable
-    public static Collection<?> itemList;
-
-    @Nullable
-    public static Collection<IIngredientType<?>> ingredientTypes;
-
-    @Nullable
-    public static Multiset<ItemStack> test;
+    public static LinkedListMultimap<String, CompoundNBT> allIngredients;
 
     @Override
     public void onRuntimeAvailable(IJeiRuntime jeiRuntime) {
-        System.out.println("onRuntimeAvailable");
-        JeiInventorySorterPlugin.jeiRuntime = jeiRuntime;
-        JeiInventorySorterPlugin.ingredientManager = jeiRuntime.getIngredientManager();
+        if (ModList.get().isLoaded("jei")) {
+            try {
+                IIngredientManager ingredientManager = jeiRuntime.getIngredientManager();
+                Collection<IIngredientType<?>> ingredientTypes = ingredientManager.getRegisteredIngredientTypes();
 
-//        Collection<IIngredientType> ingredientTypes = ingredientManager.getRegisteredIngredientTypes();
+                List<Object> allIngredients = new ArrayList<Object>();
 
-        Collection<?> allIngredients = new ArrayList<>();
+                for (IIngredientType<?> ingredientType : ingredientTypes) {
+                    List<Object> currentIngredients = Arrays.asList(ingredientManager.getAllIngredients(ingredientType).toArray());
 
-        JeiInventorySorterPlugin.test = (Multiset<ItemStack>) ingredientManager.getAllIngredients(VanillaTypes.ITEM);
+                    allIngredients.addAll(currentIngredients);
+                }
 
-        ingredientTypes = ingredientManager.getRegisteredIngredientTypes();
+                LinkedListMultimap<String, CompoundNBT> ingredientList = LinkedListMultimap.create();
 
-        for (IIngredientType<?> ingredientType : ingredientTypes) {
-            Collection<?> ingredientList = ingredientManager.getAllIngredients(ingredientType);
+                for (Object item : allIngredients) {
+                    if (item instanceof ItemStack) {
+                        ItemStack itemStack = (ItemStack) item;
+                        String itemName = itemStack.getItem().getRegistryName().toString();
+                        CompoundNBT tag = itemStack.getTag();
 
-            allIngredients = Stream.concat(allIngredients.stream(), ingredientList.stream()).collect(Collectors.toList());
+                        ingredientList.put(itemName, tag);
+                    }
+                }
+                JeiInventorySorterPlugin.allIngredients = ingredientList;
+            } catch (Exception e) {
+                InventorySorter.LOGGER.warn("JEI is not installed, sorting will default to stack size.", e);
+            }
         }
+    }
 
-        JeiInventorySorterPlugin.itemList = allIngredients;
+    public static UnmodifiableIterator<Multiset.Entry<ItemStackHolder>> sortItems(Multiset<ItemStackHolder> itemcounts){
+        List<Multiset.Entry<ItemStackHolder>> itemcountsList = Lists.newArrayList(itemcounts.entrySet());
+        Collections.sort(itemcountsList, new JeiInventorySorterPlugin.ItemStackComparator());
+        ImmutableMultiset<Multiset.Entry<ItemStackHolder>> itemsMultiset = ImmutableMultiset.copyOf(itemcountsList);
+        return itemsMultiset.iterator();
+    }
+
+    private static class ItemStackComparator implements Comparator<Multiset.Entry<ItemStackHolder>> {
+        @Override
+        public int compare(Multiset.Entry<ItemStackHolder> first, Multiset.Entry<ItemStackHolder> second) {
+            ItemStack firstItem = first.getElement().is;
+            ItemStack secondItem = second.getElement().is;
+
+            String firstItemName = firstItem.getItem().getRegistryName().toString();
+            String secondItemName = secondItem.getItem().getRegistryName().toString();
+
+            int firstNameIndex = Lists.newArrayList(allIngredients.keys()).indexOf(firstItemName);
+            int secondNameIndex = Lists.newArrayList(allIngredients.keys()).indexOf(secondItemName);
+
+            int itemNameTest = Integer.compare(firstNameIndex, secondNameIndex);
+
+            if (itemNameTest != 0) {
+                return itemNameTest;
+            }
+
+            CompoundNBT firstTag = firstItem.getTag();
+            CompoundNBT secondTag = secondItem.getTag();
+
+            List<CompoundNBT> tags = Lists.newArrayList(allIngredients.get(firstItemName));
+
+            int firstTagIndex = tags.indexOf(firstTag);
+            int secondTagIndex = tags.indexOf(secondTag);
+
+            int itemTagTest = Integer.compare(firstTagIndex, secondTagIndex);
+
+            return itemTagTest;
+        }
     }
 
     @Nonnull

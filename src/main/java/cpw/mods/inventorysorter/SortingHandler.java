@@ -19,17 +19,16 @@
 package cpw.mods.inventorysorter;
 
 import com.google.common.collect.*;
-import mezz.jei.api.ingredients.IIngredientType;
-import net.minecraft.inventory.*;
+import net.minecraft.inventory.CraftingInventory;
 import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.PlayerContainer;
 import net.minecraft.inventory.container.Slot;
-import net.minecraft.item.*;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
-import org.apache.logging.log4j.*;
+import net.minecraftforge.fml.ModList;
+import org.apache.logging.log4j.Level;
 
-import java.util.Collection;
-import java.util.function.*;
+import java.util.function.Consumer;
 
 /**
  * @author cpw
@@ -61,7 +60,6 @@ public enum SortingHandler implements Consumer<ContainerContext>
 
     private void distributeInventory(final ContainerContext context, final Multiset<ItemStackHolder> itemcounts)
     {
-        System.out.println("distributeInventory");
         CraftingInventory ic = (CraftingInventory) context.slot.inventory;
         Multiset<ItemStackHolder> slotCounts = TreeMultiset.create(new InventoryHandler.ItemStackComparator());
         for (int x=0; x<ic.getWidth(); x++)
@@ -116,20 +114,6 @@ public enum SortingHandler implements Consumer<ContainerContext>
 
     private void compactInventory(final ContainerContext context, final Multiset<ItemStackHolder> itemcounts)
     {
-        System.out.println("compactInventory");
-        final JeiInventorySorterPlugin jeiInventorySorterPlugin = new JeiInventorySorterPlugin();
-
-        Collection<IIngredientType<?>> ingredientTypes = jeiInventorySorterPlugin.ingredientTypes;
-        System.out.println(ingredientTypes.toString());
-
-        Collection<?> items = jeiInventorySorterPlugin.itemList;
-        System.out.println(items.toString());
-
-        Multiset<ItemStack> test = jeiInventorySorterPlugin.test;
-        System.out.println(test.toString());
-
-//        System.out.println(jeiInternalPlugin.ingredientManager.getAllIngredients(VanillaTypes.ITEM));
-
         final ResourceLocation containerTypeName = lookupContainerTypeName(context.player.container);
         InventorySorter.INSTANCE.lastContainerType = containerTypeName;
         if (InventorySorter.INSTANCE.containerblacklist.contains(containerTypeName)) {
@@ -141,10 +125,10 @@ public enum SortingHandler implements Consumer<ContainerContext>
         final UnmodifiableIterator<Multiset.Entry<ItemStackHolder>> itemsIterator;
         try
         {
-            itemsIterator = Multisets.copyHighestCountFirst(itemcounts).entrySet().iterator();
-            System.out.println(itemcounts.toString());
-            for(ItemStackHolder itemStack: itemcounts) {
-                System.out.println(itemStack.is.toString());
+            if (ModList.get().isLoaded("jei")) {
+                itemsIterator = JeiInventorySorterPlugin.sortItems(itemcounts);
+            } else {
+                itemsIterator = Multisets.copyHighestCountFirst(itemcounts).entrySet().iterator();
             }
         }
         catch (Exception e)
