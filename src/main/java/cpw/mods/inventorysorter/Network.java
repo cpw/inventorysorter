@@ -19,9 +19,9 @@
 package cpw.mods.inventorysorter;
 
 import io.netty.buffer.*;
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.network.NetworkRegistry;
-import net.minecraftforge.fml.network.simple.*;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.network.NetworkRegistry;
+import net.minecraftforge.network.simple.*;
 
 import java.util.Objects;
 

@@ -21,16 +21,18 @@ package cpw.mods.inventorysorter;
 import com.google.common.base.*;
 import com.google.common.collect.*;
 import com.google.common.primitives.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.inventory.*;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.inventory.container.Slot;
-import net.minecraft.item.*;
-import net.minecraft.tileentity.*;
-import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
 
 import java.lang.reflect.*;
 import java.util.*;
+
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BrewingStandBlockEntity;
+import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
+import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 
 /**
  * @author cpw
@@ -43,12 +45,12 @@ public enum InventoryHandler
     private Method getMergeStackMethod()
     {
 
-        Method m = ObfuscationReflectionHelper.findMethod(Container.class, "func_"+"75135_a", ItemStack.class, int.class, int.class, boolean.class);
+        Method m = ObfuscationReflectionHelper.findMethod(AbstractContainerMenu.class, "m_"+"38903_", ItemStack.class, int.class, int.class, boolean.class);
         m.setAccessible(true);
         return m;
     }
 
-    public boolean mergeStack(Container container, ItemStack stack, int low, int high, boolean rev)
+    public boolean mergeStack(AbstractContainerMenu container, ItemStack stack, int low, int high, boolean rev)
     {
         try
         {
@@ -68,25 +70,25 @@ public enum InventoryHandler
     public ItemStack getItemStack(Slot slot)
     {
         if (slot.getSlotIndex() < 0) return ItemStack.EMPTY;
-        return slot.getStack();
+        return slot.getItem();
     }
 
     public void moveItemToOtherInventory(ContainerContext ctx, ItemStack is, int targetLow, int targetHigh, boolean slotIsDestination)
     {
         for (int i = targetLow; i < targetHigh; i++)
         {
-            if (!ctx.player.openContainer.getSlot(i).isItemValid(is))
+            if (!ctx.player.containerMenu.getSlot(i).mayPlace(is))
             {
                 continue;
             }
-            if (mergeStack(ctx.player.openContainer, is, i, i+1, slotIsDestination))
+            if (mergeStack(ctx.player.containerMenu, is, i, i+1, slotIsDestination))
             {
                 break;
             }
         }
     }
 
-    static Map<IInventory,ImmutableList<IInventory>> preferredOrders = ImmutableMap.of(
+    static Map<Container,ImmutableList<Container>> preferredOrders = ImmutableMap.of(
             ContainerContext.PLAYER_HOTBAR, ImmutableList.of(ContainerContext.PLAYER_OFFHAND, ContainerContext.PLAYER_MAIN),
             ContainerContext.PLAYER_OFFHAND, ImmutableList.of(ContainerContext.PLAYER_HOTBAR, ContainerContext.PLAYER_MAIN),
             ContainerContext.PLAYER_MAIN, ImmutableList.of(ContainerContext.PLAYER_OFFHAND, ContainerContext.PLAYER_HOTBAR)
@@ -95,17 +97,17 @@ public enum InventoryHandler
     {
         if (is.getMaxStackSize() == 1) return null;
 
-        List<Map.Entry<IInventory, InventoryMapping>> entries = getSortedMapping(ctx);
-        for (Map.Entry<IInventory, InventoryMapping> ent : entries)
+        List<Map.Entry<Container, InventoryMapping>> entries = getSortedMapping(ctx);
+        for (Map.Entry<Container, InventoryMapping> ent : entries)
         {
-            IInventory inv = ent.getKey();
+            Container inv = ent.getKey();
             if (inv == ctx.slotMapping.inv) continue;
             for (int i = ent.getValue().begin; i <= ent.getValue().end; i++)
             {
-                final Slot slot = ctx.player.openContainer.getSlot(i);
-                if (!slot.canTakeStack(ctx.player)) continue;
-                ItemStack sis = slot.getStack();
-                if (sis != null && sis.getItem() == is.getItem() && ItemStack.areItemStackTagsEqual(sis, is))
+                final Slot slot = ctx.player.containerMenu.getSlot(i);
+                if (!slot.mayPickup(ctx.player)) continue;
+                ItemStack sis = slot.getItem();
+                if (sis != null && sis.getItem() == is.getItem() && ItemStack.tagMatches(sis, is))
                 {
                     return slot;
                 }
@@ -114,9 +116,9 @@ public enum InventoryHandler
         return null;
     }
 
-    List<Map.Entry<IInventory, InventoryMapping>> getSortedMapping(final ContainerContext ctx)
+    List<Map.Entry<Container, InventoryMapping>> getSortedMapping(final ContainerContext ctx)
     {
-        List<Map.Entry<IInventory, InventoryMapping>> entries = Lists.newArrayList(ctx.mapping.entrySet());
+        List<Map.Entry<Container, InventoryMapping>> entries = Lists.newArrayList(ctx.mapping.entrySet());
         if (preferredOrders.containsKey(ctx.slotMapping.inv)) {
             Collections.sort(entries, (o1, o2) -> {
                 int idx1 = preferredOrders.get(ctx.slotMapping.inv).indexOf(o1.getKey());
@@ -134,9 +136,9 @@ public enum InventoryHandler
         SortedMultiset<ItemStackHolder> itemcounts = TreeMultiset.create(new ItemStackComparator());
         for (int i = slotLow; i < slotHigh; i++)
         {
-            final Slot slot = context.player.openContainer.getSlot(i);
-            if (!slot.canTakeStack(context.player)) continue;
-            ItemStack stack = slot.getStack();
+            final Slot slot = context.player.containerMenu.getSlot(i);
+            if (!slot.mayPickup(context.player)) continue;
+            ItemStack stack = slot.getItem();
             if (!stack.isEmpty())
             {
                 ItemStackHolder ish = new ItemStackHolder(stack.copy());
@@ -160,7 +162,7 @@ public enum InventoryHandler
             if (o1.is == o2.is) return 0;
             if (o1.is.getItem() != o2.is.getItem())
                 return String.valueOf(o1.is.getItem().getRegistryName()).compareTo(String.valueOf(o2.is.getItem().getRegistryName()));
-            if (ItemStack.areItemStackTagsEqual(o1.is, o2.is))
+            if (ItemStack.tagMatches(o1.is, o2.is))
                 return 0;
             return Ints.compare(System.identityHashCode(o1.is), System.identityHashCode(o2.is));
         }
@@ -170,14 +172,14 @@ public enum InventoryHandler
     {
         int begin = Integer.MAX_VALUE;
         int end = 0;
-        final IInventory inv;
-        final IInventory proxy;
-        final Container container;
+        final Container inv;
+        final Container proxy;
+        final AbstractContainerMenu container;
         final Class<? extends Slot> slotType;
         boolean markForRemoval;
         boolean markAsHeterogeneous;
 
-        InventoryMapping(IInventory inv, Container container, IInventory proxy, Class<? extends Slot> slotType)
+        InventoryMapping(Container inv, AbstractContainerMenu container, Container proxy, Class<? extends Slot> slotType)
         {
             this.inv = inv;
             this.container = container;
@@ -191,15 +193,15 @@ public enum InventoryHandler
         }
 
         void addSlot(final Slot sl) {
-            if (this.slotType != sl.getClass() && !(this.inv instanceof PlayerInventory) && !(this.inv instanceof FurnaceTileEntity) && !(this.inv instanceof BrewingStandTileEntity)) {
+            if (this.slotType != sl.getClass() && !(this.inv instanceof Inventory) && !(this.inv instanceof FurnaceBlockEntity) && !(this.inv instanceof BrewingStandBlockEntity)) {
                 this.markForRemoval = true;
             }
             if (this.slotType != sl.getClass())
             {
                 this.markAsHeterogeneous = true;
             }
-            this.begin = Math.min(sl.slotNumber, this.begin);
-            this.end = Math.max(sl.slotNumber, this.end);
+            this.begin = Math.min(sl.index, this.begin);
+            this.end = Math.max(sl.index, this.end);
 
         }
     }

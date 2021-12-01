@@ -20,16 +20,17 @@ package cpw.mods.inventorysorter;
 
 import com.google.common.base.*;
 import com.google.common.collect.*;
-import net.minecraft.inventory.*;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.inventory.container.PlayerContainer;
-import net.minecraft.inventory.container.Slot;
-import net.minecraft.item.*;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.resources.ResourceLocation;
 import org.apache.logging.log4j.*;
 
 import javax.annotation.*;
 import java.util.function.*;
+
+import net.minecraft.world.inventory.CraftingContainer;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * @author cpw
@@ -45,7 +46,7 @@ public enum SortingHandler implements Consumer<ContainerContext>
         if (context.slotMapping == null) return;
         final Multiset<ItemStackHolder> itemcounts = InventoryHandler.INSTANCE.getInventoryContent(context);
 
-        if (context.slot.inventory instanceof CraftingInventory)
+        if (context.slot.container instanceof CraftingContainer)
         {
             distributeInventory(context, itemcounts);
         }
@@ -55,13 +56,13 @@ public enum SortingHandler implements Consumer<ContainerContext>
         }
     }
 
-    private static ItemStack getStackInRowAndColumn(CraftingInventory inventory, int x, int y) {
-        return inventory.getStackInSlot(y * inventory.getWidth() + x);
+    private static ItemStack getStackInRowAndColumn(CraftingContainer inventory, int x, int y) {
+        return inventory.getItem(y * inventory.getWidth() + x);
     }
 
     private void distributeInventory(final ContainerContext context, final Multiset<ItemStackHolder> itemcounts)
     {
-        CraftingInventory ic = (CraftingInventory) context.slot.inventory;
+        CraftingContainer ic = (CraftingContainer) context.slot.container;
         Multiset<ItemStackHolder> slotCounts = TreeMultiset.create(new InventoryHandler.ItemStackComparator());
         for (int x=0; x<ic.getWidth(); x++)
         {
@@ -109,12 +110,12 @@ public enum SortingHandler implements Consumer<ContainerContext>
         }
         for (int slot = context.slotMapping.begin; slot < context.slotMapping.end + 1; slot++)
         {
-            context.player.openContainer.getSlot(slot).onSlotChanged();
+            context.player.containerMenu.getSlot(slot).setChanged();
         }
     }
     private void compactInventory(final ContainerContext context, final Multiset<ItemStackHolder> itemcounts)
     {
-        final ResourceLocation containerTypeName = lookupContainerTypeName(context.player.container);
+        final ResourceLocation containerTypeName = lookupContainerTypeName(context.player.inventoryMenu);
         InventorySorter.INSTANCE.lastContainerType = containerTypeName;
         if (InventorySorter.INSTANCE.containerblacklist.contains(containerTypeName)) {
             InventorySorter.INSTANCE.debugLog("Container {} blacklisted", ()->new String[] {containerTypeName.toString()});
@@ -139,12 +140,12 @@ public enum SortingHandler implements Consumer<ContainerContext>
         int itemCount = stackHolder != null ? stackHolder.getCount() : 0;
         for (int i = slotLow; i < slotHigh; i++)
         {
-            final Slot slot = context.player.openContainer.getSlot(i);
-            if (!slot.canTakeStack(context.player) && slot.getHasStack()) {
-                InventorySorter.LOGGER.log(Level.DEBUG, "Slot {} of container {} disallows canTakeStack", ()->slot.slotNumber, ()-> containerTypeName);
+            final Slot slot = context.player.containerMenu.getSlot(i);
+            if (!slot.mayPickup(context.player) && slot.hasItem()) {
+                InventorySorter.LOGGER.log(Level.DEBUG, "Slot {} of container {} disallows canTakeStack", ()->slot.index, ()-> containerTypeName);
                 continue;
             }
-            slot.putStack(ItemStack.EMPTY);
+            slot.set(ItemStack.EMPTY);
             ItemStack target = ItemStack.EMPTY;
             if (itemCount > 0 && stackHolder != null)
             {
@@ -152,12 +153,12 @@ public enum SortingHandler implements Consumer<ContainerContext>
                 target.setCount(Math.min(itemCount, target.getMaxStackSize()));
             }
             // The item isn't valid for this slot
-            if (!target.isEmpty() && !slot.isItemValid(target)) {
+            if (!target.isEmpty() && !slot.mayPlace(target)) {
                 final ItemStack trg = target;
-                InventorySorter.LOGGER.log(Level.DEBUG, "Item {} is not valid in slot {} of container {}", ()->trg, ()->slot.slotNumber, ()-> containerTypeName);
+                InventorySorter.LOGGER.log(Level.DEBUG, "Item {} is not valid in slot {} of container {}", ()->trg, ()->slot.index, ()-> containerTypeName);
                 continue;
             }
-            slot.putStack(target.isEmpty() ? ItemStack.EMPTY : target);
+            slot.set(target.isEmpty() ? ItemStack.EMPTY : target);
             itemCount -= !target.isEmpty() ? target.getCount() : 0;
             if (itemCount == 0)
             {
@@ -168,7 +169,7 @@ public enum SortingHandler implements Consumer<ContainerContext>
     }
 
     private static final ResourceLocation DUMMY_PLAYER_CONTAINER = new ResourceLocation("inventorysorter:dummyplayercontainer");
-    private ResourceLocation lookupContainerTypeName(Container container) {
-        return container instanceof PlayerContainer ? DUMMY_PLAYER_CONTAINER : container.getType().getRegistryName();
+    private ResourceLocation lookupContainerTypeName(AbstractContainerMenu container) {
+        return container instanceof InventoryMenu ? DUMMY_PLAYER_CONTAINER : container.getType().getRegistryName();
     }
 }

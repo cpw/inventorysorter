@@ -19,11 +19,11 @@
 package cpw.mods.inventorysorter;
 
 import com.mojang.brigadier.context.CommandContext;
-import net.minecraft.command.CommandSource;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.InterModComms;
@@ -31,10 +31,11 @@ import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.event.config.ModConfigEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
-import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
+import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
@@ -113,11 +114,11 @@ public class InventorySorter
         Network.init();
     }
 
-    private void onServerStarting(FMLServerStartingEvent evt) {
-        InventorySorterCommand.register(evt.getServer().getCommandManager().getDispatcher());
+    private void onServerStarting(ServerStartingEvent evt) {
+        InventorySorterCommand.register(evt.getServer().getCommands().getDispatcher());
     }
 
-    void onConfigLoad(ModConfig.ModConfigEvent configEvent) {
+    void onConfigLoad(ModConfigEvent configEvent) {
         this.slotblacklist.clear();
         this.slotblacklist.addAll(Config.CONFIG.slotBlacklist.get());
         this.containerblacklist.clear();
@@ -138,51 +139,51 @@ public class InventorySorter
         }
     }
 
-    private static StringTextComponent greenText(final String string) {
-        final StringTextComponent tcs = new StringTextComponent(string);
-        tcs.getStyle().func_240712_a_(TextFormatting.GREEN);
+    private static TextComponent greenText(final String string) {
+        final TextComponent tcs = new TextComponent(string);
+        tcs.getStyle().withColor(ChatFormatting.GREEN);
         return tcs;
     }
 
-    static int blackListAdd(final CommandContext<CommandSource> context) {
+    static int blackListAdd(final CommandContext<CommandSourceStack> context) {
         final ResourceLocation containerType = InventorySorterCommand.Arguments.CONTAINER.get(context);
         if (ForgeRegistries.CONTAINERS.containsKey(containerType)) {
             INSTANCE.containerblacklist.add(containerType);
             INSTANCE.updateConfig();
-            context.getSource().sendFeedback(new TranslationTextComponent("inventorysorter.commands.inventorysorter.bladd.message", containerType), true);
+            context.getSource().sendSuccess(new TranslatableComponent("inventorysorter.commands.inventorysorter.bladd.message", containerType), true);
             return 1;
         } else {
-            context.getSource().sendFeedback(new TranslationTextComponent("inventorysorter.commands.inventorysorter.badtype", containerType), true);
+            context.getSource().sendSuccess(new TranslatableComponent("inventorysorter.commands.inventorysorter.badtype", containerType), true);
             return 0;
         }
     }
 
-    static int blackListRemove(final CommandContext<CommandSource> context) {
+    static int blackListRemove(final CommandContext<CommandSourceStack> context) {
         final ResourceLocation containerType = InventorySorterCommand.Arguments.BLACKLISTED.get(context);
         if (ForgeRegistries.CONTAINERS.containsKey(containerType) && INSTANCE.containerblacklist.remove(containerType)) {
             INSTANCE.updateConfig();
-            context.getSource().sendFeedback(new TranslationTextComponent("inventorysorter.commands.inventorysorter.blremove.message", containerType), true);
+            context.getSource().sendSuccess(new TranslatableComponent("inventorysorter.commands.inventorysorter.blremove.message", containerType), true);
             return 1;
         } else {
-            context.getSource().sendFeedback(new TranslationTextComponent("inventorysorter.commands.inventorysorter.badtype", containerType), true);
+            context.getSource().sendSuccess(new TranslatableComponent("inventorysorter.commands.inventorysorter.badtype", containerType), true);
             return 0;
         }
     }
 
-    static int showLast(final CommandContext<CommandSource> context) {
+    static int showLast(final CommandContext<CommandSourceStack> context) {
         if (INSTANCE.lastContainerType != null) {
-            context.getSource().sendFeedback(new TranslationTextComponent("inventorysorter.commands.inventorysorter.showlast.message", INSTANCE.lastContainerType), true);
+            context.getSource().sendSuccess(new TranslatableComponent("inventorysorter.commands.inventorysorter.showlast.message", INSTANCE.lastContainerType), true);
         } else {
-            context.getSource().sendFeedback(new TranslationTextComponent("inventorysorter.commands.inventorysorter.showlast.nosort"), true);
+            context.getSource().sendSuccess(new TranslatableComponent("inventorysorter.commands.inventorysorter.showlast.nosort"), true);
         }
         return 0;
     }
 
-    static int showBlacklist(final CommandContext<CommandSource> context) {
+    static int showBlacklist(final CommandContext<CommandSourceStack> context) {
         if (INSTANCE.containerblacklist.isEmpty()) {
-            context.getSource().sendFeedback(new TranslationTextComponent("inventorysorter.commands.inventorysorter.showblacklist.empty"), true);
+            context.getSource().sendSuccess(new TranslatableComponent("inventorysorter.commands.inventorysorter.showblacklist.empty"), true);
         } else {
-            context.getSource().sendFeedback(new TranslationTextComponent("inventorysorter.commands.inventorysorter.showblacklist.message", listBlacklist().collect(Collectors.toList())), true);
+            context.getSource().sendSuccess(new TranslatableComponent("inventorysorter.commands.inventorysorter.showblacklist.message", listBlacklist().collect(Collectors.toList())), true);
         }
         return 0;
     }

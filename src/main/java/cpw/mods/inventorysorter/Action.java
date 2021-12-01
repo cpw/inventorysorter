@@ -18,9 +18,7 @@
 
 package cpw.mods.inventorysorter;
 
-import net.minecraft.inventory.*;
-import net.minecraft.inventory.container.Slot;
-import org.apache.logging.log4j.*;
+import net.minecraft.world.inventory.Slot;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.function.*;
@@ -60,7 +58,7 @@ public enum Action
 
     public Network.ActionMessage message(Slot slot)
     {
-        return new Network.ActionMessage(this, slot.slotNumber);
+        return new Network.ActionMessage(this, slot.index);
     }
 
     public void execute(ContainerContext context)

@@ -4,32 +4,33 @@ buildscript {
         mavenCentral()
         maven {
             name = 'forge'
-            url = 'http://files.minecraftforge.net/maven'
+            url = 'https://maven.minecraftforge.net/'
         }
     }
     dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
     }
 }
 plugins {
     id 'com.matthewprenger.cursegradle' version '1.4.0'
     id 'se.bjurr.gitchangelog.git-changelog-gradle-plugin' version '1.64'
-    id 'org.ajoberstar.reckon' version '0.11.0'
-    id 'org.ajoberstar.grgit' version '3.1.1'
-    id 'com.github.ben-manes.versions' version '0.25.0'
+    id 'org.ajoberstar.grgit' version '4.1.1'
+    id 'com.github.ben-manes.versions' version '0.39.0'
 }
 
 apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'idea'
 apply plugin: 'maven-publish'
+apply from: 'https://raw.githubusercontent.com/SizableShrimp/Forge-Class-Remapper/main/classremapper.gradle'
 
 group= 'cpw.mods'
 archivesBaseName = 'inventorysorter'
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
-reckon {
-    scopeFromProp()
-    stageFromProp('ms', 'final')
-}
+//reckon {
+//    scopeFromProp()
+//    stageFromProp('ms', 'final')
+//}
 
 minecraft {
     mappings channel: MCP_CHANNEL, version: MCP_MAPPINGS
@@ -98,6 +99,7 @@ curseforge {
         changelog = file('CHANGELOG.md')
         changelogType = 'markdown'
         releaseType = project.findProperty('releaseType') ?: 'alpha'
+        addGameVersion '1.18'
     }
     options {
         javaVersionAutoDetect = true // defaults to true
@@ -106,7 +108,7 @@ curseforge {
     }
 }
 
-afterEvaluate {
+beforeEvaluate {
     tasks.curseforge240633.dependsOn.remove(reobfJar)
     tasks.curseforge240633.dependsOn.remove(jar)
     tasks.curseforge240633.dependsOn.add(makeChangelog)
@@ -145,7 +147,7 @@ publishing {
                 username project.properties.cpwMavenUser?:'spam'
                 password project.properties.cpwMavenPassword?:'bums'
             }
-            url 'http://files.minecraftforge.net/maven/manage/upload'
+            url 'https://maven.minecraftforge.net/'
         }
     }
 }

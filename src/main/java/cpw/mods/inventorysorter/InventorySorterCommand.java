@@ -11,9 +11,8 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.jodah.typetools.TypeResolver;
-import net.minecraft.command.*;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraftforge.fml.loading.StringUtils;
 
 import java.util.*;
@@ -21,18 +20,22 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.*;
 import java.util.stream.*;
 
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
+
 public class InventorySorterCommand {
-    public static void register(final CommandDispatcher<CommandSource> dispatcher) {
-        final LiteralArgumentBuilder<CommandSource> invsorterBuilder = Commands.literal("invsorter").
-                requires(cs->cs.hasPermissionLevel(1));
+    public static void register(final CommandDispatcher<CommandSourceStack> dispatcher) {
+        final LiteralArgumentBuilder<CommandSourceStack> invsorterBuilder = Commands.literal("invsorter").
+                requires(cs->cs.hasPermission(1));
 
         Stream.of(CommandAction.values()).forEach(a->invsorterBuilder.then(a.getCommand()));
         invsorterBuilder.executes(InventorySorterCommand::help);
         dispatcher.register(invsorterBuilder);
     }
 
-    private static int help(final CommandContext<CommandSource> context) {
-        context.getSource().sendErrorMessage(new TranslationTextComponent("inventorysorter.commands.inventorysorter.usage"));
+    private static int help(final CommandContext<CommandSourceStack> context) {
+        context.getSource().sendFailure(new TranslatableComponent("inventorysorter.commands.inventorysorter.usage"));
         return 0;
     }
 
@@ -43,25 +46,25 @@ public class InventorySorterCommand {
         LIST(InventorySorter::showBlacklist, 1);
 
         private final int permissionLevel;
-        private final ToIntFunction<CommandContext<CommandSource>> action;
+        private final ToIntFunction<CommandContext<CommandSourceStack>> action;
         private final List<TypedArgumentHandler<?>> argumentSupplier;
 
-        CommandAction(final ToIntFunction<CommandContext<CommandSource>> action, final int permissionLevel, final TypedArgumentHandler<?>... argumentSupplier) {
+        CommandAction(final ToIntFunction<CommandContext<CommandSourceStack>> action, final int permissionLevel, final TypedArgumentHandler<?>... argumentSupplier) {
             this.action = action;
             this.permissionLevel = permissionLevel;
             this.argumentSupplier = Arrays.asList(argumentSupplier);
         }
 
-        private void addArguments(LiteralArgumentBuilder<CommandSource> builder) {
-            final Optional<ArgumentBuilder<CommandSource, ?>> argBuilder = argumentSupplier.stream()
-                    .<ArgumentBuilder<CommandSource, ?>>map(TypedArgumentHandler::build)
+        private void addArguments(LiteralArgumentBuilder<CommandSourceStack> builder) {
+            final Optional<ArgumentBuilder<CommandSourceStack, ?>> argBuilder = argumentSupplier.stream()
+                    .<ArgumentBuilder<CommandSourceStack, ?>>map(TypedArgumentHandler::build)
                     .reduce(ArgumentBuilder::then);
             ifPresentOrElse(argBuilder, b -> builder.then(b.executes(this.action::applyAsInt)), ()->builder.executes(this.action::applyAsInt));
         }
 
-        public LiteralArgumentBuilder<CommandSource> getCommand() {
-            final LiteralArgumentBuilder<CommandSource> base = Commands.literal(StringUtils.toLowerCase(name()))
-                    .requires(cs -> cs.hasPermissionLevel(permissionLevel));
+        public LiteralArgumentBuilder<CommandSourceStack> getCommand() {
+            final LiteralArgumentBuilder<CommandSourceStack> base = Commands.literal(StringUtils.toLowerCase(name()))
+                    .requires(cs -> cs.hasPermission(permissionLevel));
             addArguments(base);
             return base;
         }
@@ -90,11 +93,11 @@ public class InventorySorterCommand {
             return new TypedArgumentHandler<>(argumentName, supplier);
         }
 
-        public RequiredArgumentBuilder<CommandSource, T> build() {
+        public RequiredArgumentBuilder<CommandSourceStack, T> build() {
             return Commands.argument(argName, this.argumentType);
         }
 
-        public T get(final CommandContext<CommandSource> context) {
+        public T get(final CommandContext<CommandSourceStack> context) {
             return context.getArgument(argName, this.clazz);
         }
     }
@@ -114,7 +117,7 @@ public class InventorySorterCommand {
 
         @Override
         public <S> CompletableFuture<Suggestions> listSuggestions(final CommandContext<S> context, final SuggestionsBuilder builder) {
-            return ISuggestionProvider.suggest(containerSuggestions.get(), builder);
+            return SharedSuggestionProvider.suggest(containerSuggestions.get(), builder);
         }
 
         @Override
