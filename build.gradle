@@ -1,6 +1,5 @@
 buildscript {
     repositories {
-        jcenter()
         mavenCentral()
         maven {
             name = 'forge'
@@ -13,7 +12,7 @@ buildscript {
 }
 plugins {
     id 'com.matthewprenger.cursegradle' version '1.4.0'
-    id 'se.bjurr.gitchangelog.git-changelog-gradle-plugin' version '1.64'
+    id 'se.bjurr.gitchangelog.git-changelog-gradle-plugin' version '1.71.4'
     id 'org.ajoberstar.grgit' version '4.1.1'
     id 'com.github.ben-manes.versions' version '0.39.0'
 }
@@ -31,6 +30,7 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 //    scopeFromProp()
 //    stageFromProp('ms', 'final')
 //}
+version = grgit.describe(longDescr: true).split('-').with { "${it[0]}.${it[1]}" }
 
 minecraft {
     mappings channel: MCP_CHANNEL, version: MCP_MAPPINGS
@@ -76,6 +76,7 @@ dependencies {
 
 task makeChangelog(type: se.bjurr.gitchangelog.plugin.gradle.GitChangelogTask) {
     file = file('CHANGELOG.md')
+    fromRepo = file(".")
     untaggedName = "Current release ${version}"
     fromRef = project.findProperty('changelogStart') ?: '13.0'
     templateContent = """
