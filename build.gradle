@@ -69,7 +69,6 @@ minecraft {
     }
 }
 
-
 dependencies {
     minecraft "net.minecraftforge:forge:${MC_VERSION}-${FORGE_VERSION}"
 }

@@ -20,10 +20,15 @@ package cpw.mods.inventorysorter;
 
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.synchronization.ArgumentTypeInfo;
+import net.minecraft.commands.synchronization.ArgumentTypeInfos;
+import net.minecraft.commands.synchronization.SingletonArgumentInfo;
+import net.minecraft.core.Registry;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.world.inventory.MenuType;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.InterModComms;
@@ -37,14 +42,13 @@ import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -73,7 +77,7 @@ public class InventorySorter
         bus.addListener(this::handleimc);
         bus.addListener(this::onConfigLoad);
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, Config.SPEC);
-
+        COMMAND_ARGUMENT_TYPES.register(bus);
         MinecraftForge.EVENT_BUS.addListener(this::onServerStarting);
     }
 
@@ -88,15 +92,15 @@ public class InventorySorter
     }
 
     private void handleimcmessage(final InterModComms.IMCMessage msg) {
-        if ("slotblacklist".equals(msg.getMethod())) {
-            final String slotBlacklistTarget = msg.<String>getMessageSupplier().get();
+        if ("slotblacklist".equals(msg.method())) {
+            final String slotBlacklistTarget = (String) msg.messageSupplier().get();
             if (slotblacklist.add(slotBlacklistTarget)) {
                 debugLog("SlotBlacklist added {}", ()->new String[] {slotBlacklistTarget});
             }
         }
 
-        if ("containerblacklist".equals(msg.getMethod())) {
-            final ResourceLocation slotContainerTarget = msg.<ResourceLocation>getMessageSupplier().get();
+        if ("containerblacklist".equals(msg.method())) {
+            final ResourceLocation slotContainerTarget = (ResourceLocation) msg.messageSupplier().get();
             if (containerblacklist.add(slotContainerTarget)) {
                 debugLog("ContainerBlacklist added {}", () -> new String[] {slotContainerTarget.toString()});
             }
@@ -139,60 +143,63 @@ public class InventorySorter
         }
     }
 
-    private static TextComponent greenText(final String string) {
-        final TextComponent tcs = new TextComponent(string);
+    private static Component greenText(final String string) {
+        final Component tcs = Component.translatable(string);
         tcs.getStyle().withColor(ChatFormatting.GREEN);
         return tcs;
     }
 
     static int blackListAdd(final CommandContext<CommandSourceStack> context) {
-        final ResourceLocation containerType = InventorySorterCommand.Arguments.CONTAINER.get(context);
+        final var containerType = context.getArgument("container", ResourceLocation.class);
         if (ForgeRegistries.CONTAINERS.containsKey(containerType)) {
             INSTANCE.containerblacklist.add(containerType);
             INSTANCE.updateConfig();
-            context.getSource().sendSuccess(new TranslatableComponent("inventorysorter.commands.inventorysorter.bladd.message", containerType), true);
+            context.getSource().sendSuccess(Component.translatable("inventorysorter.commands.inventorysorter.bladd.message", containerType), true);
             return 1;
         } else {
-            context.getSource().sendSuccess(new TranslatableComponent("inventorysorter.commands.inventorysorter.badtype", containerType), true);
+            context.getSource().sendSuccess(Component.translatable("inventorysorter.commands.inventorysorter.badtype", containerType), true);
             return 0;
         }
     }
 
     static int blackListRemove(final CommandContext<CommandSourceStack> context) {
-        final ResourceLocation containerType = InventorySorterCommand.Arguments.BLACKLISTED.get(context);
+        final var containerType = context.getArgument("container", ResourceLocation.class);
         if (ForgeRegistries.CONTAINERS.containsKey(containerType) && INSTANCE.containerblacklist.remove(containerType)) {
             INSTANCE.updateConfig();
-            context.getSource().sendSuccess(new TranslatableComponent("inventorysorter.commands.inventorysorter.blremove.message", containerType), true);
+            context.getSource().sendSuccess(Component.translatable("inventorysorter.commands.inventorysorter.blremove.message", containerType), true);
             return 1;
         } else {
-            context.getSource().sendSuccess(new TranslatableComponent("inventorysorter.commands.inventorysorter.badtype", containerType), true);
+            context.getSource().sendSuccess(Component.translatable("inventorysorter.commands.inventorysorter.badtype", containerType), true);
             return 0;
         }
     }
 
     static int showLast(final CommandContext<CommandSourceStack> context) {
         if (INSTANCE.lastContainerType != null) {
-            context.getSource().sendSuccess(new TranslatableComponent("inventorysorter.commands.inventorysorter.showlast.message", INSTANCE.lastContainerType), true);
+            context.getSource().sendSuccess(Component.translatable("inventorysorter.commands.inventorysorter.showlast.message", INSTANCE.lastContainerType), true);
         } else {
-            context.getSource().sendSuccess(new TranslatableComponent("inventorysorter.commands.inventorysorter.showlast.nosort"), true);
+            context.getSource().sendSuccess(Component.translatable("inventorysorter.commands.inventorysorter.showlast.nosort"), true);
         }
         return 0;
     }
 
     static int showBlacklist(final CommandContext<CommandSourceStack> context) {
         if (INSTANCE.containerblacklist.isEmpty()) {
-            context.getSource().sendSuccess(new TranslatableComponent("inventorysorter.commands.inventorysorter.showblacklist.empty"), true);
+            context.getSource().sendSuccess(Component.translatable("inventorysorter.commands.inventorysorter.showblacklist.empty"), true);
         } else {
-            context.getSource().sendSuccess(new TranslatableComponent("inventorysorter.commands.inventorysorter.showblacklist.message", listBlacklist().collect(Collectors.toList())), true);
+            context.getSource().sendSuccess(Component.translatable("inventorysorter.commands.inventorysorter.showblacklist.message", listBlacklist().collect(Collectors.toList())), true);
         }
         return 0;
     }
 
-    static Stream<String> listContainers() {
-        return ForgeRegistries.CONTAINERS.getEntries().stream().map(e->e.getKey().toString());
+    static Stream<ResourceLocation> listContainers() {
+        return ForgeRegistries.CONTAINERS.getEntries().stream().map(e->e.getKey().location());
     }
 
-    static Stream<String> listBlacklist() {
-        return INSTANCE.containerblacklist.stream().map(Object::toString);
+    static Stream<ResourceLocation> listBlacklist() {
+        return INSTANCE.containerblacklist.stream();
     }
+
+    private static final DeferredRegister<ArgumentTypeInfo<?, ?>> COMMAND_ARGUMENT_TYPES = DeferredRegister.create(Registry.COMMAND_ARGUMENT_TYPE_REGISTRY, "inventorysorter");
+    private static final RegistryObject<SingletonArgumentInfo<InventorySorterCommand.ContainerResourceLocationArgument>> CONTAINER_CLASS = COMMAND_ARGUMENT_TYPES.register("container_reslocation", ()-> ArgumentTypeInfos.registerByClass(InventorySorterCommand.ContainerResourceLocationArgument.class, SingletonArgumentInfo.contextFree(InventorySorterCommand.ContainerResourceLocationArgument::new)));
 }

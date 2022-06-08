@@ -161,7 +161,7 @@ public enum InventoryHandler
             if (o1 == o2) return 0;
             if (o1.is == o2.is) return 0;
             if (o1.is.getItem() != o2.is.getItem())
-                return String.valueOf(o1.is.getItem().getRegistryName()).compareTo(String.valueOf(o2.is.getItem().getRegistryName()));
+                return String.valueOf(o1.is.getItem().builtInRegistryHolder().key().location()).compareTo(String.valueOf(o2.is.getItem().builtInRegistryHolder().key().location()));
             if (ItemStack.tagMatches(o1.is, o2.is))
                 return 0;
             return Ints.compare(System.identityHashCode(o1.is), System.identityHashCode(o2.is));

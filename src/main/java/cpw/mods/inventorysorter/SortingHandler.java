@@ -20,10 +20,12 @@ package cpw.mods.inventorysorter;
 
 import com.google.common.base.*;
 import com.google.common.collect.*;
+import net.minecraft.core.Registry;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.*;
 
 import javax.annotation.*;
@@ -170,6 +172,6 @@ public enum SortingHandler implements Consumer<ContainerContext>
 
     private static final ResourceLocation DUMMY_PLAYER_CONTAINER = new ResourceLocation("inventorysorter:dummyplayercontainer");
     private ResourceLocation lookupContainerTypeName(AbstractContainerMenu container) {
-        return container instanceof InventoryMenu ? DUMMY_PLAYER_CONTAINER : container.getType().getRegistryName();
+        return container instanceof InventoryMenu ? DUMMY_PLAYER_CONTAINER : ForgeRegistries.CONTAINERS.getKey(container.getType());
     }
 }
