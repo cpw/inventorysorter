@@ -63,6 +63,7 @@ public class InventorySorter
     boolean debugLog;
     final Set<String> slotblacklist = new HashSet<>();
     final Set<ResourceLocation> containerblacklist = new HashSet<>();
+    final Set<ResourceLocation> containerBlacklistClient = new HashSet<>();
     boolean configLoaded = false;
 
     public InventorySorter() {
@@ -73,6 +74,7 @@ public class InventorySorter
         bus.addListener(this::handleimc);
         bus.addListener(this::onConfigLoad);
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, Config.SPEC);
+        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, ConfigClient.CLIENT_SPEC);
 
         MinecraftForge.EVENT_BUS.addListener(this::onServerStarting);
     }
@@ -108,6 +110,7 @@ public class InventorySorter
         if (!configLoaded) return;
         Config.CONFIG.containerBlacklist.set(containerblacklist.stream().map(Objects::toString).collect(Collectors.toList()));
         Config.CONFIG.slotBlacklist.set(new ArrayList<>(slotblacklist));
+        ConfigClient.CONFIG.containerBlacklistClient.set(containerBlacklistClient.stream().map(Objects::toString).collect(Collectors.toList()));
     }
 
     private void preinit(FMLCommonSetupEvent evt) {
@@ -123,6 +126,8 @@ public class InventorySorter
         this.slotblacklist.addAll(Config.CONFIG.slotBlacklist.get());
         this.containerblacklist.clear();
         this.containerblacklist.addAll(Config.CONFIG.containerBlacklist.get().stream().map(ResourceLocation::new).collect(Collectors.toSet()));
+        this.containerBlacklistClient.clear();
+        this.containerBlacklistClient.addAll(ConfigClient.CONFIG.containerBlacklistClient.get().stream().map(ResourceLocation::new).collect(Collectors.toSet()));
     }
 
     boolean wheelModConflicts() {

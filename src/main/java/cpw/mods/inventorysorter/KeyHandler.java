@@ -23,6 +23,7 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.KeyMapping;
 import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.Slot;
 import net.minecraftforge.client.ClientRegistry;
 import net.minecraftforge.client.event.ScreenEvent;
@@ -99,6 +100,14 @@ public class KeyHandler
         if (!(gui instanceof AbstractContainerScreen && !(gui instanceof CreativeModeInventoryScreen))) {
             return;
         }
+
+        // Container Blacklist Validation on Client
+        ResourceLocation containerTypeName = ((AbstractContainerScreen<?>) gui).getMenu().getType().getRegistryName();
+        if(InventorySorter.INSTANCE.containerBlacklistClient.contains(containerTypeName)) {
+            InventorySorter.INSTANCE.debugLog("Container {} blacklisted", ()->new String[] {containerTypeName.toString()});
+            return;
+        }
+
         final AbstractContainerScreen guiContainer = (AbstractContainerScreen) gui;
         Slot slot = guiContainer.getSlotUnderMouse();
         if (!ContainerContext.validSlot(slot)) {
