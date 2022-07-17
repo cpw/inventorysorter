@@ -28,7 +28,7 @@ public class ConfigClient {
         containerBlacklistClient = builder
                 .comment("Container blacklist on Client")
                 .translation("inventorysorter.config.containerblacklistclient")
-                .defineList("containerBlacklistClient", ArrayList::new, value -> ForgeRegistries.CONTAINERS.containsKey(new ResourceLocation(Objects.toString(value))));
+                .defineList("containerBlacklistClient", ArrayList::new, t -> true);
         builder.pop();
     }
 

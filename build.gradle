@@ -27,6 +27,8 @@ group= 'cpw.mods'
 archivesBaseName = 'inventorysorter'
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
+version = "19.0.1"
+
 //reckon {
 //    scopeFromProp()
 //    stageFromProp('ms', 'final')
