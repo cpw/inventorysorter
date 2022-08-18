@@ -73,15 +73,11 @@ public class InventorySorter
         INSTANCE = this;
         final IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
         bus.addListener(this::preinit);
-        bus.addListener(this::clientSetup);
         bus.addListener(this::handleimc);
         bus.addListener(this::onConfigLoad);
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, Config.SPEC);
         COMMAND_ARGUMENT_TYPES.register(bus);
         MinecraftForge.EVENT_BUS.addListener(this::onServerStarting);
-    }
-
-    private void clientSetup(FMLClientSetupEvent evt) {
         KeyHandler.init();
     }
 
@@ -151,7 +147,7 @@ public class InventorySorter
 
     static int blackListAdd(final CommandContext<CommandSourceStack> context) {
         final var containerType = context.getArgument("container", ResourceLocation.class);
-        if (ForgeRegistries.CONTAINERS.containsKey(containerType)) {
+        if (ForgeRegistries.MENU_TYPES.containsKey(containerType)) {
             INSTANCE.containerblacklist.add(containerType);
             INSTANCE.updateConfig();
             context.getSource().sendSuccess(Component.translatable("inventorysorter.commands.inventorysorter.bladd.message", containerType), true);
@@ -164,7 +160,7 @@ public class InventorySorter
 
     static int blackListRemove(final CommandContext<CommandSourceStack> context) {
         final var containerType = context.getArgument("container", ResourceLocation.class);
-        if (ForgeRegistries.CONTAINERS.containsKey(containerType) && INSTANCE.containerblacklist.remove(containerType)) {
+        if (ForgeRegistries.MENU_TYPES.containsKey(containerType) && INSTANCE.containerblacklist.remove(containerType)) {
             INSTANCE.updateConfig();
             context.getSource().sendSuccess(Component.translatable("inventorysorter.commands.inventorysorter.blremove.message", containerType), true);
             return 1;
@@ -193,7 +189,7 @@ public class InventorySorter
     }
 
     static Stream<ResourceLocation> listContainers() {
-        return ForgeRegistries.CONTAINERS.getEntries().stream().map(e->e.getKey().location());
+        return ForgeRegistries.MENU_TYPES.getEntries().stream().map(e->e.getKey().location());
     }
 
     static Stream<ResourceLocation> listBlacklist() {
