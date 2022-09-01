@@ -29,8 +29,10 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.ChatFormatting;
 import net.minecraft.world.inventory.MenuType;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.InterModComms;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -78,7 +80,7 @@ public class InventorySorter
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, Config.SPEC);
         COMMAND_ARGUMENT_TYPES.register(bus);
         MinecraftForge.EVENT_BUS.addListener(this::onServerStarting);
-        KeyHandler.init();
+        DistExecutor.safeRunWhenOn(Dist.CLIENT, ()->KeyHandler::init);
     }
 
     private void handleimc(final InterModProcessEvent evt)

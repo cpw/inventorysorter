@@ -60,9 +60,10 @@ public class KeyHandler
 
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onKeyMappingEvent);
 
-        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, this::onKey);
-        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, this::onMouse);
-        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, this::onScroll);
+        var eh = new ScreenEventHandler();
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, eh::onKey);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, eh::onMouse);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, eh::onScroll);
     }
 
     static void init() {
@@ -72,18 +73,19 @@ public class KeyHandler
     public void onKeyMappingEvent(RegisterKeyMappingsEvent evt) {
         keyBindingMap.keySet().forEach(evt::register);
     }
-    private void onKey(ScreenEvent.KeyPressed.Pre evt) {
-        onInputEvent(evt, this::keyEvaluate);
-    }
+    private class ScreenEventHandler {
+        private void onKey(ScreenEvent.KeyPressed.Pre evt) {
+            onInputEvent(evt, KeyHandler.this::keyEvaluate);
+        }
 
-    private void onMouse(ScreenEvent.MouseButtonPressed.Pre evt) {
-        onInputEvent(evt, this::mouseClickEvaluate);
-    }
+        private void onMouse(ScreenEvent.MouseButtonPressed.Pre evt) {
+            onInputEvent(evt, KeyHandler.this::mouseClickEvaluate);
+        }
 
-    private void onScroll(ScreenEvent.MouseScrolled.Pre evt) {
-        onInputEvent(evt, this::mouseScrollEvaluate);
+        private void onScroll(ScreenEvent.MouseScrolled.Pre evt) {
+            onInputEvent(evt, KeyHandler.this::mouseScrollEvaluate);
+        }
     }
-
     private boolean keyEvaluate(final KeyMapping kb, final ScreenEvent.KeyPressed.Pre evt) {
         return kb.matches(evt.getKeyCode(), evt.getScanCode());
     }
