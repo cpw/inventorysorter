@@ -28,32 +28,27 @@ import java.util.Objects;
 /**
  * Created by cpw on 08/01/16.
  */
-public final class Network
-{
-    private static ResourceLocation invsorter = new ResourceLocation("inventorysorter","net");
+public final class Network {
+    private static final ResourceLocation invsorter = new ResourceLocation("inventorysorter", "net");
 
     public static void init() {
 
     }
 
-    public static class ActionMessage
-    {
+    public static class ActionMessage {
         Action action;
         int slotIndex;
 
-        ActionMessage(Action action, int slotIndex)
-        {
+        ActionMessage(Action action, int slotIndex) {
             this.action = action;
             this.slotIndex = slotIndex;
         }
 
-        static ActionMessage fromBytes(ByteBuf buf)
-        {
-            return new ActionMessage(Action.values()[buf.readByte()],buf.readInt());
+        static ActionMessage fromBytes(ByteBuf buf) {
+            return new ActionMessage(Action.values()[buf.readByte()], buf.readInt());
         }
 
-        void toBytes(ByteBuf buf)
-        {
+        void toBytes(ByteBuf buf) {
             buf.writeByte(action.ordinal());
             buf.writeInt(slotIndex);
         }
@@ -61,17 +56,18 @@ public final class Network
 
 
     static SimpleChannel channel;
-    static {
-        channel = NetworkRegistry.ChannelBuilder.named(invsorter).
-                clientAcceptedVersions(s -> Objects.equals(s, "1")).
-                serverAcceptedVersions(s -> Objects.equals(s, "1")).
-                networkProtocolVersion(() -> "1").
-                simpleChannel();
 
-        channel.messageBuilder(ActionMessage.class, 1).
-                decoder(ActionMessage::fromBytes).
-                encoder(ActionMessage::toBytes).
-                consumer(ServerHandler::onMessage).
-                add();
+    static {
+        channel = NetworkRegistry.ChannelBuilder.named(invsorter)
+                .clientAcceptedVersions(s -> Objects.equals(s, "1"))
+                .serverAcceptedVersions(s -> Objects.equals(s, "1"))
+                .networkProtocolVersion(() -> "1")
+                .simpleChannel();
+
+        channel.messageBuilder(ActionMessage.class, 1)
+                .decoder(ActionMessage::fromBytes)
+                .encoder(ActionMessage::toBytes)
+                .consumerMainThread(ServerHandler::onMessage)
+                .add();
     }
 }
