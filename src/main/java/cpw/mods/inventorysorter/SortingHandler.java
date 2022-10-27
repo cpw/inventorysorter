@@ -113,12 +113,12 @@ public enum SortingHandler implements Consumer<ContainerContext>
             context.player.containerMenu.getSlot(slot).setChanged();
         }
     }
-    private void compactInventory(final ContainerContext context, final Multiset<ItemStackHolder> itemcounts)
-    {
-        final ResourceLocation containerTypeName = lookupContainerTypeName(context.player.inventoryMenu);
+    private void compactInventory(final ContainerContext context, final Multiset<ItemStackHolder> itemcounts) {
+        final ResourceLocation containerTypeName = lookupContainerTypeName(context.player.containerMenu);
+
         InventorySorter.INSTANCE.lastContainerType = containerTypeName;
         if (InventorySorter.INSTANCE.containerblacklist.contains(containerTypeName)) {
-            InventorySorter.INSTANCE.debugLog("Container {} blacklisted", ()->new String[] {containerTypeName.toString()});
+            InventorySorter.INSTANCE.debugLog("Container {} blacklisted", ()-> new String[] {containerTypeName.toString()});
             return;
         }
 

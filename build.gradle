@@ -10,6 +10,7 @@ buildscript {
         classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
     }
 }
+
 plugins {
     id 'com.matthewprenger.cursegradle' version '1.4.0'
     id 'se.bjurr.gitchangelog.git-changelog-gradle-plugin' version '1.71.4'
@@ -33,7 +34,7 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 version = grgit.describe(longDescr: true).split('-').with { "${it[0]}.${it[1]}" }
 
 minecraft {
-    mappings channel: MCP_CHANNEL, version: MCP_MAPPINGS
+    mappings channel: "official", version: MC_VERSION
     runs {
         client {
             workingDirectory project.file('run')
@@ -58,7 +59,7 @@ minecraft {
             property 'forge.logging.noansi', 'false'
             ideaModule "${project.name}.main"
         }
-        
+
         data {
             workingDirectory project.file('run')
             property 'forge.logging.markers', 'SCAN'

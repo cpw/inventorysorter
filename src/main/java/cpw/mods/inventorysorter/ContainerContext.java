@@ -3,6 +3,7 @@ package cpw.mods.inventorysorter;
 import com.google.common.collect.*;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
+import net.minecraftforge.items.SlotItemHandler;
 import org.apache.logging.log4j.*;
 
 import java.util.*;
@@ -26,6 +27,9 @@ class ContainerContext
     static boolean validSlot(Slot slot) {
         // Skip slots without an inventory - they're probably dummy slots
         return slot != null && slot.container != null
+                // Skip slots where the inventory has no slots, these are probably dummies too.
+                // Since SlotItemHandler also uses empty fake containers, whitelist that explicitly.
+                && (slot instanceof SlotItemHandler || slot.container.getContainerSize() > 0)
                 // Skip blacklisted slots
                 && !InventorySorter.INSTANCE.slotblacklist.contains(slot.getClass().getName());
     }
