@@ -26,8 +26,8 @@ import net.minecraft.commands.SharedSuggestionProvider;
 
 public class InventorySorterCommand {
     public static void register(final CommandDispatcher<CommandSourceStack> dispatcher) {
-        final LiteralArgumentBuilder<CommandSourceStack> invsorterBuilder = Commands.literal("invsorter").
-                requires(cs->cs.hasPermission(1));
+        final LiteralArgumentBuilder<CommandSourceStack> invsorterBuilder = Commands.literal("invsorter")
+                        .requires(cs->cs.hasPermission(1));
 
         Stream.of(CommandAction.values()).forEach(a->invsorterBuilder.then(a.getCommand()));
         invsorterBuilder.executes(InventorySorterCommand::help);
@@ -35,7 +35,7 @@ public class InventorySorterCommand {
     }
 
     private static int help(final CommandContext<CommandSourceStack> context) {
-        context.getSource().sendFailure(new TranslatableComponent("inventorysorter.commands.inventorysorter.usage"));
+        context.getSource().sendSuccess(new TranslatableComponent("inventorysorter.commands.inventorysorter.usage"), false);
         return 0;
     }
 
@@ -59,7 +59,8 @@ public class InventorySorterCommand {
             final Optional<ArgumentBuilder<CommandSourceStack, ?>> argBuilder = argumentSupplier.stream()
                     .<ArgumentBuilder<CommandSourceStack, ?>>map(TypedArgumentHandler::build)
                     .reduce(ArgumentBuilder::then);
-            ifPresentOrElse(argBuilder, b -> builder.then(b.executes(this.action::applyAsInt)), ()->builder.executes(this.action::applyAsInt));
+
+            argBuilder.ifPresentOrElse(b -> builder.then(b.executes(this.action::applyAsInt)), ()->builder.executes(this.action::applyAsInt));
         }
 
         public LiteralArgumentBuilder<CommandSourceStack> getCommand() {
@@ -68,7 +69,6 @@ public class InventorySorterCommand {
             addArguments(base);
             return base;
         }
-
     }
 
     public static class Arguments {
@@ -125,14 +125,4 @@ public class InventorySorterCommand {
             return EXAMPLES;
         }
     }
-
-
-    public static <T> void ifPresentOrElse(Optional<T> optional, Consumer<? super T> action, Runnable emptyAction) {
-        if (optional.isPresent()) {
-            action.accept(optional.get());
-        } else {
-            emptyAction.run();
-        }
-    }
-
 }
