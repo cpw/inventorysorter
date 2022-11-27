@@ -22,6 +22,7 @@
   "inventorysorter.commands.inventorysorter.showlast.nosort": "You have not sorted a container yet. Try sorting one!",
   "inventorysorter.commands.inventorysorter.showblacklist.message": "Current blacklist §e{0}§f",
   "inventorysorter.commands.inventorysorter.showblacklist.empty": "The blacklist is empty",
+  "inventorysorter.commands.inventorysorter.setorder.ok": "Set ordering method to §e{0}§f",
   "inventorysorter.config.containerblacklist": "Container blacklist",
   "inventorysorter.config.slotblacklist": "Slot type blacklist"
 }
