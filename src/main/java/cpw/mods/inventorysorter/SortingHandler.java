@@ -20,6 +20,8 @@ package cpw.mods.inventorysorter;
 
 import com.google.common.base.*;
 import com.google.common.collect.*;
+import com.google.common.collect.Multiset.Entry;
+
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.inventory.Slot;
@@ -27,6 +29,9 @@ import net.minecraft.resources.ResourceLocation;
 import org.apache.logging.log4j.*;
 
 import javax.annotation.*;
+
+import java.util.Comparator;
+import java.util.Iterator;
 import java.util.function.*;
 
 import net.minecraft.world.inventory.CraftingContainer;
@@ -123,10 +128,10 @@ public enum SortingHandler implements Consumer<ContainerContext>
         }
 
         InventorySorter.INSTANCE.debugLog("Container \"{}\" being sorted", ()->new String[] {containerTypeName.toString()});
-        final UnmodifiableIterator<Multiset.Entry<ItemStackHolder>> itemsIterator;
+        final Iterator<Multiset.Entry<ItemStackHolder>> itemsIterator;
         try
         {
-            itemsIterator = Multisets.copyHighestCountFirst(itemcounts).entrySet().iterator();
+            itemsIterator = InventorySorter.INSTANCE.itemOrdering.ordered(itemcounts).iterator();
         }
         catch (Exception e)
         {

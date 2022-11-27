@@ -23,6 +23,7 @@ import java.util.stream.*;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraftforge.server.command.EnumArgument;
 
 public class InventorySorterCommand {
     public static void register(final CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -43,7 +44,8 @@ public class InventorySorterCommand {
         BLADD(InventorySorter::blackListAdd, 1, Arguments.CONTAINER),
         BLREMOVE(InventorySorter::blackListRemove, 4, Arguments.BLACKLISTED),
         SHOWLAST(InventorySorter::showLast, 1),
-        LIST(InventorySorter::showBlacklist, 1);
+        LIST(InventorySorter::showBlacklist, 1),
+        SETORDERING(InventorySorter::setItemOrdering, 1, Arguments.ORDERING);
 
         private final int permissionLevel;
         private final ToIntFunction<CommandContext<CommandSourceStack>> action;
@@ -74,6 +76,7 @@ public class InventorySorterCommand {
     public static class Arguments {
         static final TypedArgumentHandler<ResourceLocation> CONTAINER = new TypedArgumentHandler<>("container", () -> new ContainerClassArgument(InventorySorter::listContainers));
         static final TypedArgumentHandler<ResourceLocation> BLACKLISTED = new TypedArgumentHandler<>("blacklisted", () -> new ContainerClassArgument(InventorySorter::listBlacklist));
+        static final TypedArgumentHandler<ItemOrdering> ORDERING = new TypedArgumentHandler<>("ordering", ItemOrdering.class, () -> EnumArgument.enumArgument(ItemOrdering.class));
     }
 
     public static class TypedArgumentHandler<T> {
@@ -83,10 +86,12 @@ public class InventorySorterCommand {
 
         @SuppressWarnings("unchecked")
         TypedArgumentHandler(final String argName, final Supplier<? extends ArgumentType<T>> argumentType) {
+            this(argName, (Class<T>) TypeResolver.resolveRawArguments(ArgumentType.class, argumentType.get().getClass())[0], argumentType);
+        }
+        TypedArgumentHandler(final String argName, Class<T> clazz, final Supplier<? extends ArgumentType<T>> argumentType) {
             this.argName = argName;
             this.argumentType = argumentType.get();
-            final Class<?>[] classes = TypeResolver.resolveRawArguments(ArgumentType.class, this.argumentType.getClass());
-            this.clazz = (Class<T>) classes[0];
+            this.clazz = clazz;
         }
 
         public static <A> TypedArgumentHandler<A> of(final String argumentName, final Supplier<? extends ArgumentType<A>> supplier) {

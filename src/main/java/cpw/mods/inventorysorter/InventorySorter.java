@@ -66,6 +66,8 @@ public class InventorySorter
     final Set<String> imcSlotBlacklist = new HashSet<>();
     final Set<ResourceLocation> imcContainerBlacklist = new HashSet<>();
 
+    ItemOrdering itemOrdering = ItemOrdering.BY_COUNT;
+
     public InventorySorter() {
         INSTANCE = this;
         final IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
@@ -140,11 +142,13 @@ public class InventorySorter
     private void updateConfig() {
         Config.CONFIG.containerBlacklist.set(containerblacklist.stream().filter(e -> !imcContainerBlacklist.contains(e)).map(Objects::toString).collect(Collectors.toList()));
         Config.CONFIG.slotBlacklist.set(slotblacklist.stream().filter(e -> !imcSlotBlacklist.contains(e)).collect(Collectors.toList()));
+        Config.CONFIG.itemOrdering.set(itemOrdering);
 
         updateBlacklists();
     }
 
     void onConfigLoad(ModConfigEvent configEvent) {
+		itemOrdering = Config.CONFIG.itemOrdering.get();
         updateBlacklists();
     }
 
@@ -202,6 +206,14 @@ public class InventorySorter
         } else {
             context.getSource().sendSuccess(new TranslatableComponent("inventorysorter.commands.inventorysorter.showblacklist.message", listBlacklist().collect(Collectors.toList())), true);
         }
+        return 0;
+    }
+
+    static int setItemOrdering(final CommandContext<CommandSourceStack> context) {
+        final ItemOrdering newOrdering = InventorySorterCommand.Arguments.ORDERING.get(context);
+        INSTANCE.itemOrdering = newOrdering;
+        INSTANCE.updateConfig();
+        context.getSource().sendSuccess(new TranslatableComponent("inventorysorter.commands.inventorysorter.setorder.ok", newOrdering.toString()), true);
         return 0;
     }
 
