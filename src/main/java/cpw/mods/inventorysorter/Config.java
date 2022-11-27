@@ -19,6 +19,8 @@ public class Config {
     final ForgeConfigSpec.ConfigValue<List<? extends String>> containerBlacklist;
     final ForgeConfigSpec.ConfigValue<List<? extends String>> slotBlacklist;
 
+    final ForgeConfigSpec.ConfigValue<ItemOrdering> itemOrdering;
+
     private Config(ForgeConfigSpec.Builder builder) {
         builder.comment("Inventory sorter blacklists");
         builder.push("blacklists");
@@ -31,5 +33,10 @@ public class Config {
                 .translation("inventorysorter.config.slotblacklist")
                 .defineList("slotBlacklist", new ArrayList<>(), t -> true);
         builder.pop();
+
+        itemOrdering = builder
+                .comment("Item ordering method")
+                .translation("inventorysorter.config.itemordering")
+                .defineEnum("itemOrdering", ItemOrdering.BY_COUNT);
     }
 }

@@ -71,6 +71,8 @@ public class InventorySorter
     final Set<ResourceLocation> containerblacklist = new HashSet<>();
     boolean configLoaded = false;
 
+    ItemOrdering itemOrdering = ItemOrdering.BY_COUNT;
+
     public InventorySorter() {
         INSTANCE = this;
         final IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
@@ -110,6 +112,7 @@ public class InventorySorter
         if (!configLoaded) return;
         Config.CONFIG.containerBlacklist.set(containerblacklist.stream().map(Objects::toString).collect(Collectors.toList()));
         Config.CONFIG.slotBlacklist.set(new ArrayList<>(slotblacklist));
+        Config.CONFIG.itemOrdering.set(itemOrdering);
     }
 
     private void preinit(FMLCommonSetupEvent evt) {
@@ -125,6 +128,8 @@ public class InventorySorter
         this.slotblacklist.addAll(Config.CONFIG.slotBlacklist.get());
         this.containerblacklist.clear();
         this.containerblacklist.addAll(Config.CONFIG.containerBlacklist.get().stream().map(ResourceLocation::new).collect(Collectors.toSet()));
+
+		itemOrdering = Config.CONFIG.itemOrdering.get();
     }
 
     boolean wheelModConflicts() {
@@ -192,6 +197,14 @@ public class InventorySorter
 
     static Stream<ResourceLocation> listContainers() {
         return ForgeRegistries.MENU_TYPES.getEntries().stream().map(e->e.getKey().location());
+	}
+
+    static int setItemOrdering(final CommandContext<CommandSourceStack> context) {
+        final ItemOrdering newOrdering = context.getArgument("ordering", ItemOrdering.class);
+        INSTANCE.itemOrdering = newOrdering;
+        INSTANCE.updateConfig();
+        context.getSource().sendSuccess(Component.translatable("inventorysorter.commands.inventorysorter.setorder.ok", newOrdering.toString()), true);
+        return 0;
     }
 
     static Stream<ResourceLocation> listBlacklist() {
