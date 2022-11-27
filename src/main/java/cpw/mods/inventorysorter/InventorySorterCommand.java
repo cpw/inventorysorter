@@ -26,6 +26,7 @@ import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraftforge.fml.loading.StringUtils;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
+import net.minecraftforge.server.command.EnumArgument;
 
 public class InventorySorterCommand {
     public static void register(final CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -49,13 +50,14 @@ public class InventorySorterCommand {
         BLADD(InventorySorter::blackListAdd, 1, Commands.argument("container", new ContainerResourceLocationArgument()).suggests(suggester(InventorySorter::listContainers))),
         BLREMOVE(InventorySorter::blackListRemove, 4, Commands.argument("container", new ContainerResourceLocationArgument()).suggests(suggester(InventorySorter::listBlacklist))),
         SHOWLAST(InventorySorter::showLast, 1, null),
-        LIST(InventorySorter::showBlacklist, 1, null);
+        LIST(InventorySorter::showBlacklist, 1, null),
+        SETORDERING(InventorySorter::setItemOrdering, 1, Commands.argument("ordering", EnumArgument.enumArgument(ItemOrdering.class)));
 
         private final int permissionLevel;
-        private RequiredArgumentBuilder<CommandSourceStack, ResourceLocation> suggester;
+        private RequiredArgumentBuilder<CommandSourceStack, ?> suggester;
         private final ToIntFunction<CommandContext<CommandSourceStack>> action;
 
-        CommandAction(final ToIntFunction<CommandContext<CommandSourceStack>> action, final int permissionLevel, final RequiredArgumentBuilder<CommandSourceStack, ResourceLocation> suggester) {
+        CommandAction(final ToIntFunction<CommandContext<CommandSourceStack>> action, final int permissionLevel, final RequiredArgumentBuilder<CommandSourceStack, ?> suggester) {
             this.action = action;
             this.permissionLevel = permissionLevel;
             this.suggester = suggester;

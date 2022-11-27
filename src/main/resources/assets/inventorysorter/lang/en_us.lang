@@ -20,3 +20,4 @@ inventorysorter.commands.inventorysorter.show.message=Last container sorted %1$s
 inventorysorter.commands.inventorysorter.list.message=Current blacklist %1$s
 inventorysorter.commands.inventorysorter.list.empty=The blacklist is empty
 inventorysorter.commands.inventorysorter.noop=§cThe last command had no effect (maybe try sorting a container?)
+inventorysorter.commands.inventorysorter.setorder.ok=Set ordering method to §e{0}§f
