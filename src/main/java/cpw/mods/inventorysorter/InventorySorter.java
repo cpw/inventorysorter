@@ -19,16 +19,14 @@
 package cpw.mods.inventorysorter;
 
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.logging.LogUtils;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.synchronization.ArgumentTypeInfo;
 import net.minecraft.commands.synchronization.ArgumentTypeInfos;
 import net.minecraft.commands.synchronization.SingletonArgumentInfo;
 import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.ChatFormatting;
-import net.minecraft.world.inventory.MenuType;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -39,16 +37,15 @@ import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -64,12 +61,14 @@ public class InventorySorter
 {
     public static InventorySorter INSTANCE;
 
-    static final Logger LOGGER = LogManager.getLogger();
+    static final Logger LOGGER = LogUtils.getLogger();
     ResourceLocation lastContainerType;
     boolean debugLog;
+
     final Set<String> slotblacklist = new HashSet<>();
     final Set<ResourceLocation> containerblacklist = new HashSet<>();
-    boolean configLoaded = false;
+    final Set<String> imcSlotBlacklist = new HashSet<>();
+    final Set<ResourceLocation> imcContainerBlacklist = new HashSet<>();
 
     public InventorySorter() {
         INSTANCE = this;
@@ -86,30 +85,37 @@ public class InventorySorter
     private void handleimc(final InterModProcessEvent evt)
     {
         final Stream<InterModComms.IMCMessage> imc = InterModComms.getMessages("inventorysorter");
-        imc.forEach(this::handleimcmessage);
+        imc.forEach(this::handleIMCMessage);
     }
 
-    private void handleimcmessage(final InterModComms.IMCMessage msg) {
+    /**
+     * Supply an IMC of `slotblacklist` as {@link String} to add to the slot blacklist. This uses the complete class path.
+     * For example `net.minecraft.world.inventory.Slot`
+     * <p>
+     * Supply an IMC of `containerblacklist as {@link ResourceLocation} to add to the container blacklist. This uses
+     * the container / menu type, for example: `minecraft:generic_3x3`
+     */
+    private void handleIMCMessage(final InterModComms.IMCMessage msg) {
         if ("slotblacklist".equals(msg.method())) {
-            final String slotBlacklistTarget = (String) msg.messageSupplier().get();
-            if (slotblacklist.add(slotBlacklistTarget)) {
-                debugLog("SlotBlacklist added {}", ()->new String[] {slotBlacklistTarget});
+            Object message = msg.messageSupplier().get();
+            if (message instanceof final String blackListTarget && imcSlotBlacklist.add(blackListTarget)) {
+                debugLog("SlotBlacklist added {}", () -> new String[]{blackListTarget});
+            } else {
+                LOGGER.warn("Rejected slotblacklist due to bad messageSupplier type. Please supply a [String]");
             }
         }
 
         if ("containerblacklist".equals(msg.method())) {
-            final ResourceLocation slotContainerTarget = (ResourceLocation) msg.messageSupplier().get();
-            if (containerblacklist.add(slotContainerTarget)) {
-                debugLog("ContainerBlacklist added {}", () -> new String[] {slotContainerTarget.toString()});
+            Object message = msg.messageSupplier().get();
+            if (message instanceof final ResourceLocation blackListTarget && imcContainerBlacklist.add(blackListTarget)) {
+                debugLog("ContainerBlacklist added {}", () -> new String[] {blackListTarget.toString()});
+            } else {
+                LOGGER.warn("Rejected containerblacklist due to bad messageSupplier type. Please supply a [ResourceLocation]");
             }
         }
-        updateConfig();
-    }
 
-    private void updateConfig() {
-        if (!configLoaded) return;
-        Config.CONFIG.containerBlacklist.set(containerblacklist.stream().map(Objects::toString).collect(Collectors.toList()));
-        Config.CONFIG.slotBlacklist.set(new ArrayList<>(slotblacklist));
+        this.slotblacklist.addAll(imcSlotBlacklist);
+        this.containerblacklist.addAll(imcContainerBlacklist);
     }
 
     private void preinit(FMLCommonSetupEvent evt) {
@@ -118,13 +124,30 @@ public class InventorySorter
 
     private void onServerStarting(ServerStartingEvent evt) {
         InventorySorterCommand.register(evt.getServer().getCommands().getDispatcher());
+        this.slotblacklist.addAll(Config.CONFIG.slotBlacklist.get());
+        this.containerblacklist.addAll(Config.CONFIG.containerBlacklist.get().stream().map(ResourceLocation::new).collect(Collectors.toSet()));
+    }
+
+    private void updateBlacklists() {
+        // Clear all entries
+        this.slotblacklist.clear();
+        this.containerblacklist.clear();
+
+        // Merge in the config values and the imc values
+        this.slotblacklist.addAll(Config.CONFIG.slotBlacklist.get());
+        this.containerblacklist.addAll(Config.CONFIG.containerBlacklist.get().stream().map(ResourceLocation::new).collect(Collectors.toSet()));
+        this.slotblacklist.addAll(imcSlotBlacklist);
+        this.containerblacklist.addAll(imcContainerBlacklist);
+    }
+
+    private void updateConfig() {
+        Config.CONFIG.containerBlacklist.set(containerblacklist.stream().map(Objects::toString).collect(Collectors.toList()));
+        Config.CONFIG.slotBlacklist.set(new ArrayList<>(slotblacklist));
+        updateBlacklists();
     }
 
     void onConfigLoad(ModConfigEvent configEvent) {
-        this.slotblacklist.clear();
-        this.slotblacklist.addAll(Config.CONFIG.slotBlacklist.get());
-        this.containerblacklist.clear();
-        this.containerblacklist.addAll(Config.CONFIG.containerBlacklist.get().stream().map(ResourceLocation::new).collect(Collectors.toSet()));
+        updateBlacklists();
     }
 
     boolean wheelModConflicts() {
@@ -139,12 +162,6 @@ public class InventorySorter
         if (debugLog) {
             LOGGER.error(message, (Object[]) args.get());
         }
-    }
-
-    private static Component greenText(final String string) {
-        final Component tcs = Component.translatable(string);
-        tcs.getStyle().withColor(ChatFormatting.GREEN);
-        return tcs;
     }
 
     static int blackListAdd(final CommandContext<CommandSourceStack> context) {
@@ -191,7 +208,7 @@ public class InventorySorter
     }
 
     static Stream<ResourceLocation> listContainers() {
-        return ForgeRegistries.MENU_TYPES.getEntries().stream().map(e->e.getKey().location());
+        return ForgeRegistries.MENU_TYPES.getEntries().stream().map(e -> e.getKey().location());
     }
 
     static Stream<ResourceLocation> listBlacklist() {

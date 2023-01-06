@@ -18,9 +18,7 @@
 
 package cpw.mods.inventorysorter;
 
-import com.google.common.base.*;
 import com.google.common.collect.*;
-import net.minecraft.core.Registry;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.inventory.Slot;
@@ -28,7 +26,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.*;
 
-import javax.annotation.*;
 import java.util.function.*;
 
 import net.minecraft.world.inventory.CraftingContainer;
@@ -115,12 +112,11 @@ public enum SortingHandler implements Consumer<ContainerContext>
             context.player.containerMenu.getSlot(slot).setChanged();
         }
     }
-    private void compactInventory(final ContainerContext context, final Multiset<ItemStackHolder> itemcounts)
-    {
-        final ResourceLocation containerTypeName = lookupContainerTypeName(context.player.inventoryMenu);
+    private void compactInventory(final ContainerContext context, final Multiset<ItemStackHolder> itemcounts) {
+        final ResourceLocation containerTypeName = lookupContainerTypeName(context.player.containerMenu);
         InventorySorter.INSTANCE.lastContainerType = containerTypeName;
         if (InventorySorter.INSTANCE.containerblacklist.contains(containerTypeName)) {
-            InventorySorter.INSTANCE.debugLog("Container {} blacklisted", ()->new String[] {containerTypeName.toString()});
+            InventorySorter.INSTANCE.debugLog("Container {} blacklisted", () -> new String[] {containerTypeName.toString()});
             return;
         }
 
@@ -144,7 +140,7 @@ public enum SortingHandler implements Consumer<ContainerContext>
         {
             final Slot slot = context.player.containerMenu.getSlot(i);
             if (!slot.mayPickup(context.player) && slot.hasItem()) {
-                InventorySorter.LOGGER.log(Level.DEBUG, "Slot {} of container {} disallows canTakeStack", ()->slot.index, ()-> containerTypeName);
+                InventorySorter.LOGGER.debug("Slot {} of container {} disallows canTakeStack", slot.index, containerTypeName);
                 continue;
             }
             slot.set(ItemStack.EMPTY);
@@ -157,7 +153,7 @@ public enum SortingHandler implements Consumer<ContainerContext>
             // The item isn't valid for this slot
             if (!target.isEmpty() && !slot.mayPlace(target)) {
                 final ItemStack trg = target;
-                InventorySorter.LOGGER.log(Level.DEBUG, "Item {} is not valid in slot {} of container {}", ()->trg, ()->slot.index, ()-> containerTypeName);
+                InventorySorter.LOGGER.debug("Item {} is not valid in slot {} of container {}", trg, slot.index, containerTypeName);
                 continue;
             }
             slot.set(target.isEmpty() ? ItemStack.EMPTY : target);
