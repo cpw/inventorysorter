@@ -24,7 +24,6 @@ import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.registries.ForgeRegistries;
-import org.apache.logging.log4j.*;
 
 import java.util.function.*;
 
