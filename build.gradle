@@ -99,7 +99,7 @@ curseforge {
         changelog = file('CHANGELOG.md')
         changelogType = 'markdown'
         releaseType = project.findProperty('releaseType') ?: 'alpha'
-        addGameVersion '1.19.2'
+        addGameVersion '1.19.3'
     }
     options {
         javaVersionAutoDetect = true // defaults to true
