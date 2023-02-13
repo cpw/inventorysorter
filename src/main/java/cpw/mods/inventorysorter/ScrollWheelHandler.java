@@ -20,7 +20,6 @@ package cpw.mods.inventorysorter;
 
 import net.minecraft.world.inventory.Slot;
 
-import javax.annotation.*;
 import java.util.*;
 import java.util.function.*;
 import java.util.stream.*;
@@ -31,8 +30,7 @@ import net.minecraft.world.item.ItemStack;
 /**
  * @author cpw
  */
-public enum ScrollWheelHandler implements Consumer<ContainerContext>
-{
+public enum ScrollWheelHandler implements Consumer<ContainerContext> {
     ONEITEMIN(-1), ONEITEMOUT(1);
 
     private final int moveAmount;
@@ -41,7 +39,6 @@ public enum ScrollWheelHandler implements Consumer<ContainerContext>
     {
         this.moveAmount = amount;
     }
-    @Nullable
     @Override
     public void accept(ContainerContext context)
     {

@@ -18,19 +18,21 @@
 
 package cpw.mods.inventorysorter;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.KeyMapping;
 import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.level.GameType;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.client.event.ScreenEvent;
 import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.*;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import org.apache.logging.log4j.*;
 
 import java.util.AbstractMap;
 import java.util.Map;
@@ -101,19 +103,24 @@ public class KeyHandler
     }
 
     private <T extends ScreenEvent> void onInputEvent(T evt, BiPredicate<KeyMapping, T> kbTest) {
-        final Screen gui = evt.getScreen();
-        if (!(gui instanceof AbstractContainerScreen && !(gui instanceof CreativeModeInventoryScreen))) {
+        // Don't sort on spectator
+        MultiPlayerGameMode gameMode = Minecraft.getInstance().gameMode;
+        if (gameMode != null && gameMode.getPlayerMode() == GameType.SPECTATOR) {
             return;
         }
-        final AbstractContainerScreen guiContainer = (AbstractContainerScreen) gui;
+        final Screen gui = evt.getScreen();
+        if (!(gui instanceof final AbstractContainerScreen<?> guiContainer && !(gui instanceof CreativeModeInventoryScreen))) {
+            return;
+        }
         Slot slot = guiContainer.getSlotUnderMouse();
         if (!ContainerContext.validSlot(slot)) {
-            InventorySorter.LOGGER.log(Level.DEBUG, "Skipping action handling for blacklisted slot");
+            InventorySorter.LOGGER.debug("Skipping action handling for blacklisted slot");
             return;
         }
+
         final Optional<Action> action = keyBindingMap.entrySet().stream().filter(e -> kbTest.test(e.getKey(), evt)).
                 map(Map.Entry::getValue).findFirst();
-        if (!action.isPresent()) return;
+        if (action.isEmpty()) return;
 
         final Action triggeredAction = action.get();
         if (triggeredAction.isActive())

@@ -9,10 +9,6 @@ import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
-import net.minecraft.commands.synchronization.ArgumentTypeInfo;
-import net.minecraft.commands.synchronization.ArgumentTypeInfos;
-import net.minecraft.commands.synchronization.SingletonArgumentInfo;
-import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
@@ -24,13 +20,11 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraftforge.fml.loading.StringUtils;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.RegistryObject;
 
 public class InventorySorterCommand {
     public static void register(final CommandDispatcher<CommandSourceStack> dispatcher) {
-        final LiteralArgumentBuilder<CommandSourceStack> invsorterBuilder = Commands.literal("invsorter").
-                requires(cs->cs.hasPermission(1));
+        final LiteralArgumentBuilder<CommandSourceStack> invsorterBuilder = Commands.literal("invsorter")
+                        .requires(cs->cs.hasPermission(1));
 
         Stream.of(CommandAction.values()).forEach(a->invsorterBuilder.then(a.buildCommand()));
         invsorterBuilder.executes(InventorySorterCommand::help);
@@ -38,7 +32,7 @@ public class InventorySorterCommand {
     }
 
     private static int help(final CommandContext<CommandSourceStack> context) {
-        context.getSource().sendFailure(Component.translatable("inventorysorter.commands.inventorysorter.usage"));
+        context.getSource().sendSuccess(Component.translatable("inventorysorter.commands.inventorysorter.usage"), false);
         return 0;
     }
 
