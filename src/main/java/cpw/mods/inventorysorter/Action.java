@@ -19,37 +19,35 @@
 package cpw.mods.inventorysorter;
 
 import net.minecraft.world.inventory.Slot;
+import net.minecraftforge.common.ForgeConfigSpec;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.function.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by cpw on 08/01/16.
  */
 public enum Action
 {
-    SORT(SortingHandler.INSTANCE, "key.inventorysorter.sort", GLFW.GLFW_MOUSE_BUTTON_MIDDLE, "middleClickSorting", "Middle-click sorting module", true, InventorySorter.INSTANCE::sortingModConflicts),
-    ONEITEMIN(ScrollWheelHandler.ONEITEMIN, "key.inventorysorter.itemin", 99, "mouseWheelMoving", "Mouse wheel movement module", true, InventorySorter.INSTANCE::wheelModConflicts),
-    ONEITEMOUT(ScrollWheelHandler.ONEITEMOUT, "key.inventorysorter.itemout", 101, "mouseWheelMoving", "Mouse wheel movement module", true, InventorySorter.INSTANCE::wheelModConflicts);
+    SORT(SortingHandler.INSTANCE, "key.inventorysorter.sort", GLFW.GLFW_MOUSE_BUTTON_MIDDLE, Config.ClientConfig.CONFIG.sortingModule),
+    ONEITEMIN(ScrollWheelHandler.ONEITEMIN, "key.inventorysorter.itemin", 99, Config.ClientConfig.CONFIG.wheelmoveModule),
+    ONEITEMOUT(ScrollWheelHandler.ONEITEMOUT, "key.inventorysorter.itemout", 101, Config.ClientConfig.CONFIG.wheelmoveModule);
 
     private final Consumer<ContainerContext> worker;
     private final String keyBindingName;
     private final int defaultKeyCode;
-    private final String configName;
-    private boolean actionActive;
-    private final String comment;
-    private final boolean implemented;
-    private final Supplier<Boolean> checkForConflicts;
+    private final ForgeConfigSpec.ConfigValue<Boolean> configValue;
 
-    Action(Consumer<ContainerContext> worker, String keyBindingName, int defaultKeyCode, String configName, String comment, boolean implemented, Supplier<Boolean> checkForConflicts)
+    Action(Consumer<ContainerContext> worker, String keyBindingName, int defaultKeyCode, ForgeConfigSpec.ConfigValue<Boolean> configValue)
     {
         this.worker = worker;
         this.keyBindingName = keyBindingName;
         this.defaultKeyCode = defaultKeyCode;
-        this.configName = configName;
-        this.comment = comment;
-        this.implemented = implemented;
-        this.checkForConflicts = checkForConflicts;
+        this.configValue = configValue;
     }
 
     public String getKeyBindingName() {
@@ -68,16 +66,10 @@ public enum Action
 
     public boolean isActive()
     {
-        return true;
-    }
-
-    public String getConfigName()
-    {
-        return configName;
+        return configValue.get();
     }
 
     public int getDefaultKeyCode() {
         return defaultKeyCode;
     }
-
 }

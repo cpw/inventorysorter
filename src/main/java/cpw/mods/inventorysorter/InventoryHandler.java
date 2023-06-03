@@ -21,6 +21,8 @@ package cpw.mods.inventorysorter;
 import com.google.common.base.*;
 import com.google.common.collect.*;
 import com.google.common.primitives.*;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 
@@ -33,6 +35,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BrewingStandBlockEntity;
 import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.ForgeRegistry;
 
 /**
  * @author cpw
@@ -161,10 +165,13 @@ public enum InventoryHandler
             if (o1 == o2) return 0;
             if (o1.is == o2.is) return 0;
             if (o1.is.getItem() != o2.is.getItem())
-                return String.valueOf(o1.is.getItem().builtInRegistryHolder().key().location()).compareTo(String.valueOf(o2.is.getItem().builtInRegistryHolder().key().location()));
+                return compareString(o1.is).compareTo(compareString(o2.is));
             if (ItemStack.tagMatches(o1.is, o2.is))
                 return 0;
             return Ints.compare(System.identityHashCode(o1.is), System.identityHashCode(o2.is));
+        }
+        private static String compareString(ItemStack stack) {
+            return String.valueOf(stack.getItemHolder().unwrap().map(ResourceKey::location, ForgeRegistries.ITEMS::getKey));
         }
     }
 
@@ -175,16 +182,16 @@ public enum InventoryHandler
         final Container inv;
         final Container proxy;
         final AbstractContainerMenu container;
-        final Class<? extends Slot> slotType;
+        final Slot slot;
         boolean markForRemoval;
         boolean markAsHeterogeneous;
 
-        InventoryMapping(Container inv, AbstractContainerMenu container, Container proxy, Class<? extends Slot> slotType)
+        InventoryMapping(Container inv, AbstractContainerMenu container, Container proxy, Slot slot)
         {
             this.inv = inv;
             this.container = container;
             this.proxy = proxy;
-            this.slotType = slotType;
+            this.slot = slot;
         }
         @Override
         public String toString()
@@ -193,10 +200,10 @@ public enum InventoryHandler
         }
 
         void addSlot(final Slot sl) {
-            if (this.slotType != sl.getClass() && !(this.inv instanceof Inventory) && !(this.inv instanceof FurnaceBlockEntity) && !(this.inv instanceof BrewingStandBlockEntity)) {
+            if (this.slot.getClass() != sl.getClass() && !(this.inv instanceof Inventory) && !(this.inv instanceof FurnaceBlockEntity) && !(this.inv instanceof BrewingStandBlockEntity)) {
                 this.markForRemoval = true;
             }
-            if (this.slotType != sl.getClass())
+            if (this.slot.getClass() != sl.getClass())
             {
                 this.markAsHeterogeneous = true;
             }

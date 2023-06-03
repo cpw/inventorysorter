@@ -67,8 +67,8 @@ public enum ScrollWheelHandler implements Consumer<ContainerContext>
 
         if (source == null) return;
 
-        if (InventorySorter.INSTANCE.slotblacklist.contains(source.getClass().getName())) return; // Blacklist source
-        if (InventorySorter.INSTANCE.slotblacklist.contains(context.slot.getClass().getName())) return; // Blacklist target
+        if (InventorySorter.INSTANCE.isSlotBlacklisted(source)) return; // Blacklist source
+        if (InventorySorter.INSTANCE.isSlotBlacklisted(context.slot)) return; // Blacklist target
         if (!source.mayPickup(context.player)) return;
         if (!source.mayPlace(is)) return;
         final ItemStack sourceStack = InventoryHandler.INSTANCE.getItemStack(source);
@@ -79,7 +79,7 @@ public enum ScrollWheelHandler implements Consumer<ContainerContext>
         final List<InventoryHandler.InventoryMapping> mappingCandidates = new ArrayList<>();
         if (moveAmount < 0)
         {
-            final InventoryHandler.InventoryMapping inventoryMapping = new InventoryHandler.InventoryMapping(context.slot.container, context.player.containerMenu, context.slot.container, context.slot.getClass());
+            final InventoryHandler.InventoryMapping inventoryMapping = new InventoryHandler.InventoryMapping(context.slot.container, context.player.containerMenu, context.slot.container, context.slot);
             mappingCandidates.add(inventoryMapping);
             inventoryMapping.begin = context.slot.index;
             inventoryMapping.end = context.slot.index;
@@ -98,7 +98,7 @@ public enum ScrollWheelHandler implements Consumer<ContainerContext>
                 for (Map.Entry<Container, InventoryHandler.InventoryMapping> entry : InventoryHandler.INSTANCE.getSortedMapping(context))
                 {
                     if (entry.getValue().proxy == context.slot.container) continue;
-                    if (InventorySorter.INSTANCE.slotblacklist.contains(entry.getValue().slotType.getName())) continue; //remove blacklisted
+                    if (InventorySorter.INSTANCE.isSlotBlacklisted(entry.getValue().slot)) continue; //remove blacklisted
                     mappingCandidates.add(entry.getValue());
                 }
             }

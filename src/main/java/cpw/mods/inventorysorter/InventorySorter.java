@@ -29,6 +29,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.ChatFormatting;
 import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.inventory.Slot;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -67,9 +68,8 @@ public class InventorySorter
     static final Logger LOGGER = LogManager.getLogger();
     ResourceLocation lastContainerType;
     boolean debugLog;
-    final Set<String> slotblacklist = new HashSet<>();
-    final Set<ResourceLocation> containerblacklist = new HashSet<>();
-    boolean configLoaded = false;
+    private final Set<String> slotblacklist = new HashSet<>();
+    private final Set<String> containerblacklist = new HashSet<>();
 
     public InventorySorter() {
         INSTANCE = this;
@@ -77,7 +77,8 @@ public class InventorySorter
         bus.addListener(this::preinit);
         bus.addListener(this::handleimc);
         bus.addListener(this::onConfigLoad);
-        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, Config.SPEC);
+        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, Config.ServerConfig.SPEC);
+        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, Config.ClientConfig.SPEC);
         COMMAND_ARGUMENT_TYPES.register(bus);
         MinecraftForge.EVENT_BUS.addListener(this::onServerStarting);
         DistExecutor.safeRunWhenOn(Dist.CLIENT, ()->KeyHandler::init);
@@ -99,17 +100,15 @@ public class InventorySorter
 
         if ("containerblacklist".equals(msg.method())) {
             final ResourceLocation slotContainerTarget = (ResourceLocation) msg.messageSupplier().get();
-            if (containerblacklist.add(slotContainerTarget)) {
+            if (containerblacklist.add(slotContainerTarget.toString())) {
                 debugLog("ContainerBlacklist added {}", () -> new String[] {slotContainerTarget.toString()});
             }
         }
-        updateConfig();
     }
 
     private void updateConfig() {
-        if (!configLoaded) return;
-        Config.CONFIG.containerBlacklist.set(containerblacklist.stream().map(Objects::toString).collect(Collectors.toList()));
-        Config.CONFIG.slotBlacklist.set(new ArrayList<>(slotblacklist));
+        Config.ServerConfig.CONFIG.containerBlacklist.set(new ArrayList<>(containerblacklist));
+        Config.ServerConfig.CONFIG.slotBlacklist.set(new ArrayList<>(slotblacklist));
     }
 
     private void preinit(FMLCommonSetupEvent evt) {
@@ -120,19 +119,24 @@ public class InventorySorter
         InventorySorterCommand.register(evt.getServer().getCommands().getDispatcher());
     }
 
+    boolean isSlotBlacklisted(Slot slot) {
+        return slotblacklist.contains(slot.getClass().getName()) || Config.ServerConfig.CONFIG.slotBlacklist.get().contains(slot.getClass().getName());
+    }
+
+    boolean isContainerBlacklisted(ResourceLocation container) {
+        return containerblacklist.contains(container.toString()) || Config.ServerConfig.CONFIG.containerBlacklist.get().contains(container.toString());
+    }
     void onConfigLoad(ModConfigEvent configEvent) {
-        this.slotblacklist.clear();
-        this.slotblacklist.addAll(Config.CONFIG.slotBlacklist.get());
-        this.containerblacklist.clear();
-        this.containerblacklist.addAll(Config.CONFIG.containerBlacklist.get().stream().map(ResourceLocation::new).collect(Collectors.toSet()));
-    }
+        if (configEvent.getConfig().getConfigData() == null) return; // Bug in forge means that we might get called back on server exit
+        switch (configEvent.getConfig().getType()) {
+            case SERVER:
+                this.slotblacklist.addAll(Config.ServerConfig.CONFIG.slotBlacklist.get());
+                this.containerblacklist.addAll(Config.ServerConfig.CONFIG.containerBlacklist.get());
+                break;
+            case CLIENT:
+                break;
+        }
 
-    boolean wheelModConflicts() {
-        return ModList.get().isLoaded("mousetweaks");
-    }
-
-    boolean sortingModConflicts() {
-        return false;
     }
 
     final void debugLog(String message, Supplier<String[]> args) {
@@ -150,7 +154,7 @@ public class InventorySorter
     static int blackListAdd(final CommandContext<CommandSourceStack> context) {
         final var containerType = context.getArgument("container", ResourceLocation.class);
         if (ForgeRegistries.MENU_TYPES.containsKey(containerType)) {
-            INSTANCE.containerblacklist.add(containerType);
+            INSTANCE.containerblacklist.add(containerType.toString());
             INSTANCE.updateConfig();
             context.getSource().sendSuccess(Component.translatable("inventorysorter.commands.inventorysorter.bladd.message", containerType), true);
             return 1;
@@ -195,9 +199,9 @@ public class InventorySorter
     }
 
     static Stream<ResourceLocation> listBlacklist() {
-        return INSTANCE.containerblacklist.stream();
+        return INSTANCE.containerblacklist.stream().map(ResourceLocation::new);
     }
 
-    private static final DeferredRegister<ArgumentTypeInfo<?, ?>> COMMAND_ARGUMENT_TYPES = DeferredRegister.create(Registry.COMMAND_ARGUMENT_TYPE_REGISTRY, "inventorysorter");
+    private static final DeferredRegister<ArgumentTypeInfo<?, ?>> COMMAND_ARGUMENT_TYPES = DeferredRegister.create(ForgeRegistries.COMMAND_ARGUMENT_TYPES, "inventorysorter");
     private static final RegistryObject<SingletonArgumentInfo<InventorySorterCommand.ContainerResourceLocationArgument>> CONTAINER_CLASS = COMMAND_ARGUMENT_TYPES.register("container_reslocation", ()-> ArgumentTypeInfos.registerByClass(InventorySorterCommand.ContainerResourceLocationArgument.class, SingletonArgumentInfo.contextFree(InventorySorterCommand.ContainerResourceLocationArgument::new)));
 }

@@ -27,7 +27,7 @@ class ContainerContext
         // Skip slots without an inventory - they're probably dummy slots
         return slot != null && slot.container != null
                 // Skip blacklisted slots
-                && !InventorySorter.INSTANCE.slotblacklist.contains(slot.getClass().getName());
+                && !InventorySorter.INSTANCE.isSlotBlacklisted(slot);
     }
 
     public ContainerContext(Slot slot, ServerPlayer playerEntity)
@@ -38,7 +38,7 @@ class ContainerContext
         final AbstractContainerMenu openContainer = playerEntity.containerMenu;
         openContainer.slots.stream().filter(ContainerContext::validSlot).forEach(sl->
         {
-            final InventoryHandler.InventoryMapping inventoryMapping = mapping.computeIfAbsent(sl.container, k -> new InventoryHandler.InventoryMapping(sl.container, openContainer, sl.container, sl.getClass()));
+            final InventoryHandler.InventoryMapping inventoryMapping = mapping.computeIfAbsent(sl.container, k -> new InventoryHandler.InventoryMapping(sl.container, openContainer, sl.container, sl));
             inventoryMapping.addSlot(sl);
             if (sl == slot)
             {
@@ -53,9 +53,9 @@ class ContainerContext
             int mainEnd = 36;
             int offhandStart = 40;
 
-            InventoryHandler.InventoryMapping hotbarMapping = new InventoryHandler.InventoryMapping(PLAYER_HOTBAR, openContainer, playerEntity.getInventory(), Slot.class);
-            InventoryHandler.InventoryMapping mainMapping = new InventoryHandler.InventoryMapping(PLAYER_MAIN, openContainer, playerEntity.getInventory(), Slot.class);
-            InventoryHandler.InventoryMapping offhandMapping = new InventoryHandler.InventoryMapping(PLAYER_OFFHAND, openContainer, playerEntity.getInventory(), Slot.class);
+            InventoryHandler.InventoryMapping hotbarMapping = new InventoryHandler.InventoryMapping(PLAYER_HOTBAR, openContainer, playerEntity.getInventory(), openContainer.getSlot(0));
+            InventoryHandler.InventoryMapping mainMapping = new InventoryHandler.InventoryMapping(PLAYER_MAIN, openContainer, playerEntity.getInventory(), openContainer.getSlot(mainStart));
+            InventoryHandler.InventoryMapping offhandMapping = new InventoryHandler.InventoryMapping(PLAYER_OFFHAND, openContainer, playerEntity.getInventory(), openContainer.getSlot(offhandStart));
             InventoryHandler.InventoryMapping inventoryMapping;
             for (int i = playerMapping.begin; i<=playerMapping.end; i++)
             {

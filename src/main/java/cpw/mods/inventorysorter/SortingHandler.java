@@ -117,9 +117,9 @@ public enum SortingHandler implements Consumer<ContainerContext>
     }
     private void compactInventory(final ContainerContext context, final Multiset<ItemStackHolder> itemcounts)
     {
-        final ResourceLocation containerTypeName = lookupContainerTypeName(context.player.inventoryMenu);
+        final ResourceLocation containerTypeName = lookupContainerTypeName(context.slotMapping.container);
         InventorySorter.INSTANCE.lastContainerType = containerTypeName;
-        if (InventorySorter.INSTANCE.containerblacklist.contains(containerTypeName)) {
+        if (InventorySorter.INSTANCE.isContainerBlacklisted(containerTypeName)) {
             InventorySorter.INSTANCE.debugLog("Container {} blacklisted", ()->new String[] {containerTypeName.toString()});
             return;
         }
@@ -152,7 +152,7 @@ public enum SortingHandler implements Consumer<ContainerContext>
             if (itemCount > 0 && stackHolder != null)
             {
                 target = stackHolder.getElement().is.copy();
-                target.setCount(Math.min(itemCount, target.getMaxStackSize()));
+                target.setCount(Math.min(itemCount, slot.getMaxStackSize(target)));
             }
             // The item isn't valid for this slot
             if (!target.isEmpty() && !slot.mayPlace(target)) {
