@@ -119,11 +119,11 @@ public enum ScrollWheelHandler implements Consumer<ContainerContext>
                 for (int i = 0; i < 9; i++)
                 {
                     ItemStack itemStack = context.player.getInventory().items.get(i);
-                    if (ItemStack.isSame(itemStack,sourceStack) && itemStack.getCount() < itemStack.getMaxStackSize())
+                    if (ItemStack.isSameItem(itemStack,sourceStack) && itemStack.getCount() < itemStack.getMaxStackSize())
                     {
                         hasTarget = true;
                     }
-                    else if (ItemStack.isSame(itemStack,sourceStack))
+                    else if (ItemStack.isSameItem(itemStack,sourceStack))
                     {
                         found = true;
                     }

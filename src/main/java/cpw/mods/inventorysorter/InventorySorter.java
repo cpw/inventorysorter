@@ -156,10 +156,10 @@ public class InventorySorter
         if (ForgeRegistries.MENU_TYPES.containsKey(containerType)) {
             INSTANCE.containerblacklist.add(containerType.toString());
             INSTANCE.updateConfig();
-            context.getSource().sendSuccess(Component.translatable("inventorysorter.commands.inventorysorter.bladd.message", containerType), true);
+            context.getSource().sendSuccess(()->Component.translatable("inventorysorter.commands.inventorysorter.bladd.message", containerType), true);
             return 1;
         } else {
-            context.getSource().sendSuccess(Component.translatable("inventorysorter.commands.inventorysorter.badtype", containerType), true);
+            context.getSource().sendSuccess(()->Component.translatable("inventorysorter.commands.inventorysorter.badtype", containerType), true);
             return 0;
         }
     }
@@ -168,28 +168,28 @@ public class InventorySorter
         final var containerType = context.getArgument("container", ResourceLocation.class);
         if (ForgeRegistries.MENU_TYPES.containsKey(containerType) && INSTANCE.containerblacklist.remove(containerType)) {
             INSTANCE.updateConfig();
-            context.getSource().sendSuccess(Component.translatable("inventorysorter.commands.inventorysorter.blremove.message", containerType), true);
+            context.getSource().sendSuccess(()->Component.translatable("inventorysorter.commands.inventorysorter.blremove.message", containerType), true);
             return 1;
         } else {
-            context.getSource().sendSuccess(Component.translatable("inventorysorter.commands.inventorysorter.badtype", containerType), true);
+            context.getSource().sendSuccess(()->Component.translatable("inventorysorter.commands.inventorysorter.badtype", containerType), true);
             return 0;
         }
     }
 
     static int showLast(final CommandContext<CommandSourceStack> context) {
         if (INSTANCE.lastContainerType != null) {
-            context.getSource().sendSuccess(Component.translatable("inventorysorter.commands.inventorysorter.showlast.message", INSTANCE.lastContainerType), true);
+            context.getSource().sendSuccess(()->Component.translatable("inventorysorter.commands.inventorysorter.showlast.message", INSTANCE.lastContainerType), true);
         } else {
-            context.getSource().sendSuccess(Component.translatable("inventorysorter.commands.inventorysorter.showlast.nosort"), true);
+            context.getSource().sendSuccess(()->Component.translatable("inventorysorter.commands.inventorysorter.showlast.nosort"), true);
         }
         return 0;
     }
 
     static int showBlacklist(final CommandContext<CommandSourceStack> context) {
         if (INSTANCE.containerblacklist.isEmpty()) {
-            context.getSource().sendSuccess(Component.translatable("inventorysorter.commands.inventorysorter.showblacklist.empty"), true);
+            context.getSource().sendSuccess(()->Component.translatable("inventorysorter.commands.inventorysorter.showblacklist.empty"), true);
         } else {
-            context.getSource().sendSuccess(Component.translatable("inventorysorter.commands.inventorysorter.showblacklist.message", listBlacklist().collect(Collectors.toList())), true);
+            context.getSource().sendSuccess(()->Component.translatable("inventorysorter.commands.inventorysorter.showblacklist.message", listBlacklist().collect(Collectors.toList())), true);
         }
         return 0;
     }

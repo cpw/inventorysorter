@@ -43,6 +43,6 @@ public class ItemStackHolder
     {
         if (!(obj instanceof ItemStackHolder)) return false;
         ItemStackHolder ish = (ItemStackHolder)obj;
-        return is.getItem() == ish.is.getItem() && ItemStack.tagMatches(is, ish.is);
+        return is.getItem() == ish.is.getItem() && ItemStack.isSameItemSameTags(is, ish.is);
     }
 }
