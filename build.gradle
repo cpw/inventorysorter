@@ -1,38 +1,24 @@
-buildscript {
-    repositories {
-        mavenCentral()
-        maven {
-            name = 'forge'
-            url = 'https://maven.minecraftforge.net/'
-        }
-    }
-    dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '[6.0,6.2)', changing: true
-    }
-}
 plugins {
     id 'com.matthewprenger.cursegradle' version '1.4.0'
     id 'se.bjurr.gitchangelog.git-changelog-gradle-plugin' version '1.71.4'
     id 'org.ajoberstar.grgit' version '4.1.1'
     id 'com.github.ben-manes.versions' version '0.39.0'
-}
+    id 'net.neoforged.gradle' version '[6.0.18,6.2)'}
 
 repositories {
     mavenLocal()
 }
-apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'idea'
 apply plugin: 'maven-publish'
-apply from: 'https://raw.githubusercontent.com/SizableShrimp/Forge-Class-Remapper/main/classremapper.gradle'
+//apply from: 'https://raw.githubusercontent.com/SizableShrimp/Forge-Class-Remapper/main/classremapper.gradle'
 
 group= 'cpw.mods'
-archivesBaseName = 'inventorysorter'
+base {
+    archivesName = 'inventorysorter'
+}
+
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
-//reckon {
-//    scopeFromProp()
-//    stageFromProp('ms', 'final')
-//}
 version = grgit.describe(longDescr: true).split('-').with { "${it[0]}.${it[1]}" }
 
 minecraft {
@@ -73,7 +59,7 @@ minecraft {
 }
 
 dependencies {
-    minecraft "net.minecraftforge:forge:${MC_VERSION}-${FORGE_VERSION}"
+    minecraft "net.neoforged:forge:${MC_VERSION}-${FORGE_VERSION}"
 }
 
 task makeChangelog(type: se.bjurr.gitchangelog.plugin.gradle.GitChangelogTask) {
@@ -102,7 +88,7 @@ curseforge {
         changelog = file('CHANGELOG.md')
         changelogType = 'markdown'
         releaseType = project.findProperty('releaseType') ?: 'alpha'
-        addGameVersion '1.20'
+        addGameVersion '1.20.1'
     }
     options {
         javaVersionAutoDetect = true // defaults to true
@@ -117,7 +103,7 @@ beforeEvaluate {
     tasks.curseforge240633.dependsOn.add(makeChangelog)
 }
 
-jar {
+tasks.named('jar', Jar).configure {
     manifest {
         attributes([
                 "Specification-Title": 'inventorysorter',
@@ -129,19 +115,14 @@ jar {
                 "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         ])
     }
-//    archiveAppendix MC_VERSION
-}
-
-def reobfFile = file("$buildDir/reobfJar/output.jar")
-def reobfArtifact = artifacts.add('default', reobfFile) {
-    type 'jar'
-    builtBy 'reobfJar'
+    archiveAppendix = MC_VERSION
+    finalizedBy 'reobfJar'
 }
 
 publishing {
     publications {
-        mavenJava(MavenPublication) {
-            artifact reobfArtifact
+        register('mavenJava', MavenPublication) {
+            artifact jar
         }
     }
     repositories {
@@ -150,7 +131,7 @@ publishing {
                 username project.properties.cpwMavenUser?:'spam'
                 password project.properties.cpwMavenPassword?:'bums'
             }
-            url 'https://maven.minecraftforge.net/'
+            url 'https://maven.neoforged.net/releases'
         }
     }
 }
