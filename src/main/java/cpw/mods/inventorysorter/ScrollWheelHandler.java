@@ -135,14 +135,7 @@ public enum ScrollWheelHandler implements Consumer<ContainerContext>
             if (iscopy.getCount() == 0)
             {
                 sourceStack.grow(-1);
-                if (sourceStack.getCount() == 0)
-                {
-                    source.set(ItemStack.EMPTY);
-                }
-                else
-                {
-                    source.setChanged();
-                }
+                source.set(sourceStack);
                 break;
             }
         }
