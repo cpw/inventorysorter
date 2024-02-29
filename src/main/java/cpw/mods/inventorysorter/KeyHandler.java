@@ -24,6 +24,7 @@ import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.KeyMapping;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.world.inventory.Slot;
+import net.neoforged.bus.api.Event;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
@@ -122,12 +123,9 @@ public class KeyHandler
             if (guiContainer.getMenu() != null && guiContainer.getMenu().slots != null && guiContainer.getMenu().slots.contains(slot))
             {
                 InventorySorter.LOGGER.debug("Sending action {} slot {}", triggeredAction, slot.index);
-                //TODO
                 PacketDistributor.SERVER.noArg().send(triggeredAction.message(slot));
-//                Network.channel.sendToServer(triggeredAction.message(slot));
-//                evt.setCanceled(true);
+                evt.setResult(Event.Result.DENY);
             }
         }
-
     }
 }
