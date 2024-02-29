@@ -21,12 +21,11 @@ package cpw.mods.inventorysorter;
 import com.google.common.base.*;
 import com.google.common.collect.*;
 import com.google.common.primitives.*;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 
-import java.lang.reflect.*;
 import java.util.*;
 
 import net.minecraft.world.Container;
@@ -34,9 +33,6 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BrewingStandBlockEntity;
 import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
-import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.ForgeRegistry;
 
 /**
  * @author cpw
@@ -44,26 +40,10 @@ import net.minecraftforge.registries.ForgeRegistry;
 public enum InventoryHandler
 {
     INSTANCE;
-    public final Method mergeStack = getMergeStackMethod();
-
-    private Method getMergeStackMethod()
-    {
-
-        Method m = ObfuscationReflectionHelper.findMethod(AbstractContainerMenu.class, "m_"+"38903_", ItemStack.class, int.class, int.class, boolean.class);
-        m.setAccessible(true);
-        return m;
-    }
 
     public boolean mergeStack(AbstractContainerMenu container, ItemStack stack, int low, int high, boolean rev)
     {
-        try
-        {
-            //noinspection ConstantConditions
-            return (Boolean)mergeStack.invoke(container, stack, low, high, rev);
-        } catch (Exception e)
-        {
-            return false;
-        }
+        return container.moveItemStackTo(stack, low, high, rev);
     }
 
     public ItemStack getItemStack(ContainerContext ctx)
@@ -171,7 +151,7 @@ public enum InventoryHandler
             return Ints.compare(System.identityHashCode(o1.is), System.identityHashCode(o2.is));
         }
         private static String compareString(ItemStack stack) {
-            return String.valueOf(stack.getItemHolder().unwrap().map(ResourceKey::location, ForgeRegistries.ITEMS::getKey));
+            return String.valueOf(stack.getItemHolder().unwrap().map(ResourceKey::location, BuiltInRegistries.ITEM::getKey));
         }
     }
 

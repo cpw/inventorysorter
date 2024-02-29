@@ -23,31 +23,25 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.synchronization.ArgumentTypeInfo;
 import net.minecraft.commands.synchronization.ArgumentTypeInfos;
 import net.minecraft.commands.synchronization.SingletonArgumentInfo;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.ChatFormatting;
-import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.InterModComms;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.config.ModConfigEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
-import net.minecraftforge.event.server.ServerStartingEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.DistExecutor;
+import net.neoforged.fml.InterModComms;
+import net.neoforged.fml.ModLoadingContext;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.event.config.ModConfigEvent;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.fml.event.lifecycle.InterModProcessEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -71,17 +65,18 @@ public class InventorySorter
     private final Set<String> slotblacklist = new HashSet<>();
     private final Set<String> containerblacklist = new HashSet<>();
 
-    public InventorySorter() {
+    public InventorySorter(IEventBus bus) {
         INSTANCE = this;
-        final IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
         bus.addListener(this::preinit);
         bus.addListener(this::handleimc);
         bus.addListener(this::onConfigLoad);
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, Config.ServerConfig.SPEC);
         ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, Config.ClientConfig.SPEC);
+        //TODO
         COMMAND_ARGUMENT_TYPES.register(bus);
-        MinecraftForge.EVENT_BUS.addListener(this::onServerStarting);
+        NeoForge.EVENT_BUS.addListener(this::onServerStarting);
         DistExecutor.safeRunWhenOn(Dist.CLIENT, ()->KeyHandler::init);
+        Network.init(bus);
     }
 
     private void handleimc(final InterModProcessEvent evt)
@@ -112,7 +107,6 @@ public class InventorySorter
     }
 
     private void preinit(FMLCommonSetupEvent evt) {
-        Network.init();
     }
 
     private void onServerStarting(ServerStartingEvent evt) {
@@ -153,7 +147,7 @@ public class InventorySorter
 
     static int blackListAdd(final CommandContext<CommandSourceStack> context) {
         final var containerType = context.getArgument("container", ResourceLocation.class);
-        if (ForgeRegistries.MENU_TYPES.containsKey(containerType)) {
+        if (BuiltInRegistries.MENU.containsKey(containerType)) {
             INSTANCE.containerblacklist.add(containerType.toString());
             INSTANCE.updateConfig();
             context.getSource().sendSuccess(()->Component.translatable("inventorysorter.commands.inventorysorter.bladd.message", containerType), true);
@@ -166,7 +160,7 @@ public class InventorySorter
 
     static int blackListRemove(final CommandContext<CommandSourceStack> context) {
         final var containerType = context.getArgument("container", ResourceLocation.class);
-        if (ForgeRegistries.MENU_TYPES.containsKey(containerType) && INSTANCE.containerblacklist.remove(containerType)) {
+        if (BuiltInRegistries.MENU.containsKey(containerType) && INSTANCE.containerblacklist.remove(containerType)) {
             INSTANCE.updateConfig();
             context.getSource().sendSuccess(()->Component.translatable("inventorysorter.commands.inventorysorter.blremove.message", containerType), true);
             return 1;
@@ -195,13 +189,14 @@ public class InventorySorter
     }
 
     static Stream<ResourceLocation> listContainers() {
-        return ForgeRegistries.MENU_TYPES.getEntries().stream().map(e->e.getKey().location());
+        return BuiltInRegistries.MENU.entrySet().stream().map(e->e.getKey().location());
     }
 
     static Stream<ResourceLocation> listBlacklist() {
         return INSTANCE.containerblacklist.stream().map(ResourceLocation::new);
     }
 
-    private static final DeferredRegister<ArgumentTypeInfo<?, ?>> COMMAND_ARGUMENT_TYPES = DeferredRegister.create(ForgeRegistries.COMMAND_ARGUMENT_TYPES, "inventorysorter");
-    private static final RegistryObject<SingletonArgumentInfo<InventorySorterCommand.ContainerResourceLocationArgument>> CONTAINER_CLASS = COMMAND_ARGUMENT_TYPES.register("container_reslocation", ()-> ArgumentTypeInfos.registerByClass(InventorySorterCommand.ContainerResourceLocationArgument.class, SingletonArgumentInfo.contextFree(InventorySorterCommand.ContainerResourceLocationArgument::new)));
+    private static final DeferredRegister<ArgumentTypeInfo<?, ?>> COMMAND_ARGUMENT_TYPES = DeferredRegister.create(BuiltInRegistries.COMMAND_ARGUMENT_TYPE, "inventorysorter");
+    private static final DeferredHolder<ArgumentTypeInfo<?, ?>, SingletonArgumentInfo<InventorySorterCommand.ContainerResourceLocationArgument>> CONTAINER_CLASS = COMMAND_ARGUMENT_TYPES.register("container_reslocation",
+            () -> ArgumentTypeInfos.registerByClass(InventorySorterCommand.ContainerResourceLocationArgument.class, SingletonArgumentInfo.contextFree(InventorySorterCommand.ContainerResourceLocationArgument::new)));
 }

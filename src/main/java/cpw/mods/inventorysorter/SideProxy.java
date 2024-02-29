@@ -18,13 +18,6 @@
 
 package cpw.mods.inventorysorter;
 
-import net.minecraftforge.common.*;
-import net.minecraftforge.fml.InterModComms;
-
-import java.io.*;
-import java.util.*;
-import java.util.function.*;
-
 /**
  * Created by cpw on 08/01/16.
  */

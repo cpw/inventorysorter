@@ -18,56 +18,57 @@
 
 package cpw.mods.inventorysorter;
 
-import io.netty.buffer.*;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.network.NetworkRegistry;
-import net.minecraftforge.network.simple.*;
-
-import java.util.Objects;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlerEvent;
+import net.neoforged.neoforge.network.registration.IPayloadRegistrar;
 
 /**
  * Created by cpw on 08/01/16.
  */
 public final class Network {
-    private static final ResourceLocation invsorter = new ResourceLocation("inventorysorter", "net");
+    private static final String PROTOCOL_VERSION = Integer.toString(1);
 
-    public static void init() {
+    public static void init(IEventBus bus) {
+        bus.addListener(Network::registerEvent);
 
     }
 
-    public static class ActionMessage {
+    public static void registerEvent(RegisterPayloadHandlerEvent event) {
+        IPayloadRegistrar registrar = event.registrar("inventorysorter").versioned(PROTOCOL_VERSION);
+        registrar.play(ActionMessage.ID, ActionMessage::fromBytes, ServerHandler::onMessage);
+    }
+
+    public static class ActionMessage implements CustomPacketPayload
+    {
         Action action;
         int slotIndex;
+        public static ResourceLocation ID = new ResourceLocation("inventorysorter", "net");
 
         ActionMessage(Action action, int slotIndex) {
             this.action = action;
             this.slotIndex = slotIndex;
         }
 
-        static ActionMessage fromBytes(ByteBuf buf) {
+        static ActionMessage fromBytes(FriendlyByteBuf buf)
+        {
             return new ActionMessage(Action.values()[buf.readByte()], buf.readInt());
         }
 
-        void toBytes(ByteBuf buf) {
+
+        @Override
+        public void write(FriendlyByteBuf buf)
+        {
             buf.writeByte(action.ordinal());
             buf.writeInt(slotIndex);
         }
-    }
 
-
-    static SimpleChannel channel;
-
-    static {
-        channel = NetworkRegistry.ChannelBuilder.named(invsorter)
-                .clientAcceptedVersions(s -> Objects.equals(s, "1"))
-                .serverAcceptedVersions(s -> Objects.equals(s, "1"))
-                .networkProtocolVersion(() -> "1")
-                .simpleChannel();
-
-        channel.messageBuilder(ActionMessage.class, 1)
-                .decoder(ActionMessage::fromBytes)
-                .encoder(ActionMessage::toBytes)
-                .consumerMainThread(ServerHandler::onMessage)
-                .add();
+        @Override
+        public ResourceLocation id()
+        {
+            return ID;
+        }
     }
 }

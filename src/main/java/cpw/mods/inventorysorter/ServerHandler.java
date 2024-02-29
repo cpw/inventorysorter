@@ -20,21 +20,19 @@ package cpw.mods.inventorysorter;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.inventory.Slot;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.neoforge.network.handling.PlayPayloadContext;
 import org.apache.logging.log4j.*;
-
-import java.util.function.Supplier;
 
 /**
  * Created by cpw on 08/01/16.
  */
 public class ServerHandler
 {
-    static boolean onMessage(Network.ActionMessage message, Supplier<NetworkEvent.Context> ctx)
+    static boolean onMessage(Network.ActionMessage message, PlayPayloadContext ctx)
     {
-        final ServerPlayer sender = ctx.get().getSender();
+        final ServerPlayer sender = (ServerPlayer) ctx.player().get();
         if (sender != null) {
-            ctx.get().enqueueWork(() -> {
+            ctx.workHandler().execute(() -> {
                 InventorySorter.LOGGER.log(Level.DEBUG, "Got action {} slot {}", message.action, message.slotIndex);
                 Slot slot = sender.containerMenu.getSlot(message.slotIndex);
                 message.action.execute(new ContainerContext(slot, sender));

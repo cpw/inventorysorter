@@ -19,14 +19,10 @@
 package cpw.mods.inventorysorter;
 
 import net.minecraft.world.inventory.Slot;
-import net.minecraftforge.common.ForgeConfigSpec;
+import net.neoforged.neoforge.common.ModConfigSpec;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 import java.util.function.*;
-import java.util.stream.Collectors;
 
 /**
  * Created by cpw on 08/01/16.
@@ -40,9 +36,9 @@ public enum Action
     private final Consumer<ContainerContext> worker;
     private final String keyBindingName;
     private final int defaultKeyCode;
-    private final ForgeConfigSpec.ConfigValue<Boolean> configValue;
+    private final ModConfigSpec.ConfigValue<Boolean> configValue;
 
-    Action(Consumer<ContainerContext> worker, String keyBindingName, int defaultKeyCode, ForgeConfigSpec.ConfigValue<Boolean> configValue)
+    Action(Consumer<ContainerContext> worker, String keyBindingName, int defaultKeyCode, ModConfigSpec.ConfigValue<Boolean> configValue)
     {
         this.worker = worker;
         this.keyBindingName = keyBindingName;
