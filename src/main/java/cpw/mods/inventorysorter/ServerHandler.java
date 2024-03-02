@@ -33,7 +33,8 @@ public class ServerHandler
         final ServerPlayer sender = (ServerPlayer) ctx.player().get();
         if (sender != null) {
             ctx.workHandler().execute(() -> {
-                InventorySorter.LOGGER.log(Level.DEBUG, "Got action {} slot {}", message.action, message.slotIndex);
+                if(Config.ServerConfig.CONFIG.debug.get())
+                    InventorySorter.LOGGER.log(Level.DEBUG, "Got action {} slot {}", message.action, message.slotIndex);
                 Slot slot = sender.containerMenu.getSlot(message.slotIndex);
                 message.action.execute(new ContainerContext(slot, sender));
             });

@@ -124,7 +124,6 @@ public class KeyHandler
             {
                 InventorySorter.LOGGER.debug("Sending action {} slot {}", triggeredAction, slot.index);
                 PacketDistributor.SERVER.noArg().send(triggeredAction.message(slot));
-                evt.setResult(Event.Result.DENY);
             }
         }
     }

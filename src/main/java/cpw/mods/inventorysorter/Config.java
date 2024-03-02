@@ -19,6 +19,7 @@ public class Config {
 
         final ModConfigSpec.ConfigValue<List<? extends String>> containerBlacklist;
         final ModConfigSpec.ConfigValue<List<? extends String>> slotBlacklist;
+        final ModConfigSpec.BooleanValue debug;
         private ServerConfig(ModConfigSpec.Builder builder) {
             builder.comment("Inventory sorter blacklists");
             builder.push("blacklists");
@@ -30,6 +31,10 @@ public class Config {
                     .comment("Slot type blacklist")
                     .translation("inventorysorter.config.slotblacklist")
                     .defineList("slotBlacklist", new ArrayList<>(), t -> true);
+
+            debug = builder
+                    .comment("Enable debug logging")
+                    .define("debug", false);
             builder.pop();
         }
     }

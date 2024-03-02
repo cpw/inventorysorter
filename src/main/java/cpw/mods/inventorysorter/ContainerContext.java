@@ -100,7 +100,10 @@ class ContainerContext
         }
         this.slotMapping = slotTarget;
         this.mapping = ImmutableBiMap.copyOf(mapping);
-        InventorySorter.LOGGER.log(Level.DEBUG, "Slot mapping {}", ()->this.mapping);
-        InventorySorter.LOGGER.log(Level.DEBUG, "Action slot {}", ()->this.slotMapping);
+        if(Config.ServerConfig.CONFIG.debug.get())
+        {
+            InventorySorter.LOGGER.log(Level.DEBUG, "Slot mapping {}", () -> this.mapping);
+            InventorySorter.LOGGER.log(Level.DEBUG, "Action slot {}", () -> this.slotMapping);
+        }
     }
 }
