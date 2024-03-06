@@ -61,7 +61,6 @@ public class InventorySorter
 
     static final Logger LOGGER = LogManager.getLogger();
     ResourceLocation lastContainerType;
-    boolean debugLog;
     private final Set<String> slotblacklist = new HashSet<>();
     private final Set<String> containerblacklist = new HashSet<>();
 
@@ -133,9 +132,14 @@ public class InventorySorter
     }
 
     final void debugLog(String message, Supplier<String[]> args) {
-        if (debugLog) {
+        if (Config.ServerConfig.CONFIG.debug.get()) {
             LOGGER.error(message, (Object[]) args.get());
         }
+    }
+
+    final void debugLogString(String message, Supplier<Object> arg)
+    {
+        debugLog(message, () -> new String[] {arg.toString()});
     }
 
     private static Component greenText(final String string) {

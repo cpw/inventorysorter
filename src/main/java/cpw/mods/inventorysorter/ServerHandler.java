@@ -21,7 +21,6 @@ package cpw.mods.inventorysorter;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.inventory.Slot;
 import net.neoforged.neoforge.network.handling.PlayPayloadContext;
-import org.apache.logging.log4j.*;
 
 /**
  * Created by cpw on 08/01/16.
@@ -33,8 +32,7 @@ public class ServerHandler
         final ServerPlayer sender = (ServerPlayer) ctx.player().get();
         if (sender != null) {
             ctx.workHandler().execute(() -> {
-                if(Config.ServerConfig.CONFIG.debug.get())
-                    InventorySorter.LOGGER.log(Level.DEBUG, "Got action {} slot {}", message.action, message.slotIndex);
+                InventorySorter.INSTANCE.debugLogString("Got action {} slot {}", () -> new String[] {message.action.toString(), String.valueOf(message.slotIndex)});
                 Slot slot = sender.containerMenu.getSlot(message.slotIndex);
                 message.action.execute(new ContainerContext(slot, sender));
             });
