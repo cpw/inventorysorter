@@ -139,7 +139,7 @@ public class InventorySorter
 
     final void debugLogString(String message, Supplier<Object> arg)
     {
-        debugLog(message, () -> new String[] {arg.toString()});
+        debugLog(message, () -> new String[] {arg.get().toString()});
     }
 
     private static Component greenText(final String string) {
