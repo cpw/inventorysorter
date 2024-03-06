@@ -71,6 +71,7 @@ public class InventorySorter
         bus.addListener(this::onConfigLoad);
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, Config.ServerConfig.SPEC);
         ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, Config.ClientConfig.SPEC);
+        CompatHandler.init();
         COMMAND_ARGUMENT_TYPES.register(bus);
         NeoForge.EVENT_BUS.addListener(this::onServerStarting);
         DistExecutor.safeRunWhenOn(Dist.CLIENT, ()->KeyHandler::init);
