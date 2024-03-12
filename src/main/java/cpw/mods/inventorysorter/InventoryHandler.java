@@ -189,7 +189,6 @@ public enum InventoryHandler
             }
             this.begin = Math.min(sl.index, this.begin);
             this.end = Math.max(sl.index, this.end);
-
         }
     }
 }

@@ -34,21 +34,53 @@ class ContainerContext
                 && !InventorySorter.INSTANCE.isSlotBlacklisted(slot);
     }
 
+    public Container sameInventory(Map<Container, InventoryHandler.InventoryMapping> mapping, Slot slot)
+    {
+        for (Map.Entry<Container, InventoryHandler.InventoryMapping> entry : mapping.entrySet())
+        {
+            InventoryHandler.InventoryMapping inventoryMapping = entry.getValue();
+            if (inventoryMapping.slot.isSameInventory(slot)) return entry.getKey();
+        }
+        return null;
+    }
+
     public ContainerContext(Slot slot, ServerPlayer playerEntity)
     {
         this.slot = slot;
         this.player = playerEntity;
         Map<Container, InventoryHandler.InventoryMapping> mapping = new HashMap<>();
         final AbstractContainerMenu openContainer = playerEntity.containerMenu;
-        openContainer.slots.stream().filter(ContainerContext::validSlot).forEach(sl->
+
+        for (Slot sl : openContainer.slots.stream().filter(ContainerContext::validSlot).toList())
         {
-            final InventoryHandler.InventoryMapping inventoryMapping = mapping.computeIfAbsent(sl.container, k -> new InventoryHandler.InventoryMapping(sl.container, openContainer, sl.container, sl));
-            inventoryMapping.addSlot(sl);
-            if (sl == slot)
+            Container container = sl.container;
+            Container matchedContainer = sameInventory(mapping, sl);
+
+            if(matchedContainer != null)
             {
-                slotTarget = inventoryMapping;
+                mapping.get(matchedContainer).addSlot(sl);
+                if (sl == slot)
+                {
+                    slotTarget = mapping.get(matchedContainer);
+                }
+                continue;
             }
-        });
+
+            if(mapping.isEmpty() || !mapping.containsKey(container))
+            {
+                final InventoryHandler.InventoryMapping inventoryMapping = new InventoryHandler.InventoryMapping(sl.container, openContainer, sl.container, sl);
+                inventoryMapping.addSlot(sl);
+                mapping.put(container, inventoryMapping);
+            }
+            else
+            {
+                mapping.get(container).addSlot(sl);
+                if (sl == slot)
+                {
+                    slotTarget = mapping.get(container);
+                }
+            }
+        }
 
         if (mapping.containsKey(playerEntity.getInventory())) {
             final InventoryHandler.InventoryMapping playerMapping = mapping.remove(playerEntity.getInventory());

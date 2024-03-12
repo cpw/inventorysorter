@@ -168,7 +168,7 @@ public enum SortingHandler implements Consumer<ContainerContext>
     }
 
     private static final ResourceLocation DUMMY_PLAYER_CONTAINER = new ResourceLocation("inventorysorter:dummyplayercontainer");
-    private ResourceLocation lookupContainerTypeName(AbstractContainerMenu container) {
+    public static ResourceLocation lookupContainerTypeName(AbstractContainerMenu container) {
         return container instanceof InventoryMenu ? DUMMY_PLAYER_CONTAINER : BuiltInRegistries.MENU.getKey(container.getType());
     }
 }
