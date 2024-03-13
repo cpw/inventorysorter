@@ -45,6 +45,8 @@ public enum ScrollWheelHandler implements Consumer<ContainerContext>
     @Override
     public void accept(ContainerContext context)
     {
+        if(CompatHandler.isMouseTweaksLoaded()) return;
+
         if (context == null) throw new NullPointerException("WHUT");
         // Skip if we can't find ourselves in the mapping table
         if (context.slotMapping == null) return;
