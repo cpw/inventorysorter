@@ -24,6 +24,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlerEvent;
 import net.neoforged.neoforge.network.registration.IPayloadRegistrar;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by cpw on 08/01/16.
@@ -47,7 +48,8 @@ public final class Network {
         int slotIndex;
         public static ResourceLocation ID = new ResourceLocation("inventorysorter", "net");
 
-        ActionMessage(Action action, int slotIndex) {
+        ActionMessage(Action action, int slotIndex)
+        {
             this.action = action;
             this.slotIndex = slotIndex;
         }
@@ -57,7 +59,6 @@ public final class Network {
             return new ActionMessage(Action.values()[buf.readByte()], buf.readInt());
         }
 
-
         @Override
         public void write(FriendlyByteBuf buf)
         {
@@ -66,7 +67,7 @@ public final class Network {
         }
 
         @Override
-        public ResourceLocation id()
+        public @NotNull ResourceLocation id()
         {
             return ID;
         }
