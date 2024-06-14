@@ -19,12 +19,12 @@
 package cpw.mods.inventorysorter;
 
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlerEvent;
-import net.neoforged.neoforge.network.registration.IPayloadRegistrar;
-import org.jetbrains.annotations.NotNull;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 /**
  * Created by cpw on 08/01/16.
@@ -37,16 +37,18 @@ public final class Network {
 
     }
 
-    public static void registerEvent(RegisterPayloadHandlerEvent event) {
-        IPayloadRegistrar registrar = event.registrar("inventorysorter").versioned(PROTOCOL_VERSION);
-        registrar.play(ActionMessage.ID, ActionMessage::fromBytes, ServerHandler::onMessage);
+    public static void registerEvent(RegisterPayloadHandlersEvent event) {
+        PayloadRegistrar registrar = event.registrar("inventorysorter").versioned(PROTOCOL_VERSION);
+        registrar.playToServer(ActionMessage.TYPE, ActionMessage.STREAM_CODEC, ServerHandler::onMessage);
     }
 
     public static class ActionMessage implements CustomPacketPayload
     {
+        public static final StreamCodec<FriendlyByteBuf, ActionMessage> STREAM_CODEC = CustomPacketPayload.codec(ActionMessage::write, ActionMessage::fromBytes);
+        public static final Type<ActionMessage> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath("inventorysorter", "action_message"));
+
         Action action;
         int slotIndex;
-        public static ResourceLocation ID = new ResourceLocation("inventorysorter", "net");
 
         ActionMessage(Action action, int slotIndex)
         {
@@ -54,22 +56,22 @@ public final class Network {
             this.slotIndex = slotIndex;
         }
 
-        static ActionMessage fromBytes(FriendlyByteBuf buf)
-        {
-            return new ActionMessage(Action.values()[buf.readByte()], buf.readInt());
-        }
-
-        @Override
-        public void write(FriendlyByteBuf buf)
+        private void write(FriendlyByteBuf buf)
         {
             buf.writeByte(action.ordinal());
             buf.writeInt(slotIndex);
         }
 
-        @Override
-        public @NotNull ResourceLocation id()
+        static ActionMessage fromBytes(FriendlyByteBuf buf)
         {
-            return ID;
+            return new ActionMessage(Action.values()[buf.readByte()], buf.readInt());
+        }
+
+
+        @Override
+        public Type<? extends CustomPacketPayload> type()
+        {
+            return TYPE;
         }
     }
 }

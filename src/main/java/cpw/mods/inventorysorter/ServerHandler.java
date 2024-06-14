@@ -21,23 +21,21 @@ package cpw.mods.inventorysorter;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
-import net.neoforged.neoforge.network.handling.PlayPayloadContext;
-
-import java.util.Optional;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 /**
  * Created by cpw on 08/01/16.
  */
 public class ServerHandler
 {
-    static boolean onMessage(Network.ActionMessage message, PlayPayloadContext ctx)
+    static boolean onMessage(Network.ActionMessage message, IPayloadContext ctx)
     {
-        final Optional<Player> sender = ctx.player();
-        if (sender.isPresent()) {
-            ctx.workHandler().submitAsync(() -> {
+        final Player sender = ctx.player();
+        if (sender != null && sender instanceof ServerPlayer serverPlayer) {
+            ctx.enqueueWork(() -> {
                 InventorySorter.INSTANCE.debugLog("Got action {} slot {}", () -> new String[] {message.action.name(), String.valueOf(message.slotIndex)});
-                Slot slot = sender.get().containerMenu.getSlot(message.slotIndex);
-                message.action.execute(new ContainerContext(slot, (ServerPlayer) sender.get()));
+                Slot slot = sender.containerMenu.getSlot(message.slotIndex);
+                message.action.execute(new ContainerContext(slot, serverPlayer));
             });
             return true;
         } else {

@@ -30,12 +30,13 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.world.inventory.Slot;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.fml.DistExecutor;
 import net.neoforged.fml.InterModComms;
+import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.config.ModConfigEvent;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.event.lifecycle.InterModProcessEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -64,17 +65,24 @@ public class InventorySorter
     private final Set<String> slotblacklist = new HashSet<>();
     private final Set<String> containerblacklist = new HashSet<>();
 
-    public InventorySorter(IEventBus bus) {
+    public static IEventBus eventBus;
+
+    public InventorySorter(IEventBus bus, ModContainer modContainer) {
         INSTANCE = this;
+        eventBus = bus;
         bus.addListener(this::preinit);
         bus.addListener(this::handleimc);
         bus.addListener(this::onConfigLoad);
-        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, Config.ServerConfig.SPEC);
-        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, Config.ClientConfig.SPEC);
+        Config.register(modContainer);
         COMMAND_ARGUMENT_TYPES.register(bus);
         NeoForge.EVENT_BUS.addListener(this::onServerStarting);
-        DistExecutor.safeRunWhenOn(Dist.CLIENT, ()->KeyHandler::init);
+        bus.addListener(this::clientSetup);
         Network.init(bus);
+    }
+
+    private void clientSetup(final FMLClientSetupEvent event)
+    {
+        KeyHandler.init();
     }
 
     private void handleimc(final InterModProcessEvent evt)
@@ -196,7 +204,7 @@ public class InventorySorter
     }
 
     static Stream<ResourceLocation> listBlacklist() {
-        return INSTANCE.containerblacklist.stream().map(ResourceLocation::new);
+        return INSTANCE.containerblacklist.stream().map(ResourceLocation::parse);
     }
 
     private static final DeferredRegister<ArgumentTypeInfo<?, ?>> COMMAND_ARGUMENT_TYPES = DeferredRegister.create(BuiltInRegistries.COMMAND_ARGUMENT_TYPE, "inventorysorter");

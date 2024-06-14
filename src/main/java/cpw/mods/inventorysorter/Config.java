@@ -1,5 +1,7 @@
 package cpw.mods.inventorysorter;
 
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -65,5 +67,11 @@ public class Config {
 
             builder.pop();
         }
+    }
+
+    public static void register(ModContainer modContainer)
+    {
+        modContainer.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC.self());
+        modContainer.registerConfig(ModConfig.Type.SERVER, ServerConfig.SPEC.self());
     }
 }

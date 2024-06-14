@@ -91,7 +91,7 @@ public enum InventoryHandler
                 final Slot slot = ctx.player.containerMenu.getSlot(i);
                 if (!slot.mayPickup(ctx.player)) continue;
                 ItemStack sis = slot.getItem();
-                if (sis != null && sis.getItem() == is.getItem() && ItemStack.isSameItemSameTags(sis, is))
+                if (sis != null && sis.getItem() == is.getItem() && ItemStack.isSameItemSameComponents(sis, is))
                 {
                     return slot;
                 }
@@ -146,7 +146,7 @@ public enum InventoryHandler
             if (o1.is == o2.is) return 0;
             if (o1.is.getItem() != o2.is.getItem())
                 return compareString(o1.is).compareTo(compareString(o2.is));
-            if (ItemStack.isSameItemSameTags(o1.is, o2.is))
+            if (ItemStack.isSameItemSameComponents(o1.is, o2.is))
                 return 0;
             return Ints.compare(System.identityHashCode(o1.is), System.identityHashCode(o2.is));
         }

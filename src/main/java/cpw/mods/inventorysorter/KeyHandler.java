@@ -24,9 +24,7 @@ import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.KeyMapping;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.world.inventory.Slot;
-import net.neoforged.bus.api.Event;
 import net.neoforged.bus.api.EventPriority;
-import net.neoforged.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.client.settings.KeyConflictContext;
@@ -60,7 +58,7 @@ public class KeyHandler
                         InputConstants.Type.MOUSE, a.getDefaultKeyCode(), "keygroup.inventorysorter")))
                 .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
 
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onKeyMappingEvent);
+        InventorySorter.eventBus.addListener(this::onKeyMappingEvent);
 
         var eh = new ScreenEventHandler();
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, eh::onKey);
@@ -123,7 +121,7 @@ public class KeyHandler
             if (guiContainer.getMenu() != null && guiContainer.getMenu().slots != null && guiContainer.getMenu().slots.contains(slot))
             {
                 InventorySorter.LOGGER.debug("Sending action {} slot {}", triggeredAction, slot.index);
-                PacketDistributor.SERVER.noArg().send(triggeredAction.message(slot));
+                PacketDistributor.sendToServer(triggeredAction.message(slot));
             }
         }
     }
