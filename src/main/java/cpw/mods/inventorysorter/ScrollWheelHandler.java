@@ -41,9 +41,9 @@ public enum ScrollWheelHandler implements Consumer<ContainerContext>
     {
         this.moveAmount = amount;
     }
-    @Nullable
+
     @Override
-    public void accept(ContainerContext context)
+    public void accept(@SuppressWarnings("ClassEscapesDefinedScope") ContainerContext context)
     {
         if (context == null) throw new NullPointerException("WHUT");
         // Skip if we can't find ourselves in the mapping table
@@ -89,7 +89,7 @@ public enum ScrollWheelHandler implements Consumer<ContainerContext>
             if (context.player.containerMenu == context.player.inventoryMenu)
             {
                 if (InventoryHandler.preferredOrders.containsKey(context.slotMapping.inv)) {
-                    mappingCandidates.addAll(InventoryHandler.preferredOrders.get(context.slotMapping.inv).stream().map(mapping::get).collect(Collectors.toList()));
+                    mappingCandidates.addAll(InventoryHandler.preferredOrders.get(context.slotMapping.inv).stream().map(mapping::get).toList());
                 }
                 Collections.reverse(mappingCandidates);
             }
@@ -110,7 +110,10 @@ public enum ScrollWheelHandler implements Consumer<ContainerContext>
                 boolean empty = true;
                 for (ItemStack itemStack : context.player.getInventory().offhand)
                 {
-                    if (!itemStack.isEmpty()) empty = false;
+                    if (!itemStack.isEmpty()) {
+                        empty = false;
+                        break;
+                    }
                 }
                 if (empty) continue;
             }
@@ -135,14 +138,7 @@ public enum ScrollWheelHandler implements Consumer<ContainerContext>
             if (iscopy.getCount() == 0)
             {
                 sourceStack.grow(-1);
-                if (sourceStack.getCount() == 0)
-                {
-                    source.set(ItemStack.EMPTY);
-                }
-                else
-                {
-                    source.setChanged();
-                }
+                source.set(sourceStack);
                 break;
             }
         }
