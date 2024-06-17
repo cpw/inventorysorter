@@ -3,6 +3,7 @@ package cpw.mods.inventorysorter;
 import com.google.common.collect.*;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
+import net.neoforged.neoforge.items.SlotItemHandler;
 import org.apache.logging.log4j.*;
 
 import java.util.*;
@@ -26,8 +27,19 @@ class ContainerContext
     static boolean validSlot(Slot slot) {
         // Skip slots without an inventory - they're probably dummy slots
         return slot != null && slot.container != null
+                // don't skip slots that are slotitemhandlers with a container size > 0
+                && (slot instanceof SlotItemHandler || slot.container.getContainerSize() > 0)
                 // Skip blacklisted slots
                 && !InventorySorter.INSTANCE.isSlotBlacklisted(slot);
+    }
+
+    private Container findMatchingContainer(final Map<Container, InventoryHandler.InventoryMapping> mapping, final Slot sl) {
+        for (Map.Entry<Container, InventoryHandler.InventoryMapping> container : mapping.entrySet()) {
+            if (sl.isSameInventory(container.getValue().slot)) {
+                return container.getKey();
+            }
+        }
+        return sl.container;
     }
 
     public ContainerContext(Slot slot, ServerPlayer playerEntity)
@@ -38,7 +50,8 @@ class ContainerContext
         final AbstractContainerMenu openContainer = playerEntity.containerMenu;
         openContainer.slots.stream().filter(ContainerContext::validSlot).forEach(sl->
         {
-            final InventoryHandler.InventoryMapping inventoryMapping = mapping.computeIfAbsent(sl.container, k -> new InventoryHandler.InventoryMapping(sl.container, openContainer, sl.container, sl));
+            final Container matchingContainer = findMatchingContainer(mapping, sl);
+            final InventoryHandler.InventoryMapping inventoryMapping = mapping.computeIfAbsent(matchingContainer, k -> new InventoryHandler.InventoryMapping(matchingContainer, openContainer, matchingContainer, sl));
             inventoryMapping.addSlot(sl);
             if (sl == slot)
             {
