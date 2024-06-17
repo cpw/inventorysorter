@@ -19,14 +19,10 @@
 package cpw.mods.inventorysorter;
 
 import com.google.common.collect.*;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.resources.ResourceLocation;
 import org.apache.logging.log4j.*;
 
-import javax.annotation.*;
 import java.util.function.*;
 
 import net.minecraft.world.inventory.CraftingContainer;
@@ -39,7 +35,7 @@ public enum SortingHandler implements Consumer<ContainerContext>
 {
     INSTANCE;
     @Override
-    public void accept(ContainerContext context)
+    public void accept(@SuppressWarnings("ClassEscapesDefinedScope") ContainerContext context)
     {
         if (context == null) throw new NullPointerException("WHUT");
         // Ignore if we can't find ourselves in the slot set
@@ -115,7 +111,7 @@ public enum SortingHandler implements Consumer<ContainerContext>
     }
     private void compactInventory(final ContainerContext context, final Multiset<ItemStackHolder> itemcounts)
     {
-        final ResourceLocation containerTypeName = lookupContainerTypeName(context.slotMapping.container);
+        final ResourceLocation containerTypeName = InventoryHandler.lookupContainerTypeName(context.slotMapping.container);
         InventorySorter.INSTANCE.lastContainerType = containerTypeName;
         if (InventorySorter.INSTANCE.isContainerBlacklisted(containerTypeName)) {
             InventorySorter.INSTANCE.debugLog("Container {} blacklisted", ()->new String[] {containerTypeName.toString()});
@@ -166,10 +162,5 @@ public enum SortingHandler implements Consumer<ContainerContext>
                 itemCount = stackHolder != null ? stackHolder.getCount() : 0;
             }
         }
-    }
-
-    private static final ResourceLocation DUMMY_PLAYER_CONTAINER = ResourceLocation.parse("inventorysorter:dummyplayercontainer");
-    private ResourceLocation lookupContainerTypeName(AbstractContainerMenu container) {
-        return container instanceof InventoryMenu ? DUMMY_PLAYER_CONTAINER : BuiltInRegistries.MENU.getKey(container.getType());
     }
 }
