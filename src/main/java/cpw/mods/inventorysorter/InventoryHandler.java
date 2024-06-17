@@ -21,7 +21,7 @@ package cpw.mods.inventorysorter;
 import com.google.common.base.*;
 import com.google.common.collect.*;
 import com.google.common.primitives.*;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
@@ -34,9 +34,6 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BrewingStandBlockEntity;
 import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
-import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.ForgeRegistry;
 
 /**
  * @author cpw
@@ -48,10 +45,14 @@ public enum InventoryHandler
 
     private Method getMergeStackMethod()
     {
-
-        Method m = ObfuscationReflectionHelper.findMethod(AbstractContainerMenu.class, "m_"+"38903_", ItemStack.class, int.class, int.class, boolean.class);
-        m.setAccessible(true);
-        return m;
+        Method m = null;
+        try {
+            m = AbstractContainerMenu.class.getDeclaredMethod("moveItemStackTo", ItemStack.class, int.class, int.class, boolean.class);
+            m.setAccessible(true);
+            return m;
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public boolean mergeStack(AbstractContainerMenu container, ItemStack stack, int low, int high, boolean rev)
@@ -66,7 +67,7 @@ public enum InventoryHandler
         }
     }
 
-    public ItemStack getItemStack(ContainerContext ctx)
+    ItemStack getItemStack(ContainerContext ctx)
     {
         return getItemStack(ctx.slot);
     }
@@ -77,7 +78,7 @@ public enum InventoryHandler
         return slot.getItem();
     }
 
-    public void moveItemToOtherInventory(ContainerContext ctx, ItemStack is, int targetLow, int targetHigh, boolean slotIsDestination)
+    void moveItemToOtherInventory(ContainerContext ctx, ItemStack is, int targetLow, int targetHigh, boolean slotIsDestination)
     {
         for (int i = targetLow; i < targetHigh; i++)
         {
@@ -97,7 +98,7 @@ public enum InventoryHandler
             ContainerContext.PLAYER_OFFHAND, ImmutableList.of(ContainerContext.PLAYER_HOTBAR, ContainerContext.PLAYER_MAIN),
             ContainerContext.PLAYER_MAIN, ImmutableList.of(ContainerContext.PLAYER_OFFHAND, ContainerContext.PLAYER_HOTBAR)
     );
-    public Slot findStackWithItem(ItemStack is, final ContainerContext ctx)
+    Slot findStackWithItem(ItemStack is, final ContainerContext ctx)
     {
         if (is.getMaxStackSize() == 1) return null;
 
@@ -111,7 +112,7 @@ public enum InventoryHandler
                 final Slot slot = ctx.player.containerMenu.getSlot(i);
                 if (!slot.mayPickup(ctx.player)) continue;
                 ItemStack sis = slot.getItem();
-                if (sis != null && sis.getItem() == is.getItem() && ItemStack.isSameItemSameTags(sis, is))
+                if (sis != null && sis.getItem() == is.getItem() && ItemStack.isSameItemSameComponents(sis, is))
                 {
                     return slot;
                 }
@@ -133,7 +134,7 @@ public enum InventoryHandler
         return entries;
     }
 
-    public Multiset<ItemStackHolder> getInventoryContent(ContainerContext context)
+    Multiset<ItemStackHolder> getInventoryContent(ContainerContext context)
     {
         int slotLow = context.slotMapping.begin;
         int slotHigh = context.slotMapping.end + 1;
@@ -166,12 +167,12 @@ public enum InventoryHandler
             if (o1.is == o2.is) return 0;
             if (o1.is.getItem() != o2.is.getItem())
                 return compareString(o1.is).compareTo(compareString(o2.is));
-            if (ItemStack.isSameItemSameTags(o1.is, o2.is))
+            if (ItemStack.isSameItemSameComponents(o1.is, o2.is))
                 return 0;
             return Ints.compare(System.identityHashCode(o1.is), System.identityHashCode(o2.is));
         }
         private static String compareString(ItemStack stack) {
-            return String.valueOf(stack.getItemHolder().unwrap().map(ResourceKey::location, ForgeRegistries.ITEMS::getKey));
+            return String.valueOf(stack.getItemHolder().unwrap().map(ResourceKey::location, BuiltInRegistries.ITEM::getKey));
         }
     }
 

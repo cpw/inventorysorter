@@ -19,7 +19,7 @@
 package cpw.mods.inventorysorter;
 
 import net.minecraft.world.inventory.Slot;
-import net.minecraftforge.common.ForgeConfigSpec;
+import net.neoforged.neoforge.common.ModConfigSpec;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.Arrays;
@@ -33,21 +33,26 @@ import java.util.stream.Collectors;
  */
 public enum Action
 {
-    SORT(SortingHandler.INSTANCE, "key.inventorysorter.sort", GLFW.GLFW_MOUSE_BUTTON_MIDDLE, Config.ClientConfig.CONFIG.sortingModule),
-    ONEITEMIN(ScrollWheelHandler.ONEITEMIN, "key.inventorysorter.itemin", 99, Config.ClientConfig.CONFIG.wheelmoveModule),
-    ONEITEMOUT(ScrollWheelHandler.ONEITEMOUT, "key.inventorysorter.itemout", 101, Config.ClientConfig.CONFIG.wheelmoveModule);
+    SORT(SortingHandler.INSTANCE, "key.inventorysorter.sort",
+            GLFW.GLFW_MOUSE_BUTTON_MIDDLE, Config.ClientConfig.CONFIG.sortingModule, ModConfigSpec.ConfigValue::get),
+    ONEITEMIN(ScrollWheelHandler.ONEITEMIN, "key.inventorysorter.itemin",
+            99, Config.ClientConfig.CONFIG.wheelmoveModule, cf->cf.get() && InventorySorter.INSTANCE.dontDodgeMouseTweaks()),
+    ONEITEMOUT(ScrollWheelHandler.ONEITEMOUT, "key.inventorysorter.itemout",
+            101, Config.ClientConfig.CONFIG.wheelmoveModule, cf->cf.get() && InventorySorter.INSTANCE.dontDodgeMouseTweaks());
 
     private final Consumer<ContainerContext> worker;
     private final String keyBindingName;
     private final int defaultKeyCode;
-    private final ForgeConfigSpec.ConfigValue<Boolean> configValue;
+    private final ModConfigSpec.ConfigValue<Boolean> configValue;
+    private final Predicate<ModConfigSpec.ConfigValue<Boolean>> configPredicate;
 
-    Action(Consumer<ContainerContext> worker, String keyBindingName, int defaultKeyCode, ForgeConfigSpec.ConfigValue<Boolean> configValue)
+    Action(Consumer<ContainerContext> worker, String keyBindingName, int defaultKeyCode, ModConfigSpec.ConfigValue<Boolean> configValue, Predicate<ModConfigSpec.ConfigValue<Boolean>> configPredicate)
     {
         this.worker = worker;
         this.keyBindingName = keyBindingName;
         this.defaultKeyCode = defaultKeyCode;
         this.configValue = configValue;
+        this.configPredicate = configPredicate;
     }
 
     public String getKeyBindingName() {
@@ -59,14 +64,14 @@ public enum Action
         return new Network.ActionMessage(this, slot.index);
     }
 
-    public void execute(ContainerContext context)
+    void execute(ContainerContext context)
     {
         this.worker.accept(context);
     }
 
     public boolean isActive()
     {
-        return configValue.get();
+        return configPredicate.test(this.configValue);
     }
 
     public int getDefaultKeyCode() {

@@ -3,63 +3,125 @@ plugins {
     id 'se.bjurr.gitchangelog.git-changelog-gradle-plugin' version '1.71.4'
     id 'org.ajoberstar.grgit' version '4.1.1'
     id 'com.github.ben-manes.versions' version '0.39.0'
-    id 'net.neoforged.gradle' version '[6.0.18,6.2)'}
+    id 'net.neoforged.gradle.userdev' version '7.0.142'
+    id 'java-library'
+    id 'idea'
+    id 'maven-publish'
+}
+
+tasks.named('wrapper', Wrapper).configure {
+    // Define wrapper values here so as to not have to always do so when updating gradlew.properties.
+    // Switching this to Wrapper.DistributionType.ALL will download the full gradle sources that comes with
+    // documentation attached on cursor hover of gradle classes and methods. However, this comes with increased
+    // file size for Gradle. If you do switch this to ALL, run the Gradle wrapper task twice afterwards.
+    // (Verify by checking gradle/wrapper/gradle-wrapper.properties to see if distributionUrl now points to `-all`)
+    distributionType = Wrapper.DistributionType.BIN
+}
+
+version = grgit.describe(longDescr: true).split('-').with { "${it[0]}.${it[1]}" }
+group = 'cpw.mods'
 
 repositories {
     mavenLocal()
 }
-apply plugin: 'idea'
-apply plugin: 'maven-publish'
-//apply from: 'https://raw.githubusercontent.com/SizableShrimp/Forge-Class-Remapper/main/classremapper.gradle'
 
-group= 'cpw.mods'
 base {
     archivesName = 'inventorysorter'
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+// Mojang ships Java 21 to end users starting in 1.20.5, so mods should target Java 21.
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
-version = grgit.describe(longDescr: true).split('-').with { "${it[0]}.${it[1]}" }
+//minecraft.accessTransformers.file rootProject.file('src/main/resources/META-INF/accesstransformer.cfg')
+//minecraft.accessTransformers.entry public net.minecraft.client.Minecraft textureManager # textureManager
 
-minecraft {
-    mappings channel: MCP_CHANNEL, version: MCP_MAPPINGS
-    runs {
-        client {
-            workingDirectory project.file('run')
+// Default run configurations.
+// These can be tweaked, removed, or duplicated as needed.
+runs {
+    // applies to all the run configs below
+    configureEach {
+        // Recommended logging data for a userdev environment
+        // The markers can be added/remove as needed separated by commas.
+        // "SCAN": For mods scan.
+        // "REGISTRIES": For firing of registry events.
+        // "REGISTRYDUMP": For getting the contents of all registries.
+        systemProperty 'forge.logging.markers', 'REGISTRIES'
 
-            // Recommended logging data for a userdev environment
-            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+        // Recommended logging level for the console
+        // You can set various levels here.
+        // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
+        systemProperty 'forge.logging.console.level', 'debug'
 
-            // Recommended logging level for the console
-            property 'forge.logging.console.level', 'info'
-            property 'forge.logging.noansi', 'false'
-            ideaModule "${project.name}.main"
-        }
+        modSource project.sourceSets.main
+    }
 
-        server {
-            workingDirectory project.file('run')
+    client {
+        // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
+        systemProperty 'forge.enabledGameTestNamespaces', 'inventorysorter'
+    }
 
-            // Recommended logging data for a userdev environment
-            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+    server {
+        systemProperty 'forge.enabledGameTestNamespaces', 'inventorysorter'
+        programArgument '--nogui'
+    }
 
-            // Recommended logging level for the console
-            property 'forge.logging.console.level', 'info'
-            property 'forge.logging.noansi', 'false'
-            ideaModule "${project.name}.main"
-        }
-        
-        data {
-            workingDirectory project.file('run')
-            property 'forge.logging.markers', 'SCAN'
-            property 'forge.logging.console.level', 'debug'
-            property 'forge.logging.noansi', 'false'
-            ideaModule "${project.name}.main"
-        }
+    // This run config launches GameTestServer and runs all registered gametests, then exits.
+    // By default, the server will crash when no gametests are provided.
+    // The gametest system is also enabled by default for other run configs under the /test command.
+    gameTestServer {
+        systemProperty 'forge.enabledGameTestNamespaces', 'inventorysorter'
+    }
+
+    data {
+        // example of overriding the workingDirectory set in configureEach above, uncomment if you want to use it
+        // workingDirectory project.file('run-data')
+
+        // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
+        programArguments.addAll '--mod', 'inventorysorter', '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
     }
 }
 
+// Include resources generated by data generators.
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+// Sets up a dependency configuration called 'localRuntime'.
+// This configuration should be used instead of 'runtimeOnly' to declare
+// a dependency that will be present for runtime testing but that is
+// "optional", meaning it will not be pulled by dependents of this mod.
+configurations {
+    runtimeClasspath.extendsFrom localRuntime
+}
+
 dependencies {
-    minecraft "net.neoforged:forge:${MC_VERSION}-${FORGE_VERSION}"
+    // Specify the version of Minecraft to use.
+    // Depending on the plugin applied there are several options. We will assume you applied the userdev plugin as shown above.
+    // The group for userdev is net.neoforged, the module name is neoforge, and the version is the same as the neoforge version.
+    // You can however also use the vanilla plugin (net.neoforged.gradle.vanilla) to use a version of Minecraft without the neoforge loader.
+    // And its provides the option to then use net.minecraft as the group, and one of; client, server or joined as the module name, plus the game version as version.
+    // For all intends and purposes: You can treat this dependency as if it is a normal library you would use.
+    implementation "net.neoforged:neoforge:${neo_version}"
+
+    // Example optional mod dependency with JEI
+    // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
+    // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
+    // compileOnly "mezz.jei:jei-${mc_version}-neoforge-api:${jei_version}"
+    // We add the full version to localRuntime, not runtimeOnly, so that we do not publish a dependency on it
+    // localRuntime "mezz.jei:jei-${mc_version}-neoforge:${jei_version}"
+
+    // Example mod dependency using a mod jar from ./libs with a flat dir repository
+    // This maps to ./libs/coolmod-${mc_version}-${coolmod_version}.jar
+    // The group id is ignored when searching -- in this case, it is "blank"
+    // implementation "blank:coolmod-${mc_version}:${coolmod_version}"
+
+    // Example mod dependency using a file as dependency
+    // implementation files("libs/coolmod-${mc_version}-${coolmod_version}.jar")
+
+    // Example project dependency using a sister or child project:
+    // implementation project(":myproject")
+
+    // For more info:
+    // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
+    // http://www.gradle.org/docs/current/userguide/dependency_management.html
 }
 
 task makeChangelog(type: se.bjurr.gitchangelog.plugin.gradle.GitChangelogTask) {
@@ -70,7 +132,7 @@ task makeChangelog(type: se.bjurr.gitchangelog.plugin.gradle.GitChangelogTask) {
     templateContent = """
 # Inventory sorter changelog history
 
-## Version ${version} for Minecraft ${MC_VERSION}
+## Version ${version} for Minecraft ${mc_version}
 
 {{#tags}}
 * {{name}}
@@ -88,7 +150,7 @@ curseforge {
         changelog = file('CHANGELOG.md')
         changelogType = 'markdown'
         releaseType = project.findProperty('releaseType') ?: 'alpha'
-        addGameVersion '1.20.1'
+        addGameVersion "${mc_version}"
     }
     options {
         javaVersionAutoDetect = true // defaults to true
@@ -115,23 +177,46 @@ tasks.named('jar', Jar).configure {
                 "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         ])
     }
-    archiveAppendix = MC_VERSION
-    finalizedBy 'reobfJar'
+    archiveAppendix = mc_version
 }
 
+// This block of code expands all declared replace properties in the specified resource targets.
+// A missing property will result in an error. Properties are expanded using ${} Groovy notation.
+// When "copyIdeResources" is enabled, this will also run before the game launches in IDE environments.
+// See https://docs.gradle.org/current/dsl/org.gradle.language.jvm.tasks.ProcessResources.html
+//tasks.withType(ProcessResources).configureEach {
+//    var replaceProperties = [
+//            mod_version            : project.version,
+//    ]
+//    inputs.properties replaceProperties
+//
+//    filesMatching(['META-INF/neoforge.mods.toml']) {
+//        expand replaceProperties
+//    }
+//}
+
+// Example configuration to allow publishing using the maven-publish plugin
 publishing {
     publications {
         register('mavenJava', MavenPublication) {
-            artifact jar
+            from components.java
         }
     }
     repositories {
         maven {
-            credentials {
-                username project.properties.cpwMavenUser?:'spam'
-                password project.properties.cpwMavenPassword?:'bums'
-            }
-            url 'https://maven.neoforged.net/releases'
+            url "file://${project.projectDir}/repo"
         }
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
+}
+
+// IDEA no longer automatically downloads sources/javadoc jars for dependencies, so we need to explicitly enable the behavior.
+idea {
+    module {
+        downloadSources = true
+        downloadJavadoc = true
     }
 }
