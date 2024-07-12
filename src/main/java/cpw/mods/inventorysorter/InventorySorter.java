@@ -113,7 +113,6 @@ public class InventorySorter
         return containerblacklist.contains(container.toString()) || Config.ServerConfig.CONFIG.containerBlacklist.get().contains(container.toString());
     }
     void onConfigLoad(ModConfigEvent configEvent) {
-        if (configEvent.getConfig().getConfigData() == null) return; // Bug in forge means that we might get called back on server exit
         switch (configEvent.getConfig().getType()) {
             case SERVER:
                 this.slotblacklist.addAll(Config.ServerConfig.CONFIG.slotBlacklist.get());

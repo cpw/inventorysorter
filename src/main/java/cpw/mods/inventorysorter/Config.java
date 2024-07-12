@@ -71,7 +71,7 @@ public class Config {
 
     public static void register(ModContainer modContainer)
     {
-        modContainer.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC.self());
-        modContainer.registerConfig(ModConfig.Type.SERVER, ServerConfig.SPEC.self());
+        modContainer.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
+        modContainer.registerConfig(ModConfig.Type.SERVER, ServerConfig.SPEC);
     }
 }
