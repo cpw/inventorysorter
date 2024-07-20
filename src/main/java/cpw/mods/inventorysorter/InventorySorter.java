@@ -52,8 +52,7 @@ import java.util.stream.Stream;
  */
 
 @Mod("inventorysorter")
-public class InventorySorter
-{
+public class InventorySorter {
     public static InventorySorter INSTANCE;
 
     static final Logger LOGGER = LogManager.getLogger();
@@ -112,7 +111,13 @@ public class InventorySorter
     boolean isContainerBlacklisted(ResourceLocation container) {
         return containerblacklist.contains(container.toString()) || Config.ServerConfig.CONFIG.containerBlacklist.get().contains(container.toString());
     }
+
     void onConfigLoad(ModConfigEvent configEvent) {
+        // Don't load data on unloading
+        if (configEvent instanceof ModConfigEvent.Unloading) {
+            return;
+        }
+
         switch (configEvent.getConfig().getType()) {
             case SERVER:
                 this.slotblacklist.addAll(Config.ServerConfig.CONFIG.slotBlacklist.get());
