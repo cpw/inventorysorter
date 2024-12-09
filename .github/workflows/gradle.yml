@@ -18,4 +18,4 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew build
     - name: Curseforge publish
-      run: ./gradlew makeChangelog curseforge -P curseforge_apikey=${{ secrets.CURSEFORGE_TOKEN }}
+      run: ./gradlew makeChangelog publishMods -P curseforge_apikey=${{ secrets.CURSEFORGE_TOKEN }}
