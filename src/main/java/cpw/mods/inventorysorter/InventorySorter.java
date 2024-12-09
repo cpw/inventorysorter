@@ -52,8 +52,7 @@ import java.util.stream.Stream;
  */
 
 @Mod("inventorysorter")
-public class InventorySorter
-{
+public class InventorySorter {
     public static InventorySorter INSTANCE;
 
     static final Logger LOGGER = LogManager.getLogger();
@@ -99,6 +98,7 @@ public class InventorySorter
     private void updateConfig() {
         Config.ServerConfig.CONFIG.containerBlacklist.set(new ArrayList<>(containerblacklist));
         Config.ServerConfig.CONFIG.slotBlacklist.set(new ArrayList<>(slotblacklist));
+        Config.ServerConfig.SPEC.save();
     }
 
     private void onServerStarting(ServerStartingEvent evt) {
@@ -112,7 +112,13 @@ public class InventorySorter
     boolean isContainerBlacklisted(ResourceLocation container) {
         return containerblacklist.contains(container.toString()) || Config.ServerConfig.CONFIG.containerBlacklist.get().contains(container.toString());
     }
+
     void onConfigLoad(ModConfigEvent configEvent) {
+        // Don't load data on unloading
+        if (configEvent instanceof ModConfigEvent.Unloading) {
+            return;
+        }
+
         switch (configEvent.getConfig().getType()) {
             case SERVER:
                 this.slotblacklist.addAll(Config.ServerConfig.CONFIG.slotBlacklist.get());
@@ -144,7 +150,7 @@ public class InventorySorter
         if (BuiltInRegistries.MENU.containsKey(containerType)) {
             INSTANCE.containerblacklist.add(containerType.toString());
             INSTANCE.updateConfig();
-            context.getSource().sendSuccess(()->Component.translatable("inventorysorter.commands.inventorysorter.bladd.message", containerType), true);
+            context.getSource().sendSuccess(()->Component.translatable("inventorysorter.commands.inventorysorter.bladd.message", containerType.toString()), true);
             return 1;
         } else {
             context.getSource().sendSuccess(()->Component.translatable("inventorysorter.commands.inventorysorter.badtype", containerType), true);
@@ -156,17 +162,17 @@ public class InventorySorter
         final var containerType = context.getArgument("container", ResourceLocation.class);
         if (BuiltInRegistries.MENU.containsKey(containerType) && INSTANCE.containerblacklist.remove(containerType.toString())) {
             INSTANCE.updateConfig();
-            context.getSource().sendSuccess(()->Component.translatable("inventorysorter.commands.inventorysorter.blremove.message", containerType), true);
+            context.getSource().sendSuccess(()->Component.translatable("inventorysorter.commands.inventorysorter.blremove.message", containerType.toString()), true);
             return 1;
         } else {
-            context.getSource().sendSuccess(()->Component.translatable("inventorysorter.commands.inventorysorter.badtype", containerType), true);
+            context.getSource().sendSuccess(()->Component.translatable("inventorysorter.commands.inventorysorter.badtype", containerType.toString()), true);
             return 0;
         }
     }
 
     static int showLast(final CommandContext<CommandSourceStack> context) {
         if (INSTANCE.lastContainerType != null) {
-            context.getSource().sendSuccess(()->Component.translatable("inventorysorter.commands.inventorysorter.showlast.message", INSTANCE.lastContainerType), true);
+            context.getSource().sendSuccess(()->Component.translatable("inventorysorter.commands.inventorysorter.showlast.message", INSTANCE.lastContainerType.toString()), true);
         } else {
             context.getSource().sendSuccess(()->Component.translatable("inventorysorter.commands.inventorysorter.showlast.nosort"), true);
         }
@@ -177,7 +183,9 @@ public class InventorySorter
         if (INSTANCE.containerblacklist.isEmpty()) {
             context.getSource().sendSuccess(()->Component.translatable("inventorysorter.commands.inventorysorter.showblacklist.empty"), true);
         } else {
-            context.getSource().sendSuccess(()->Component.translatable("inventorysorter.commands.inventorysorter.showblacklist.message", listBlacklist().collect(Collectors.toList())), true);
+            context.getSource().sendSuccess(()->Component.translatable("inventorysorter.commands.inventorysorter.showblacklist.message", listBlacklist()
+                    .map(ResourceLocation::toString)
+                    .collect(Collectors.joining(", "))), true);
         }
         return 0;
     }

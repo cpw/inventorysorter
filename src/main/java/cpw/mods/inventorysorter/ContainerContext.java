@@ -68,7 +68,13 @@ class ContainerContext
 
             InventoryHandler.InventoryMapping hotbarMapping = new InventoryHandler.InventoryMapping(PLAYER_HOTBAR, openContainer, playerEntity.getInventory(), openContainer.getSlot(0));
             InventoryHandler.InventoryMapping mainMapping = new InventoryHandler.InventoryMapping(PLAYER_MAIN, openContainer, playerEntity.getInventory(), openContainer.getSlot(mainStart));
-            InventoryHandler.InventoryMapping offhandMapping = new InventoryHandler.InventoryMapping(PLAYER_OFFHAND, openContainer, playerEntity.getInventory(), openContainer.getSlot(offhandStart));
+
+            // Only add the offhandMapping if the screen contains an offhand slot. Most don't.
+            InventoryHandler.InventoryMapping offhandMapping = null;
+            if (openContainer.slots.size() >= 40) {
+                offhandMapping = new InventoryHandler.InventoryMapping(PLAYER_OFFHAND, openContainer, playerEntity.getInventory(), openContainer.getSlot(offhandStart));
+            }
+
             InventoryHandler.InventoryMapping inventoryMapping;
             for (int i = playerMapping.begin; i<=playerMapping.end; i++)
             {
@@ -87,7 +93,7 @@ class ContainerContext
                     mapping.put(PLAYER_MAIN, mainMapping);
                     inventoryMapping = mainMapping;
                 }
-                else if (s.getSlotIndex() >= offhandStart && s.container == playerEntity.getInventory())
+                else if (offhandMapping != null && s.getSlotIndex() >= offhandStart && s.container == playerEntity.getInventory())
                 {
                     offhandMapping.begin = Math.min(s.index, offhandMapping.begin);
                     offhandMapping.end = Math.max(s.index, offhandMapping.end);
