@@ -44,7 +44,7 @@ import net.minecraftforge.registries.ForgeRegistry;
 public enum InventoryHandler
 {
     INSTANCE;
-    public final Method mergeStack = getMergeStackMethod();
+    private final Method mergeStack = getMergeStackMethod();
 
     private Method getMergeStackMethod()
     {
@@ -92,12 +92,13 @@ public enum InventoryHandler
         }
     }
 
-    static Map<Container,ImmutableList<Container>> preferredOrders = ImmutableMap.of(
+    static final Map<Container,ImmutableList<Container>> preferredOrders = ImmutableMap.of(
             ContainerContext.PLAYER_HOTBAR, ImmutableList.of(ContainerContext.PLAYER_OFFHAND, ContainerContext.PLAYER_MAIN),
             ContainerContext.PLAYER_OFFHAND, ImmutableList.of(ContainerContext.PLAYER_HOTBAR, ContainerContext.PLAYER_MAIN),
             ContainerContext.PLAYER_MAIN, ImmutableList.of(ContainerContext.PLAYER_OFFHAND, ContainerContext.PLAYER_HOTBAR)
     );
-    public Slot findStackWithItem(ItemStack is, final ContainerContext ctx)
+
+    Slot findStackWithItem(ItemStack is, final ContainerContext ctx)
     {
         if (is.getMaxStackSize() == 1) return null;
 
