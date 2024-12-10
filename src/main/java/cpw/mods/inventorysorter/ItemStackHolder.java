@@ -41,8 +41,7 @@ public class ItemStackHolder
     @Override
     public boolean equals(Object obj)
     {
-        if (!(obj instanceof ItemStackHolder)) return false;
-        ItemStackHolder ish = (ItemStackHolder)obj;
-        return is.getItem() == ish.is.getItem() && ItemStack.isSameItemSameTags(is, ish.is);
+        if (!(obj instanceof final ItemStackHolder ish)) return false;
+        return is.getItem() == ish.is.getItem() && ItemStack.isSameItemSameComponents(is, ish.is);
     }
 }

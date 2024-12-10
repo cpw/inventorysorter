@@ -28,7 +28,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.*;
 
-import javax.annotation.*;
 import java.util.function.*;
 
 import net.minecraft.world.inventory.CraftingContainer;
@@ -41,7 +40,7 @@ public enum SortingHandler implements Consumer<ContainerContext>
 {
     INSTANCE;
     @Override
-    public void accept(ContainerContext context)
+    public void accept(@SuppressWarnings("ClassEscapesDefinedScope") ContainerContext context)
     {
         if (context == null) throw new NullPointerException("WHUT");
         // Ignore if we can't find ourselves in the slot set
@@ -117,7 +116,7 @@ public enum SortingHandler implements Consumer<ContainerContext>
     }
     private void compactInventory(final ContainerContext context, final Multiset<ItemStackHolder> itemcounts)
     {
-        final ResourceLocation containerTypeName = lookupContainerTypeName(context.slotMapping.container);
+        final ResourceLocation containerTypeName = InventoryHandler.lookupContainerTypeName(context.slotMapping.container);
         InventorySorter.INSTANCE.lastContainerType = containerTypeName;
         if (InventorySorter.INSTANCE.isContainerBlacklisted(containerTypeName)) {
             InventorySorter.INSTANCE.debugLog("Container {} blacklisted", ()->new String[] {containerTypeName.toString()});

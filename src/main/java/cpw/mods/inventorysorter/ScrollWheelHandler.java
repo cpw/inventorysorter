@@ -20,10 +20,8 @@ package cpw.mods.inventorysorter;
 
 import net.minecraft.world.inventory.Slot;
 
-import javax.annotation.*;
 import java.util.*;
 import java.util.function.*;
-import java.util.stream.*;
 
 import net.minecraft.world.Container;
 import net.minecraft.world.item.ItemStack;
@@ -67,8 +65,10 @@ public enum ScrollWheelHandler implements Consumer<ContainerContext>
 
         if (source == null) return;
 
+        if (InventorySorter.INSTANCE.isContainerBlacklisted(InventoryHandler.lookupContainerTypeName(context.slotMapping.container))) return; // Blacklist container screen
         if (InventorySorter.INSTANCE.isSlotBlacklisted(source)) return; // Blacklist source
         if (InventorySorter.INSTANCE.isSlotBlacklisted(context.slot)) return; // Blacklist target
+
         if (!source.mayPickup(context.player)) return;
         if (!source.mayPlace(is)) return;
         final ItemStack sourceStack = InventoryHandler.INSTANCE.getItemStack(source);
@@ -137,7 +137,7 @@ public enum ScrollWheelHandler implements Consumer<ContainerContext>
             InventoryHandler.INSTANCE.moveItemToOtherInventory(context, iscopy, mappingCandidate.begin, mappingCandidate.end+1, moveAmount < 0);
             if (iscopy.getCount() == 0)
             {
-                sourceStack.grow(-1);
+                sourceStack.shrink(1);
                 source.set(sourceStack);
                 break;
             }
