@@ -3,7 +3,7 @@ package cpw.mods.inventorysorter;
 import com.google.common.collect.*;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
-import net.neoforged.neoforge.items.SlotItemHandler;
+import net.minecraftforge.items.SlotItemHandler;
 import org.apache.logging.log4j.*;
 
 import java.util.*;

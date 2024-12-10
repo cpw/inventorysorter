@@ -42,6 +42,6 @@ public class ItemStackHolder
     public boolean equals(Object obj)
     {
         if (!(obj instanceof final ItemStackHolder ish)) return false;
-        return is.getItem() == ish.is.getItem() && ItemStack.isSameItemSameComponents(is, ish.is);
+        return is.getItem() == ish.is.getItem() && ItemStack.isSameItemSameTags(is, ish.is);
     }
 }

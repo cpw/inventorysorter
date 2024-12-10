@@ -22,6 +22,7 @@ import com.google.common.base.*;
 import com.google.common.collect.*;
 import com.google.common.primitives.*;
 import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -216,7 +217,7 @@ public enum InventoryHandler
         }
     }
 
-    static final ResourceLocation DUMMY_PLAYER_CONTAINER = ResourceLocation.parse("inventorysorter:dummyplayercontainer");
+    static final ResourceLocation DUMMY_PLAYER_CONTAINER = new ResourceLocation("inventorysorter:dummyplayercontainer");
 
     static ResourceLocation lookupContainerTypeName(AbstractContainerMenu container) {
         return container instanceof InventoryMenu ? DUMMY_PLAYER_CONTAINER : BuiltInRegistries.MENU.getKey(container.getType());
