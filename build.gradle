@@ -47,7 +47,7 @@ minecraft {
             property 'forge.logging.noansi', 'false'
             ideaModule "${project.name}.main"
         }
-        
+
         data {
             workingDirectory project.file('run')
             property 'forge.logging.markers', 'SCAN'
@@ -87,7 +87,7 @@ curseforge {
         id = '240633'
         changelog = file('CHANGELOG.md')
         changelogType = 'markdown'
-        releaseType = project.findProperty('releaseType') ?: 'alpha'
+        releaseType = 'release'
         addGameVersion '1.20.1'
     }
     options {

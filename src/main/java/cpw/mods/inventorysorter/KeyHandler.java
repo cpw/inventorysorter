@@ -18,12 +18,15 @@
 
 package cpw.mods.inventorysorter;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.KeyMapping;
 import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.level.GameType;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.client.event.ScreenEvent;
 import net.minecraftforge.client.settings.KeyConflictContext;
@@ -101,6 +104,12 @@ public class KeyHandler
     }
 
     private <T extends ScreenEvent> void onInputEvent(T evt, BiPredicate<KeyMapping, T> kbTest) {
+        // Don't sort on spectator
+        MultiPlayerGameMode gameMode = Minecraft.getInstance().gameMode;
+        if (gameMode != null && gameMode.getPlayerMode() == GameType.SPECTATOR) {
+            return;
+        }
+
         final Screen gui = evt.getScreen();
         if (!(gui instanceof AbstractContainerScreen && !(gui instanceof CreativeModeInventoryScreen))) {
             return;
