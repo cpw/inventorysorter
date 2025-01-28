@@ -31,6 +31,7 @@ import net.minecraft.world.inventory.Slot;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModList;
+import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.fml.InterModComms;
 import net.neoforged.fml.common.Mod;
@@ -67,11 +68,11 @@ public class InventorySorter {
         final IEventBus bus = modBus;
         bus.addListener(this::handleimc);
         bus.addListener(this::onConfigLoad);
-        Config.register(me);
+        Config.register(ModLoadingContext.get());
         COMMAND_ARGUMENT_TYPES.register(bus);
         NeoForge.EVENT_BUS.addListener(this::onServerStarting);
         KeyHandler.registerKeyHandlers(bus);
-        Network.registerPayloadHandlers(bus);
+        Network.init(bus);
     }
 
     private void handleimc(final InterModProcessEvent evt) {
@@ -195,7 +196,7 @@ public class InventorySorter {
     }
 
     static Stream<ResourceLocation> listBlacklist() {
-        return INSTANCE.containerblacklist.stream().map(ResourceLocation::parse);
+        return INSTANCE.containerblacklist.stream().map(ResourceLocation::new);
     }
 
     boolean dontDodgeMouseTweaks() {

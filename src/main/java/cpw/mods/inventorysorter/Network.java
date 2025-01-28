@@ -20,50 +20,57 @@ package cpw.mods.inventorysorter;
 
 import io.netty.buffer.*;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlerEvent;
+import net.neoforged.neoforge.network.registration.IPayloadRegistrar;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by cpw on 08/01/16.
  */
 public final class Network {
-    static void registerPayloadHandlers(final IEventBus bus) {
-        bus.addListener(Network::registerPayloadHandler);
+    private static final String PROTOCOL_VERSION = Integer.toString(1);
+
+    public static void init(IEventBus bus) {
+        bus.addListener(Network::registerEvent);
+
     }
 
-    private static void registerPayloadHandler(RegisterPayloadHandlersEvent evt) {
-        PayloadRegistrar registrar = evt.registrar("inventorysorter").versioned("1");
-        registrar.playToServer(ActionMessage.TYPE, ActionMessage.CODEC, ServerHandler::onMessage);
+    public static void registerEvent(RegisterPayloadHandlerEvent event) {
+        IPayloadRegistrar registrar = event.registrar("inventorysorter").versioned(PROTOCOL_VERSION);
+        registrar.play(ActionMessage.ID, ActionMessage::fromBytes, ServerHandler::onMessage);
     }
-    public static class ActionMessage implements CustomPacketPayload {
 
-        static final Type<ActionMessage> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath("inventorysorter", "action_message"));
-        static final StreamCodec<FriendlyByteBuf, ActionMessage> CODEC = CustomPacketPayload.codec(ActionMessage::write, ActionMessage::read);
-
+    public static class ActionMessage implements CustomPacketPayload
+    {
         Action action;
         int slotIndex;
+        public static ResourceLocation ID = new ResourceLocation("inventorysorter", "net");
 
-        ActionMessage(Action action, int slotIndex) {
+        ActionMessage(Action action, int slotIndex)
+        {
             this.action = action;
             this.slotIndex = slotIndex;
         }
 
-        private void write(FriendlyByteBuf buf) {
-            buf.writeByte(action.ordinal());
-            buf.writeInt(slotIndex);
-        }
-        static ActionMessage read(ByteBuf buf) {
+        static ActionMessage fromBytes(FriendlyByteBuf buf)
+        {
             return new ActionMessage(Action.values()[buf.readByte()], buf.readInt());
         }
 
         @Override
-        public @NotNull Type<? extends CustomPacketPayload> type() {
-            return TYPE;
+        public void write(FriendlyByteBuf buf)
+        {
+            buf.writeByte(action.ordinal());
+            buf.writeInt(slotIndex);
+        }
+
+        @Override
+        public @NotNull ResourceLocation id()
+        {
+            return ID;
         }
     }
 }

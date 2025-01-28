@@ -134,7 +134,7 @@ public class KeyHandler
             if (guiContainer.getMenu() != null && guiContainer.getMenu().slots != null && guiContainer.getMenu().slots.contains(slot))
             {
                 InventorySorter.LOGGER.debug("Sending action {} slot {}", triggeredAction, slot.index);
-                PacketDistributor.sendToServer(triggeredAction.message(slot));
+                PacketDistributor.SERVER.noArg().send(triggeredAction.message(slot));
             }
         }
 

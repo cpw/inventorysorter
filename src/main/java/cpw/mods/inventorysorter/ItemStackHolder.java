@@ -35,13 +35,13 @@ public class ItemStackHolder
     @Override
     public int hashCode()
     {
-        return ItemStack.hashItemAndComponents(is);//(is.hasTag() ? is.getTag().hashCode() : 0);
+        return is.getItem().hashCode() * 31 + (is.hasTag() ? is.getTag().hashCode() : 0);
     }
 
     @Override
     public boolean equals(Object obj)
     {
         if (!(obj instanceof final ItemStackHolder ish)) return false;
-        return is.getItem() == ish.is.getItem() && ItemStack.isSameItemSameComponents(is, ish.is);
+        return is.getItem() == ish.is.getItem() && ItemStack.isSameItemSameTags(is, ish.is);
     }
 }

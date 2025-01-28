@@ -31,9 +31,13 @@ public class ServerHandler
 {
     static boolean onMessage(Network.ActionMessage message, IPayloadContext ctx)
     {
-        final Player sender = ctx.player();
-        if (sender != null && sender instanceof ServerPlayer serverPlayer) {
-            ctx.enqueueWork(() -> {
+        if (ctx.player().isEmpty()) {
+            return false;
+        }
+
+        final Player sender = ctx.player().get();
+        if (sender instanceof ServerPlayer serverPlayer) {
+            ctx.workHandler().submitAsync(() -> {
                 InventorySorter.LOGGER.log(Level.DEBUG, "Got action {} slot {}", message.action, message.slotIndex);
                 Slot slot = serverPlayer.containerMenu.getSlot(message.slotIndex);
                 message.action.execute(new ContainerContext(slot, serverPlayer));
