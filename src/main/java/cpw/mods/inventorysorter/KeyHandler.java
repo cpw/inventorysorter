@@ -18,18 +18,24 @@
 
 package cpw.mods.inventorysorter;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.KeyMapping;
 import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.world.inventory.Slot;
-import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
-import net.minecraftforge.client.event.ScreenEvent;
-import net.minecraftforge.client.settings.KeyConflictContext;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.eventbus.api.*;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraft.world.level.GameType;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.loading.FMLEnvironment;
+import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
+import net.neoforged.neoforge.client.event.ScreenEvent;
+import net.neoforged.neoforge.client.settings.KeyConflictContext;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.apache.logging.log4j.*;
 
 import java.util.AbstractMap;
@@ -58,16 +64,17 @@ public class KeyHandler
                         InputConstants.Type.MOUSE, a.getDefaultKeyCode(), "keygroup.inventorysorter")))
                 .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
 
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onKeyMappingEvent);
-
         var eh = new ScreenEventHandler();
-        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, eh::onKey);
-        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, eh::onMouse);
-        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, eh::onScroll);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, eh::onKey);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, eh::onMouse);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, eh::onScroll);
     }
 
-    static void init() {
+    static void registerKeyHandlers(IEventBus bus) {
+        if (FMLEnvironment.dist != Dist.CLIENT)
+            return;
         keyHandler = new KeyHandler();
+        bus.addListener(keyHandler::onKeyMappingEvent);
     }
 
     public void onKeyMappingEvent(RegisterKeyMappingsEvent evt) {
@@ -95,12 +102,18 @@ public class KeyHandler
     }
 
     private boolean mouseScrollEvaluate(final KeyMapping kb, final ScreenEvent.MouseScrolled.Pre evt) {
-        int dir = (int) Math.signum(evt.getScrollDelta());
+        int dir = (int) Math.signum(evt.getScrollDeltaY());
         int keycode = dir + 100;
         return kb.matchesMouse(keycode);
     }
 
     private <T extends ScreenEvent> void onInputEvent(T evt, BiPredicate<KeyMapping, T> kbTest) {
+        // Don't sort on spectator
+        MultiPlayerGameMode gameMode = Minecraft.getInstance().gameMode;
+        if (gameMode != null && gameMode.getPlayerMode() == GameType.SPECTATOR) {
+            return;
+        }
+
         final Screen gui = evt.getScreen();
         if (!(gui instanceof AbstractContainerScreen && !(gui instanceof CreativeModeInventoryScreen))) {
             return;
@@ -121,8 +134,7 @@ public class KeyHandler
             if (guiContainer.getMenu() != null && guiContainer.getMenu().slots != null && guiContainer.getMenu().slots.contains(slot))
             {
                 InventorySorter.LOGGER.debug("Sending action {} slot {}", triggeredAction, slot.index);
-                Network.channel.sendToServer(triggeredAction.message(slot));
-                evt.setCanceled(true);
+                PacketDistributor.sendToServer(triggeredAction.message(slot));
             }
         }
 

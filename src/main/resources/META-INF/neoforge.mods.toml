@@ -6,7 +6,7 @@
 # The name of the mod loader type to load - for regular FML @Mod mods it should be javafml
 modLoader="javafml" #mandatory
 # A version range to match for said mod loader - for regular FML @Mod it will be the minecraft version (without the 1.)
-loaderVersion="[38,)" #mandatory
+loaderVersion="[4,)" #mandatory
 # A text field displayed in the mod UI
 credits="cpw" #optional
 # A text field displayed in the mod UI
@@ -17,7 +17,7 @@ license="GPLv3"
     # The modid of the mod
     modId="inventorysorter" #mandatory
     # The version number of the mod - there's a few well known ${} variables useable here or just hardcode it
-    version="${file.jarVersion}" #mandatory
+    version="${mod_version}" #mandatory
      # A display name for the mod
     displayName="Simple Inventory Sorter" #mandatory
     # The description text for the mod (multi line!) (#mandatory)

@@ -1,6 +1,8 @@
 package cpw.mods.inventorysorter;
 
-import net.minecraftforge.common.ForgeConfigSpec;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.neoforge.common.ModConfigSpec;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
@@ -9,17 +11,17 @@ import java.util.List;
 public class Config {
     public static class ServerConfig {
         static final ServerConfig CONFIG;
-        static final ForgeConfigSpec SPEC;
+        static final ModConfigSpec SPEC;
 
         static {
-            final Pair<ServerConfig, ForgeConfigSpec> conf = new ForgeConfigSpec.Builder().configure(ServerConfig::new);
+            final Pair<ServerConfig, ModConfigSpec> conf = new ModConfigSpec.Builder().configure(ServerConfig::new);
             CONFIG = conf.getLeft();
             SPEC = conf.getRight();
         }
 
-        final ForgeConfigSpec.ConfigValue<List<? extends String>> containerBlacklist;
-        final ForgeConfigSpec.ConfigValue<List<? extends String>> slotBlacklist;
-        private ServerConfig(ForgeConfigSpec.Builder builder) {
+        final ModConfigSpec.ConfigValue<List<? extends String>> containerBlacklist;
+        final ModConfigSpec.ConfigValue<List<? extends String>> slotBlacklist;
+        private ServerConfig(ModConfigSpec.Builder builder) {
             builder.comment("Inventory sorter blacklists");
             builder.push("blacklists");
             containerBlacklist = builder
@@ -35,17 +37,18 @@ public class Config {
     }
     public static class ClientConfig {
         static final ClientConfig CONFIG;
-        static final ForgeConfigSpec SPEC;
+        static final ModConfigSpec SPEC;
 
         static {
-            final Pair<ClientConfig, ForgeConfigSpec> conf = new ForgeConfigSpec.Builder().configure(ClientConfig::new);
+            final Pair<ClientConfig, ModConfigSpec> conf = new ModConfigSpec.Builder().configure(ClientConfig::new);
             CONFIG = conf.getLeft();
             SPEC = conf.getRight();
         }
-        final ForgeConfigSpec.ConfigValue<Boolean> sortingModule;
-        final ForgeConfigSpec.ConfigValue<Boolean> wheelmoveModule;
+        final ModConfigSpec.ConfigValue<Boolean> sortingModule;
+        final ModConfigSpec.ConfigValue<Boolean> wheelmoveModule;
+        final ModConfigSpec.ConfigValue<Boolean> dodgeMousetweaks;
 
-        private ClientConfig(ForgeConfigSpec.Builder builder) {
+        private ClientConfig(ModConfigSpec.Builder builder) {
             builder.comment("Inventory sorter modules");
             builder.push("modules");
             sortingModule = builder
@@ -58,7 +61,17 @@ public class Config {
                     .translation("inventorysorter.config.wheelmovemodule")
                     .define("wheelmovemodule", true);
 
+            dodgeMousetweaks = builder
+                    .comment("Avoid conflicts with mousetweaks wheel moves")
+                    .translation("inventorysorter.config.avoidmousetweaks")
+                    .define("dodgemousetweaks", true);
             builder.pop();
         }
+    }
+
+    public static void register(ModContainer modContainer)
+    {
+        modContainer.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
+        modContainer.registerConfig(ModConfig.Type.SERVER, ServerConfig.SPEC);
     }
 }

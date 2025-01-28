@@ -20,10 +20,8 @@ package cpw.mods.inventorysorter;
 
 import net.minecraft.world.inventory.Slot;
 
-import javax.annotation.*;
 import java.util.*;
 import java.util.function.*;
-import java.util.stream.*;
 
 import net.minecraft.world.Container;
 import net.minecraft.world.item.ItemStack;
@@ -41,9 +39,9 @@ public enum ScrollWheelHandler implements Consumer<ContainerContext>
     {
         this.moveAmount = amount;
     }
-    @Nullable
+
     @Override
-    public void accept(ContainerContext context)
+    public void accept(@SuppressWarnings("ClassEscapesDefinedScope") ContainerContext context)
     {
         if (context == null) throw new NullPointerException("WHUT");
         // Skip if we can't find ourselves in the mapping table
@@ -67,8 +65,10 @@ public enum ScrollWheelHandler implements Consumer<ContainerContext>
 
         if (source == null) return;
 
+        if (InventorySorter.INSTANCE.isContainerBlacklisted(InventoryHandler.lookupContainerTypeName(context.slotMapping.container))) return; // Blacklist container screen
         if (InventorySorter.INSTANCE.isSlotBlacklisted(source)) return; // Blacklist source
         if (InventorySorter.INSTANCE.isSlotBlacklisted(context.slot)) return; // Blacklist target
+
         if (!source.mayPickup(context.player)) return;
         if (!source.mayPlace(is)) return;
         final ItemStack sourceStack = InventoryHandler.INSTANCE.getItemStack(source);
@@ -89,7 +89,7 @@ public enum ScrollWheelHandler implements Consumer<ContainerContext>
             if (context.player.containerMenu == context.player.inventoryMenu)
             {
                 if (InventoryHandler.preferredOrders.containsKey(context.slotMapping.inv)) {
-                    mappingCandidates.addAll(InventoryHandler.preferredOrders.get(context.slotMapping.inv).stream().map(mapping::get).collect(Collectors.toList()));
+                    mappingCandidates.addAll(InventoryHandler.preferredOrders.get(context.slotMapping.inv).stream().map(mapping::get).toList());
                 }
                 Collections.reverse(mappingCandidates);
             }
@@ -110,7 +110,10 @@ public enum ScrollWheelHandler implements Consumer<ContainerContext>
                 boolean empty = true;
                 for (ItemStack itemStack : context.player.getInventory().offhand)
                 {
-                    if (!itemStack.isEmpty()) empty = false;
+                    if (!itemStack.isEmpty()) {
+                        empty = false;
+                        break;
+                    }
                 }
                 if (empty) continue;
             }
@@ -134,15 +137,8 @@ public enum ScrollWheelHandler implements Consumer<ContainerContext>
             InventoryHandler.INSTANCE.moveItemToOtherInventory(context, iscopy, mappingCandidate.begin, mappingCandidate.end+1, moveAmount < 0);
             if (iscopy.getCount() == 0)
             {
-                sourceStack.grow(-1);
-                if (sourceStack.getCount() == 0)
-                {
-                    source.set(ItemStack.EMPTY);
-                }
-                else
-                {
-                    source.setChanged();
-                }
+                sourceStack.shrink(1);
+                source.set(sourceStack);
                 break;
             }
         }
