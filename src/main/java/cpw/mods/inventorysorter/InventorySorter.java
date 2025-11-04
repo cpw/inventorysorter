@@ -36,6 +36,7 @@ import net.neoforged.fml.InterModComms;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.fml.event.lifecycle.InterModProcessEvent;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -69,7 +70,7 @@ public class InventorySorter {
         bus.addListener(this::onConfigLoad);
         Config.register(me);
         COMMAND_ARGUMENT_TYPES.register(bus);
-        NeoForge.EVENT_BUS.addListener(this::onServerStarting);
+        NeoForge.EVENT_BUS.addListener(this::onCommandRegister);
         KeyHandler.registerKeyHandlers(bus);
         Network.registerPayloadHandlers(bus);
     }
@@ -101,8 +102,8 @@ public class InventorySorter {
         Config.ServerConfig.SPEC.save();
     }
 
-    private void onServerStarting(ServerStartingEvent evt) {
-        InventorySorterCommand.register(evt.getServer().getCommands().getDispatcher());
+    private void onCommandRegister(RegisterCommandsEvent evt) {
+        InventorySorterCommand.register(evt.getDispatcher());
     }
 
     boolean isSlotBlacklisted(Slot slot) {
