@@ -25,6 +25,7 @@ import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.KeyMapping;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.level.GameType;
 import net.neoforged.api.distmarker.Dist;
@@ -48,8 +49,7 @@ import java.util.stream.Stream;
 /**
  * Created by cpw on 08/01/16.
  */
-public class KeyHandler
-{
+public class KeyHandler {
     private static KeyHandler keyHandler;
     private final Map<KeyMapping, Action> keyBindingMap;
 
@@ -73,6 +73,7 @@ public class KeyHandler
     static void registerKeyHandlers(IEventBus bus) {
         if (FMLEnvironment.dist != Dist.CLIENT)
             return;
+
         keyHandler = new KeyHandler();
         bus.addListener(keyHandler::onKeyMappingEvent);
     }
@@ -80,6 +81,7 @@ public class KeyHandler
     public void onKeyMappingEvent(RegisterKeyMappingsEvent evt) {
         keyBindingMap.keySet().forEach(evt::register);
     }
+
     private class ScreenEventHandler {
         private void onKey(ScreenEvent.KeyPressed.Pre evt) {
             onInputEvent(evt, KeyHandler.this::keyEvaluate);
@@ -93,6 +95,7 @@ public class KeyHandler
             onInputEvent(evt, KeyHandler.this::mouseScrollEvaluate);
         }
     }
+
     private boolean keyEvaluate(final KeyMapping kb, final ScreenEvent.KeyPressed.Pre evt) {
         return kb.matches(evt.getKeyCode(), evt.getScanCode());
     }
@@ -115,10 +118,10 @@ public class KeyHandler
         }
 
         final Screen gui = evt.getScreen();
-        if (!(gui instanceof AbstractContainerScreen && !(gui instanceof CreativeModeInventoryScreen))) {
+        if (!(gui instanceof AbstractContainerScreen<?> guiContainer && !(gui instanceof CreativeModeInventoryScreen))) {
             return;
         }
-        final AbstractContainerScreen guiContainer = (AbstractContainerScreen) gui;
+
         Slot slot = guiContainer.getSlotUnderMouse();
         if (!ContainerContext.validSlot(slot)) {
             InventorySorter.LOGGER.log(Level.DEBUG, "Skipping action handling for blacklisted slot");
@@ -126,17 +129,17 @@ public class KeyHandler
         }
         final Optional<Action> action = keyBindingMap.entrySet().stream().filter(e -> kbTest.test(e.getKey(), evt)).
                 map(Map.Entry::getValue).findFirst();
-        if (!action.isPresent()) return;
+
+        if (action.isEmpty()) return;
 
         final Action triggeredAction = action.get();
-        if (triggeredAction.isActive())
-        {
-            if (guiContainer.getMenu() != null && guiContainer.getMenu().slots != null && guiContainer.getMenu().slots.contains(slot))
+        if (triggeredAction.isActive()) {
+            AbstractContainerMenu menu = guiContainer.getMenu();
+            if (menu != null && menu.slots != null && menu.slots.contains(slot))
             {
                 InventorySorter.LOGGER.debug("Sending action {} slot {}", triggeredAction, slot.index);
                 PacketDistributor.sendToServer(triggeredAction.message(slot));
             }
         }
-
     }
 }

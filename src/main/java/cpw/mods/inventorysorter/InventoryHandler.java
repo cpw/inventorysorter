@@ -167,12 +167,12 @@ public enum InventoryHandler
         public int compare(ItemStackHolder o1, ItemStackHolder o2)
         {
             if (o1 == o2) return 0;
-            if (o1.is == o2.is) return 0;
-            if (o1.is.getItem() != o2.is.getItem())
-                return compareString(o1.is).compareTo(compareString(o2.is));
-            if (ItemStack.isSameItemSameComponents(o1.is, o2.is))
+            if (o1.is() == o2.is()) return 0;
+            if (o1.is().getItem() != o2.is().getItem())
+                return compareString(o1.is()).compareTo(compareString(o2.is()));
+            if (ItemStack.isSameItemSameComponents(o1.is(), o2.is()))
                 return 0;
-            return Ints.compare(System.identityHashCode(o1.is), System.identityHashCode(o2.is));
+            return Ints.compare(System.identityHashCode(o1.is()), System.identityHashCode(o2.is()));
         }
         private static String compareString(ItemStack stack) {
             return String.valueOf(stack.getItemHolder().unwrap().map(ResourceKey::location, BuiltInRegistries.ITEM::getKey));
@@ -219,7 +219,7 @@ public enum InventoryHandler
 
     static final ResourceLocation DUMMY_PLAYER_CONTAINER = ResourceLocation.parse("inventorysorter:dummyplayercontainer");
 
-    static ResourceLocation lookupContainerTypeName(AbstractContainerMenu container) {
+    public static ResourceLocation lookupContainerTypeName(AbstractContainerMenu container) {
         return container instanceof InventoryMenu ? DUMMY_PLAYER_CONTAINER : BuiltInRegistries.MENU.getKey(container.getType());
     }
 

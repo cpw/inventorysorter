@@ -4,7 +4,7 @@ plugins {
     id 'se.bjurr.gitchangelog.git-changelog-gradle-plugin' version '1.71.4'
     id 'org.ajoberstar.grgit' version '4.1.1'
     id 'com.github.ben-manes.versions' version '0.39.0'
-    id 'net.neoforged.gradle.userdev' version '7.0.142'
+    id 'net.neoforged.gradle.userdev' version '7.0.185'
     id "me.modmuss50.mod-publish-plugin" version "0.7.1"
     id 'java-library'
     id 'idea'
@@ -20,6 +20,13 @@ group = 'cpw.mods'
 
 repositories {
     mavenLocal()
+
+    maven {
+        url = 'https://cursemaven.com'
+        content {
+            includeGroup("curse.maven")
+        }
+    }
 }
 
 base {
@@ -27,9 +34,6 @@ base {
 }
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
-
-//minecraft.accessTransformers.file rootProject.file('src/main/resources/META-INF/accesstransformer.cfg')
-//minecraft.accessTransformers.entry public net.minecraft.client.Minecraft textureManager # textureManager
 
 runs {
     configureEach {
@@ -65,6 +69,13 @@ configurations {
 
 dependencies {
     implementation "net.neoforged:neoforge:${neo_version}"
+
+//    runtimeOnly "curse.maven:relics-mod-445274:6444603"
+//    runtimeOnly "curse.maven:sophisticated-backpacks-422301:6586226"
+//    runtimeOnly "curse.maven:sophisticated-core-618298:6596310"
+//    runtimeOnly "curse.maven:curios-309927:6529130"
+//    runtimeOnly "curse.maven:octo-lib-916747:6011408"
+//    runtimeOnly "curse.maven:architectury-api-419699:5786327"
 }
 
 tasks.register('makeChangelog', GitChangelogTask) {
@@ -102,10 +113,13 @@ publishMods {
         accessToken = apiKey
 
         minecraftVersions.add(mc_version)
-        minecraftVersions.add("1.21.1")
         minecraftVersions.add("1.21.2")
         minecraftVersions.add("1.21.3")
         minecraftVersions.add("1.21.4")
+        minecraftVersions.add("1.21.5")
+        minecraftVersions.add("1.21.6")
+        minecraftVersions.add("1.21.7")
+        minecraftVersions.add("1.21.8")
 
         javaVersions.add(JavaVersion.VERSION_21)
 

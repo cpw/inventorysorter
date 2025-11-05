@@ -21,6 +21,7 @@ public class Config {
 
         final ModConfigSpec.ConfigValue<List<? extends String>> containerBlacklist;
         final ModConfigSpec.ConfigValue<List<? extends String>> slotBlacklist;
+
         private ServerConfig(ModConfigSpec.Builder builder) {
             builder.comment("Inventory sorter blacklists");
             builder.push("blacklists");
@@ -31,10 +32,11 @@ public class Config {
             slotBlacklist = builder
                     .comment("Slot type blacklist")
                     .translation("inventorysorter.config.slotblacklist")
-                    .defineList("slotBlacklist", new ArrayList<>(), t -> true);
+                    .defineList("slotBlacklist", ArrayList::new, t -> true);
             builder.pop();
         }
     }
+
     public static class ClientConfig {
         static final ClientConfig CONFIG;
         static final ModConfigSpec SPEC;
@@ -69,8 +71,7 @@ public class Config {
         }
     }
 
-    public static void register(ModContainer modContainer)
-    {
+    public static void register(ModContainer modContainer) {
         modContainer.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
         modContainer.registerConfig(ModConfig.Type.SERVER, ServerConfig.SPEC);
     }

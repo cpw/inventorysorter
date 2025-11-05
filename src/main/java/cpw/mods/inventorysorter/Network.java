@@ -40,8 +40,8 @@ public final class Network {
         PayloadRegistrar registrar = evt.registrar("inventorysorter").versioned("1");
         registrar.playToServer(ActionMessage.TYPE, ActionMessage.CODEC, ServerHandler::onMessage);
     }
-    public static class ActionMessage implements CustomPacketPayload {
 
+    public static class ActionMessage implements CustomPacketPayload {
         static final Type<ActionMessage> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath("inventorysorter", "action_message"));
         static final StreamCodec<FriendlyByteBuf, ActionMessage> CODEC = CustomPacketPayload.codec(ActionMessage::write, ActionMessage::read);
 

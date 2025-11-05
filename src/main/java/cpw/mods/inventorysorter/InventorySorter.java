@@ -31,13 +31,13 @@ import net.minecraft.world.inventory.Slot;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModList;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.fml.InterModComms;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.fml.event.lifecycle.InterModProcessEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
-import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.apache.logging.log4j.LogManager;
@@ -59,16 +59,19 @@ public class InventorySorter {
     static final Logger LOGGER = LogManager.getLogger();
     ResourceLocation lastContainerType;
     boolean debugLog;
-    private final Set<String> slotblacklist = new HashSet<>();
-    private final Set<String> containerblacklist = new HashSet<>();
+
+    private final Set<String> slotBlacklist = new HashSet<>();
+    private final Set<String> containerBlacklist = new HashSet<>();
+
     private boolean dodgeMouseTweaks;
 
-    public InventorySorter(IEventBus modBus, ModContainer me) {
+    public InventorySorter(IEventBus modBus, ModContainer modContainer) {
         INSTANCE = this;
         final IEventBus bus = modBus;
         bus.addListener(this::handleimc);
         bus.addListener(this::onConfigLoad);
         Config.register(me);
+        Config.register(modContainer);
         COMMAND_ARGUMENT_TYPES.register(bus);
         NeoForge.EVENT_BUS.addListener(this::onCommandRegister);
         KeyHandler.registerKeyHandlers(bus);
@@ -83,22 +86,22 @@ public class InventorySorter {
     private void handleimcmessage(final InterModComms.IMCMessage msg) {
         if ("slotblacklist".equals(msg.method())) {
             final String slotBlacklistTarget = (String) msg.messageSupplier().get();
-            if (slotblacklist.add(slotBlacklistTarget)) {
+            if (slotBlacklist.add(slotBlacklistTarget)) {
                 debugLog("SlotBlacklist added {}", ()->new String[] {slotBlacklistTarget});
             }
         }
 
         if ("containerblacklist".equals(msg.method())) {
             final ResourceLocation slotContainerTarget = (ResourceLocation) msg.messageSupplier().get();
-            if (containerblacklist.add(slotContainerTarget.toString())) {
+            if (containerBlacklist.add(slotContainerTarget.toString())) {
                 debugLog("ContainerBlacklist added {}", () -> new String[] {slotContainerTarget.toString()});
             }
         }
     }
 
     private void updateConfig() {
-        Config.ServerConfig.CONFIG.containerBlacklist.set(new ArrayList<>(containerblacklist));
-        Config.ServerConfig.CONFIG.slotBlacklist.set(new ArrayList<>(slotblacklist));
+        Config.ServerConfig.CONFIG.containerBlacklist.set(new ArrayList<>(containerBlacklist));
+        Config.ServerConfig.CONFIG.slotBlacklist.set(new ArrayList<>(slotBlacklist));
         Config.ServerConfig.SPEC.save();
     }
 
@@ -107,11 +110,11 @@ public class InventorySorter {
     }
 
     boolean isSlotBlacklisted(Slot slot) {
-        return slotblacklist.contains(slot.getClass().getName()) || Config.ServerConfig.CONFIG.slotBlacklist.get().contains(slot.getClass().getName());
+        return slotBlacklist.contains(slot.getClass().getName()) || Config.ServerConfig.CONFIG.slotBlacklist.get().contains(slot.getClass().getName());
     }
 
     boolean isContainerBlacklisted(ResourceLocation container) {
-        return containerblacklist.contains(container.toString()) || Config.ServerConfig.CONFIG.containerBlacklist.get().contains(container.toString());
+        return containerBlacklist.contains(container.toString()) || Config.ServerConfig.CONFIG.containerBlacklist.get().contains(container.toString());
     }
 
     void onConfigLoad(ModConfigEvent configEvent) {
@@ -122,8 +125,8 @@ public class InventorySorter {
 
         switch (configEvent.getConfig().getType()) {
             case SERVER:
-                this.slotblacklist.addAll(Config.ServerConfig.CONFIG.slotBlacklist.get());
-                this.containerblacklist.addAll(Config.ServerConfig.CONFIG.containerBlacklist.get());
+                this.slotBlacklist.addAll(Config.ServerConfig.CONFIG.slotBlacklist.get());
+                this.containerBlacklist.addAll(Config.ServerConfig.CONFIG.containerBlacklist.get());
                 break;
             case CLIENT:
                 if (Config.ClientConfig.CONFIG.dodgeMousetweaks.get() && ModList.get().isLoaded("mousetweaks")) {
@@ -149,7 +152,7 @@ public class InventorySorter {
     static int blackListAdd(final CommandContext<CommandSourceStack> context) {
         final var containerType = context.getArgument("container", ResourceLocation.class);
         if (BuiltInRegistries.MENU.containsKey(containerType)) {
-            INSTANCE.containerblacklist.add(containerType.toString());
+            INSTANCE.containerBlacklist.add(containerType.toString());
             INSTANCE.updateConfig();
             context.getSource().sendSuccess(()->Component.translatable("inventorysorter.commands.inventorysorter.bladd.message", containerType.toString()), true);
             return 1;
@@ -161,7 +164,7 @@ public class InventorySorter {
 
     static int blackListRemove(final CommandContext<CommandSourceStack> context) {
         final var containerType = context.getArgument("container", ResourceLocation.class);
-        if (BuiltInRegistries.MENU.containsKey(containerType) && INSTANCE.containerblacklist.remove(containerType.toString())) {
+        if (BuiltInRegistries.MENU.containsKey(containerType) && INSTANCE.containerBlacklist.remove(containerType.toString())) {
             INSTANCE.updateConfig();
             context.getSource().sendSuccess(()->Component.translatable("inventorysorter.commands.inventorysorter.blremove.message", containerType.toString()), true);
             return 1;
@@ -181,7 +184,7 @@ public class InventorySorter {
     }
 
     static int showBlacklist(final CommandContext<CommandSourceStack> context) {
-        if (INSTANCE.containerblacklist.isEmpty()) {
+        if (INSTANCE.containerBlacklist.isEmpty()) {
             context.getSource().sendSuccess(()->Component.translatable("inventorysorter.commands.inventorysorter.showblacklist.empty"), true);
         } else {
             context.getSource().sendSuccess(()->Component.translatable("inventorysorter.commands.inventorysorter.showblacklist.message", listBlacklist()
@@ -196,11 +199,19 @@ public class InventorySorter {
     }
 
     static Stream<ResourceLocation> listBlacklist() {
-        return INSTANCE.containerblacklist.stream().map(ResourceLocation::parse);
+        return INSTANCE.containerBlacklist.stream().map(ResourceLocation::parse);
     }
 
     boolean dontDodgeMouseTweaks() {
         return !dodgeMouseTweaks;
+    }
+
+    public Set<String> containerblacklist() {
+        return containerBlacklist;
+    }
+
+    public Set<String> slotblacklist() {
+        return slotBlacklist;
     }
 
     private static final DeferredRegister<ArgumentTypeInfo<?, ?>> COMMAND_ARGUMENT_TYPES = DeferredRegister.create(BuiltInRegistries.COMMAND_ARGUMENT_TYPE, "inventorysorter");

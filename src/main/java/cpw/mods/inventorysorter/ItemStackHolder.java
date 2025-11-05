@@ -23,25 +23,15 @@ import net.minecraft.world.item.ItemStack;
 /**
  * Created by cpw on 08/01/16.
  */
-public class ItemStackHolder
-{
-    public final ItemStack is;
-
-    ItemStackHolder(ItemStack stack)
-    {
-        this.is = stack;
-    }
-
+public record ItemStackHolder(ItemStack is) {
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         return ItemStack.hashItemAndComponents(is);//(is.hasTag() ? is.getTag().hashCode() : 0);
     }
 
     @Override
-    public boolean equals(Object obj)
-    {
-        if (!(obj instanceof final ItemStackHolder ish)) return false;
-        return is.getItem() == ish.is.getItem() && ItemStack.isSameItemSameComponents(is, ish.is);
+    public boolean equals(Object obj) {
+        if (!(obj instanceof ItemStackHolder(ItemStack is1))) return false;
+        return is.getItem() == is1.getItem() && ItemStack.isSameItemSameComponents(is, is1);
     }
 }
