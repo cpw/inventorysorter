@@ -70,12 +70,16 @@ public class InventorySorter {
         final IEventBus bus = modBus;
         bus.addListener(this::handleimc);
         bus.addListener(this::onConfigLoad);
-        Config.register(me);
+        bus.addListener(this::onCommonLoaded);
         Config.register(modContainer);
         COMMAND_ARGUMENT_TYPES.register(bus);
         NeoForge.EVENT_BUS.addListener(this::onCommandRegister);
         KeyHandler.registerKeyHandlers(bus);
         Network.registerPayloadHandlers(bus);
+    }
+
+    private void onCommonLoaded(final FMLCommonSetupEvent event) {
+        Integrations.init();
     }
 
     private void handleimc(final InterModProcessEvent evt) {
