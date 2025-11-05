@@ -77,15 +77,18 @@ public class InventorySorter
         bus.addListener(this::preinit);
         bus.addListener(this::handleimc);
         bus.addListener(this::onConfigLoad);
-        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, Config.ServerConfig.SPEC);
-        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, Config.ClientConfig.SPEC);
+        bus.addListener(this::onCommonLoaded);
+        Config.register(modContainer);
         COMMAND_ARGUMENT_TYPES.register(bus);
         MinecraftForge.EVENT_BUS.addListener(this::onServerStarting);
         DistExecutor.safeRunWhenOn(Dist.CLIENT, ()->KeyHandler::init);
     }
 
-    private void handleimc(final InterModProcessEvent evt)
-    {
+    private void onCommonLoaded(final FMLCommonSetupEvent event) {
+        Integrations.init();
+    }
+
+    private void handleimc(final InterModProcessEvent evt) {
         final Stream<InterModComms.IMCMessage> imc = InterModComms.getMessages("inventorysorter");
         imc.forEach(this::handleimcmessage);
     }
