@@ -24,3 +24,5 @@ repo
 /CHANGELOG.html
 /CHANGELOG.md
 /.okhttpcache/
+runs/
+.DS_Store
