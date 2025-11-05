@@ -42,14 +42,13 @@ class ContainerContext
         return sl.container;
     }
 
-    public ContainerContext(Slot slot, ServerPlayer playerEntity)
-    {
+    public ContainerContext(Slot slot, ServerPlayer playerEntity) {
         this.slot = slot;
         this.player = playerEntity;
+
         Map<Container, InventoryHandler.InventoryMapping> mapping = new HashMap<>();
         final AbstractContainerMenu openContainer = playerEntity.containerMenu;
-        openContainer.slots.stream().filter(ContainerContext::validSlot).forEach(sl->
-        {
+        openContainer.slots.stream().filter(ContainerContext::validSlot).forEach(sl-> {
             final Container matchingContainer = findMatchingContainer(mapping, sl);
             final InventoryHandler.InventoryMapping inventoryMapping = mapping.computeIfAbsent(matchingContainer, k -> new InventoryHandler.InventoryMapping(matchingContainer, openContainer, matchingContainer, sl));
             inventoryMapping.addSlot(sl);
@@ -75,12 +74,11 @@ class ContainerContext
                 offhandMapping = new InventoryHandler.InventoryMapping(PLAYER_OFFHAND, openContainer, playerEntity.getInventory(), openContainer.getSlot(offhandStart));
             }
 
+            // Attempt to figure out the best start + end index for the inventory.
             InventoryHandler.InventoryMapping inventoryMapping;
-            for (int i = playerMapping.begin; i<=playerMapping.end; i++)
-            {
+            for (int i = playerMapping.begin; i<=playerMapping.end; i++) {
                 Slot s = openContainer.getSlot(i);
-                if (s.getSlotIndex() < mainStart && s.container == playerEntity.getInventory())
-                {
+                if (s.getSlotIndex() < mainStart && s.container == playerEntity.getInventory()) {
                     hotbarMapping.begin = Math.min(s.index, hotbarMapping.begin);
                     hotbarMapping.end = Math.max(s.index, hotbarMapping.end);
                     mapping.put(PLAYER_HOTBAR, hotbarMapping);
@@ -110,6 +108,7 @@ class ContainerContext
                 }
             }
         }
+
         for (Map.Entry<Container, InventoryHandler.InventoryMapping> map : Sets.newLinkedHashSet(mapping.entrySet()))
         {
             if (map.getValue().markForRemoval) {
