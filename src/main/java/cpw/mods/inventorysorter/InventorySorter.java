@@ -78,7 +78,7 @@ public class InventorySorter
         bus.addListener(this::handleimc);
         bus.addListener(this::onConfigLoad);
         bus.addListener(this::onCommonLoaded);
-        Config.register(modContainer);
+        Config.register();
         COMMAND_ARGUMENT_TYPES.register(bus);
         MinecraftForge.EVENT_BUS.addListener(this::onServerStarting);
         DistExecutor.safeRunWhenOn(Dist.CLIENT, ()->KeyHandler::init);
@@ -206,6 +206,14 @@ public class InventorySorter
 
     static Stream<ResourceLocation> listBlacklist() {
         return INSTANCE.containerblacklist.stream().map(ResourceLocation::new);
+    }
+
+    public Set<String> slotblacklist() {
+        return slotblacklist;
+    }
+
+    public Set<String> containerblacklist() {
+        return containerblacklist;
     }
 
     private static final DeferredRegister<ArgumentTypeInfo<?, ?>> COMMAND_ARGUMENT_TYPES = DeferredRegister.create(ForgeRegistries.COMMAND_ARGUMENT_TYPES, "inventorysorter");

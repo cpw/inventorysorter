@@ -1,6 +1,6 @@
 package cpw.mods.inventorysorter;
 
-import net.neoforged.fml.ModList;
+import net.minecraftforge.fml.ModList;
 
 import java.util.Arrays;
 

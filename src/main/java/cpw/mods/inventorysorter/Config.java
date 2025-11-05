@@ -1,17 +1,17 @@
 package cpw.mods.inventorysorter;
 
 import net.minecraftforge.common.ForgeConfigSpec;
-import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.config.ModConfig;
+import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.config.ModConfig;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class Config {
-    public static void register(ModContainer modContainer) {
-        modContainer.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
-        modContainer.registerConfig(ModConfig.Type.SERVER, ServerConfig.SPEC);
+    public static void register() {
+        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
+        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, ServerConfig.SPEC);
     }
 
     public static class ServerConfig {
