@@ -24,7 +24,10 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.KeyMapping;
 import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.level.GameType;
@@ -34,9 +37,9 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.neoforged.neoforge.client.settings.KeyConflictContext;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.network.PacketDistributor;
 import org.apache.logging.log4j.*;
 
 import java.util.AbstractMap;
@@ -53,6 +56,8 @@ public class KeyHandler {
     private static KeyHandler keyHandler;
     private final Map<KeyMapping, Action> keyBindingMap;
 
+    private final KeyMapping.Category category = new KeyMapping.Category(ResourceLocation.fromNamespaceAndPath("inventorysorter", "keys"));
+
     KeyHandler() {
         // Custom input mapping for wheel up (-1)
         InputConstants.Type.MOUSE.getOrCreate(99);
@@ -61,7 +66,7 @@ public class KeyHandler {
 
         keyBindingMap = Stream.of(Action.values())
                 .map(a -> new AbstractMap.SimpleEntry<>(a, new KeyMapping(a.getKeyBindingName(), KeyConflictContext.GUI,
-                        InputConstants.Type.MOUSE, a.getDefaultKeyCode(), "keygroup.inventorysorter")))
+                        InputConstants.Type.MOUSE, a.getDefaultKeyCode(), category)))
                 .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
 
         var eh = new ScreenEventHandler();
@@ -71,7 +76,7 @@ public class KeyHandler {
     }
 
     static void registerKeyHandlers(IEventBus bus) {
-        if (FMLEnvironment.dist != Dist.CLIENT)
+        if (FMLEnvironment.getDist() != Dist.CLIENT)
             return;
 
         keyHandler = new KeyHandler();
@@ -79,6 +84,7 @@ public class KeyHandler {
     }
 
     public void onKeyMappingEvent(RegisterKeyMappingsEvent evt) {
+        evt.registerCategory(category);
         keyBindingMap.keySet().forEach(evt::register);
     }
 
@@ -97,17 +103,17 @@ public class KeyHandler {
     }
 
     private boolean keyEvaluate(final KeyMapping kb, final ScreenEvent.KeyPressed.Pre evt) {
-        return kb.matches(evt.getKeyCode(), evt.getScanCode());
+        return kb.matches(evt.getKeyEvent());
     }
 
     private boolean mouseClickEvaluate(final KeyMapping kb, final ScreenEvent.MouseButtonPressed.Pre evt) {
-        return kb.matchesMouse(evt.getButton());
+        return kb.matchesMouse(evt.getMouseButtonEvent());
     }
 
     private boolean mouseScrollEvaluate(final KeyMapping kb, final ScreenEvent.MouseScrolled.Pre evt) {
         int dir = (int) Math.signum(evt.getScrollDeltaY());
         int keycode = dir + 100;
-        return kb.matchesMouse(keycode);
+        return kb.matchesMouse(new MouseButtonEvent(evt.getMouseX(), evt.getMouseY(), new MouseButtonInfo(keycode, 0)));
     }
 
     private <T extends ScreenEvent> void onInputEvent(T evt, BiPredicate<KeyMapping, T> kbTest) {
@@ -138,7 +144,7 @@ public class KeyHandler {
             if (menu != null && menu.slots != null && menu.slots.contains(slot))
             {
                 InventorySorter.LOGGER.debug("Sending action {} slot {}", triggeredAction, slot.index);
-                PacketDistributor.sendToServer(triggeredAction.message(slot));
+                ClientPacketDistributor.sendToServer(triggeredAction.message(slot));
             }
         }
     }

@@ -8,7 +8,7 @@
   "inventorysorter.gui.allMoving.tooltip": "Is the spacebar to move all items module enabled?",
   "inventorysorter.gui.containerDebug": "Debug Container sorting",
   "inventorysorter.gui.containerDebug.tooltip": "Create log messages when a container is being sorted to aid in blacklist compilation",
-  "keygroup.inventorysorter": "Inventory Sorter",
+  "key.category.inventorysorter.keys": "Inventory Sorter",
   "key.inventorysorter.sort": "Sort inventory",
   "key.inventorysorter.itemin": "Wheel item to cursor",
   "key.inventorysorter.itemout": "Wheel item from cursor",
