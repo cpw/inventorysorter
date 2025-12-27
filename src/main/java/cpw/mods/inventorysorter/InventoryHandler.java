@@ -22,8 +22,8 @@ import com.google.common.base.*;
 import com.google.common.collect.*;
 import com.google.common.primitives.*;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.inventory.Slot;
@@ -175,7 +175,7 @@ public enum InventoryHandler
             return Ints.compare(System.identityHashCode(o1.is()), System.identityHashCode(o2.is()));
         }
         private static String compareString(ItemStack stack) {
-            return String.valueOf(stack.getItemHolder().unwrap().map(ResourceKey::location, BuiltInRegistries.ITEM::getKey));
+            return String.valueOf(stack.getItemHolder().unwrap().map(ResourceKey::identifier, BuiltInRegistries.ITEM::getKey));
         }
     }
 
@@ -217,9 +217,9 @@ public enum InventoryHandler
         }
     }
 
-    static final ResourceLocation DUMMY_PLAYER_CONTAINER = ResourceLocation.parse("inventorysorter:dummyplayercontainer");
+    static final Identifier DUMMY_PLAYER_CONTAINER = InventorySorter.id("dummyplayercontainer");
 
-    public static ResourceLocation lookupContainerTypeName(AbstractContainerMenu container) {
+    public static Identifier lookupContainerTypeName(AbstractContainerMenu container) {
         return container instanceof InventoryMenu ? DUMMY_PLAYER_CONTAINER : BuiltInRegistries.MENU.getKey(container.getType());
     }
 

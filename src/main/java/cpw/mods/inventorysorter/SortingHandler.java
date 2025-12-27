@@ -19,8 +19,8 @@
 package cpw.mods.inventorysorter;
 
 import com.google.common.collect.*;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.inventory.Slot;
-import net.minecraft.resources.ResourceLocation;
 import org.apache.logging.log4j.*;
 
 import java.util.function.*;
@@ -107,7 +107,7 @@ public enum SortingHandler implements Consumer<ContainerContext>
     }
 
     private void compactInventory(final ContainerContext context, final Multiset<ItemStackHolder> itemCounts) {
-        final ResourceLocation containerTypeName = InventoryHandler.lookupContainerTypeName(context.slotMapping.container);
+        final Identifier containerTypeName = InventoryHandler.lookupContainerTypeName(context.slotMapping.container);
         InventorySorter.INSTANCE.lastContainerType = containerTypeName;
         if (InventorySorter.INSTANCE.isContainerBlacklisted(containerTypeName)) {
             InventorySorter.INSTANCE.debugLog("Container {} blacklisted", ()->new String[] {containerTypeName.toString()});

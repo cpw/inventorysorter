@@ -22,7 +22,6 @@ import io.netty.buffer.*;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
@@ -42,7 +41,7 @@ public final class Network {
     }
 
     public static class ActionMessage implements CustomPacketPayload {
-        static final Type<ActionMessage> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath("inventorysorter", "action_message"));
+        static final Type<ActionMessage> TYPE = new Type<>(InventorySorter.id("action_message"));
         static final StreamCodec<FriendlyByteBuf, ActionMessage> CODEC = CustomPacketPayload.codec(ActionMessage::write, ActionMessage::read);
 
         Action action;

@@ -25,8 +25,8 @@ import net.minecraft.commands.synchronization.ArgumentTypeInfos;
 import net.minecraft.commands.synchronization.SingletonArgumentInfo;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.ChatFormatting;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.inventory.Slot;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -52,12 +52,13 @@ import java.util.stream.Stream;
  * Created by cpw on 08/01/16.
  */
 
-@Mod("inventorysorter")
+@Mod(InventorySorter.MOD_ID)
 public class InventorySorter {
+    public static final String MOD_ID = "inventorysorter";
     public static InventorySorter INSTANCE;
 
     static final Logger LOGGER = LogManager.getLogger();
-    ResourceLocation lastContainerType;
+    Identifier lastContainerType;
     boolean debugLog;
 
     private final Set<String> slotBlacklist = new HashSet<>();
@@ -96,7 +97,7 @@ public class InventorySorter {
         }
 
         if ("containerblacklist".equals(msg.method())) {
-            final ResourceLocation slotContainerTarget = (ResourceLocation) msg.messageSupplier().get();
+            final Identifier slotContainerTarget = (Identifier) msg.messageSupplier().get();
             if (containerBlacklist.add(slotContainerTarget.toString())) {
                 debugLog("ContainerBlacklist added {}", () -> new String[] {slotContainerTarget.toString()});
             }
@@ -117,7 +118,7 @@ public class InventorySorter {
         return slotBlacklist.contains(slot.getClass().getName()) || Config.ServerConfig.CONFIG.slotBlacklist.get().contains(slot.getClass().getName());
     }
 
-    boolean isContainerBlacklisted(ResourceLocation container) {
+    boolean isContainerBlacklisted(Identifier container) {
         return containerBlacklist.contains(container.toString()) || Config.ServerConfig.CONFIG.containerBlacklist.get().contains(container.toString());
     }
 
@@ -154,7 +155,7 @@ public class InventorySorter {
     }
 
     static int blackListAdd(final CommandContext<CommandSourceStack> context) {
-        final var containerType = context.getArgument("container", ResourceLocation.class);
+        final var containerType = context.getArgument("container", Identifier.class);
         if (BuiltInRegistries.MENU.containsKey(containerType)) {
             INSTANCE.containerBlacklist.add(containerType.toString());
             INSTANCE.updateConfig();
@@ -167,7 +168,7 @@ public class InventorySorter {
     }
 
     static int blackListRemove(final CommandContext<CommandSourceStack> context) {
-        final var containerType = context.getArgument("container", ResourceLocation.class);
+        final var containerType = context.getArgument("container", Identifier.class);
         if (BuiltInRegistries.MENU.containsKey(containerType) && INSTANCE.containerBlacklist.remove(containerType.toString())) {
             INSTANCE.updateConfig();
             context.getSource().sendSuccess(()->Component.translatable("inventorysorter.commands.inventorysorter.blremove.message", containerType.toString()), true);
@@ -192,18 +193,18 @@ public class InventorySorter {
             context.getSource().sendSuccess(()->Component.translatable("inventorysorter.commands.inventorysorter.showblacklist.empty"), true);
         } else {
             context.getSource().sendSuccess(()->Component.translatable("inventorysorter.commands.inventorysorter.showblacklist.message", listBlacklist()
-                    .map(ResourceLocation::toString)
+                    .map(Identifier::toString)
                     .collect(Collectors.joining(", "))), true);
         }
         return 0;
     }
 
-    static Stream<ResourceLocation> listContainers() {
-        return BuiltInRegistries.MENU.entrySet().stream().map(e->e.getKey().location());
+    static Stream<Identifier> listContainers() {
+        return BuiltInRegistries.MENU.entrySet().stream().map(e->e.getKey().identifier());
     }
 
-    static Stream<ResourceLocation> listBlacklist() {
-        return INSTANCE.containerBlacklist.stream().map(ResourceLocation::parse);
+    static Stream<Identifier> listBlacklist() {
+        return INSTANCE.containerBlacklist.stream().map(Identifier::parse);
     }
 
     boolean dontDodgeMouseTweaks() {
@@ -219,6 +220,10 @@ public class InventorySorter {
     }
 
     private static final DeferredRegister<ArgumentTypeInfo<?, ?>> COMMAND_ARGUMENT_TYPES = DeferredRegister.create(BuiltInRegistries.COMMAND_ARGUMENT_TYPE, "inventorysorter");
-    private static final DeferredHolder<ArgumentTypeInfo<?,?>, SingletonArgumentInfo<InventorySorterCommand.ContainerResourceLocationArgument>> CONTAINER_CLASS = COMMAND_ARGUMENT_TYPES.register("container_reslocation",
-            ()-> ArgumentTypeInfos.registerByClass(InventorySorterCommand.ContainerResourceLocationArgument.class, SingletonArgumentInfo.contextFree(InventorySorterCommand.ContainerResourceLocationArgument::new)));
+    private static final DeferredHolder<ArgumentTypeInfo<?,?>, SingletonArgumentInfo<InventorySorterCommand.ContainerIdentifierArgument>> CONTAINER_CLASS = COMMAND_ARGUMENT_TYPES.register("container_reslocation",
+            ()-> ArgumentTypeInfos.registerByClass(InventorySorterCommand.ContainerIdentifierArgument.class, SingletonArgumentInfo.contextFree(InventorySorterCommand.ContainerIdentifierArgument::new)));
+
+    public static Identifier id(String path) {
+        return Identifier.fromNamespaceAndPath(MOD_ID, path);
+    }
 }

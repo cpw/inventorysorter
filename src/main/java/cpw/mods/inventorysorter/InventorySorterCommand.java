@@ -9,12 +9,8 @@ import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
-import net.minecraft.commands.synchronization.ArgumentTypeInfo;
-import net.minecraft.commands.synchronization.ArgumentTypeInfos;
-import net.minecraft.commands.synchronization.SingletonArgumentInfo;
-import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.*;
 import java.util.function.*;
@@ -23,12 +19,14 @@ import java.util.stream.Stream;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.server.permissions.Permission;
+import net.minecraft.server.permissions.Permissions;
 import net.neoforged.fml.loading.StringUtils;
 
 public class InventorySorterCommand {
     public static void register(final CommandDispatcher<CommandSourceStack> dispatcher) {
         final LiteralArgumentBuilder<CommandSourceStack> invsorterBuilder = Commands.literal("invsorter").
-                requires(cs->cs.hasPermission(1));
+                requires(cs->cs.permissions().hasPermission(Permissions.COMMANDS_MODERATOR));
 
         Stream.of(CommandAction.values()).forEach(a->invsorterBuilder.then(a.buildCommand()));
         invsorterBuilder.executes(InventorySorterCommand::help);
@@ -40,20 +38,20 @@ public class InventorySorterCommand {
         return 0;
     }
 
-    private static SuggestionProvider<CommandSourceStack> suggester(Supplier<Stream<ResourceLocation>> containers) {
+    private static SuggestionProvider<CommandSourceStack> suggester(Supplier<Stream<Identifier>> containers) {
         return (ctx, suggestionbuilder) -> SharedSuggestionProvider.suggestResource(containers.get(), suggestionbuilder);
     }
     private enum CommandAction {
-        BLADD(InventorySorter::blackListAdd, 1, Commands.argument("container", new ContainerResourceLocationArgument()).suggests(suggester(InventorySorter::listContainers))),
-        BLREMOVE(InventorySorter::blackListRemove, 4, Commands.argument("container", new ContainerResourceLocationArgument()).suggests(suggester(InventorySorter::listBlacklist))),
-        SHOWLAST(InventorySorter::showLast, 1, null),
-        LIST(InventorySorter::showBlacklist, 1, null);
+        BLADD(InventorySorter::blackListAdd, Permissions.COMMANDS_MODERATOR, Commands.argument("container", new ContainerIdentifierArgument()).suggests(suggester(InventorySorter::listContainers))),
+        BLREMOVE(InventorySorter::blackListRemove, Permissions.COMMANDS_OWNER, Commands.argument("container", new ContainerIdentifierArgument()).suggests(suggester(InventorySorter::listBlacklist))),
+        SHOWLAST(InventorySorter::showLast, Permissions.COMMANDS_MODERATOR, null),
+        LIST(InventorySorter::showBlacklist, Permissions.COMMANDS_MODERATOR, null);
 
-        private final int permissionLevel;
-        private RequiredArgumentBuilder<CommandSourceStack, ResourceLocation> suggester;
+        private final Permission permissionLevel;
+        private RequiredArgumentBuilder<CommandSourceStack, Identifier> suggester;
         private final ToIntFunction<CommandContext<CommandSourceStack>> action;
 
-        CommandAction(final ToIntFunction<CommandContext<CommandSourceStack>> action, final int permissionLevel, final RequiredArgumentBuilder<CommandSourceStack, ResourceLocation> suggester) {
+        CommandAction(final ToIntFunction<CommandContext<CommandSourceStack>> action, final Permission permissionLevel, final RequiredArgumentBuilder<CommandSourceStack, Identifier> suggester) {
             this.action = action;
             this.permissionLevel = permissionLevel;
             this.suggester = suggester;
@@ -61,7 +59,7 @@ public class InventorySorterCommand {
 
         public ArgumentBuilder<CommandSourceStack, ?> buildCommand() {
             final var base = Commands.literal(StringUtils.toLowerCase(name()))
-                    .requires(cs -> cs.hasPermission(permissionLevel));
+                    .requires(cs -> cs.permissions().hasPermission(permissionLevel));
             if (this.suggester != null)
                 base.then(this.suggester.executes(this.action::applyAsInt));
             else
@@ -70,11 +68,11 @@ public class InventorySorterCommand {
         }
     }
 
-    public static class ContainerResourceLocationArgument implements ArgumentType<ResourceLocation> {
+    public static class ContainerIdentifierArgument implements ArgumentType<Identifier> {
         private static final List<String> EXAMPLES = Collections.singletonList("minecraft:chest");
         @Override
-        public ResourceLocation parse(final StringReader reader) throws CommandSyntaxException {
-            return ResourceLocation.read(reader);
+        public Identifier parse(final StringReader reader) throws CommandSyntaxException {
+            return Identifier.read(reader);
         }
 
         @Override
