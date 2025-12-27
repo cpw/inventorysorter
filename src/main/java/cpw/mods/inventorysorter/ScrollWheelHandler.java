@@ -107,21 +107,16 @@ public enum ScrollWheelHandler implements Consumer<ContainerContext>
         for (InventoryHandler.InventoryMapping mappingCandidate : mappingCandidates)
         {
             if (mappingCandidate.inv == ContainerContext.PLAYER_OFFHAND && moveAmount > 0) {
-                boolean empty = true;
-                for (ItemStack itemStack : context.player.getInventory().offhand)
-                {
-                    if (!itemStack.isEmpty()) {
-                        empty = false;
-                        break;
-                    }
+                var itemStack = context.player.getOffhandItem();
+                if (itemStack.isEmpty()) {
+                    continue;
                 }
-                if (empty) continue;
             }
             if (mappingCandidate.inv == ContainerContext.PLAYER_HOTBAR && moveAmount > 0) {
                 boolean hasTarget = false, found = false;
                 for (int i = 0; i < 9; i++)
                 {
-                    ItemStack itemStack = context.player.getInventory().items.get(i);
+                    ItemStack itemStack = context.player.getInventory().getItem(i);
                     if (ItemStack.isSameItem(itemStack,sourceStack) && itemStack.getCount() < itemStack.getMaxStackSize())
                     {
                         hasTarget = true;
