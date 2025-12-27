@@ -27,7 +27,6 @@ import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.level.GameType;
@@ -56,7 +55,7 @@ public class KeyHandler {
     private static KeyHandler keyHandler;
     private final Map<KeyMapping, Action> keyBindingMap;
 
-    private final KeyMapping.Category category = new KeyMapping.Category(ResourceLocation.fromNamespaceAndPath("inventorysorter", "keys"));
+    private final KeyMapping.Category category = new KeyMapping.Category(InventorySorter.id("keys"));
 
     KeyHandler() {
         // Custom input mapping for wheel up (-1)

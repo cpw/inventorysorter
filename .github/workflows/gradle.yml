@@ -1,7 +1,10 @@
 name: Java CI
 
+# On a push to any branch
 on:
-  - push
+  push:
+    branches:
+      - '**'
 
 jobs:
   build:
