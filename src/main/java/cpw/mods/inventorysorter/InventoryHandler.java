@@ -175,7 +175,7 @@ public enum InventoryHandler
             return Ints.compare(System.identityHashCode(o1.is()), System.identityHashCode(o2.is()));
         }
         private static String compareString(ItemStack stack) {
-            return String.valueOf(stack.getItemHolder().unwrap().map(ResourceKey::identifier, BuiltInRegistries.ITEM::getKey));
+            return String.valueOf(stack.typeHolder().unwrap().map(ResourceKey::identifier, BuiltInRegistries.ITEM::getKey));
         }
     }
 
