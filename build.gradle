@@ -112,7 +112,7 @@ publishMods {
         projectId = "240633"
         accessToken = apiKey
 
-        supported_minecraft_versions.each {
+        supported_minecraft_versions.split(",").each {
             minecraftVersions.add(it.trim())
         }
 
