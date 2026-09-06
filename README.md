@@ -20,6 +20,10 @@ Middle mouse sorting
 
 The mod requires installation on both client and server to function. It makes no attempt to sort in the client, rather delegating all work to the server. This means it is very reliable and very fast. It should work with all containers (and maybe too many), and tries to respect canExtract/isItemValid (it will avoid slots that are marked that way).
 
+## Credits
+
+Much thanks to **@ErrorMikey** for picking up the maintenance of this mod and updating it all the way to 26.2. Thanks Mikey! This README change marks my return to maintenance of the mod.
+
 ## License
 
 This project is licensed according to GPL v3, see gpl-3.0.txt or https://www.gnu.org/licenses/gpl-3.0.en.html for more information.
