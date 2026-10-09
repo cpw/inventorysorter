@@ -4,7 +4,7 @@ plugins {
     id 'se.bjurr.gitchangelog.git-changelog-gradle-plugin' version '1.71.4'
     id 'org.ajoberstar.grgit' version '4.1.1'
     id 'com.github.ben-manes.versions' version '0.39.0'
-    id 'net.neoforged.moddev' version '2.0.141'
+    id 'net.neoforged.moddev' version '2.0.148'
     id "me.modmuss50.mod-publish-plugin" version "2.1.0"
     id 'java-library'
     id 'idea'
