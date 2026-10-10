@@ -109,7 +109,7 @@ publishMods {
 
     file = jar.archiveFile
     changelog = file('CHANGELOG.md').exists() ? file('CHANGELOG.md').text : "No changelog provided"
-    type = STABLE
+    type = BETA
 
     curseforge {
         modLoaders.add("neoforge")

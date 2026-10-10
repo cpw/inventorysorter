@@ -18,7 +18,6 @@
 
 package cpw.mods.inventorysorter;
 
-import javax.annotation.*;
 import java.util.function.*;
 
 /**

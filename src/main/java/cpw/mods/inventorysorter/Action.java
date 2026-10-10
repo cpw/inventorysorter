@@ -20,13 +20,10 @@ package cpw.mods.inventorysorter;
 
 import net.minecraft.world.inventory.Slot;
 import net.neoforged.neoforge.common.ModConfigSpec;
-import org.lwjgl.glfw.GLFW;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import com.mojang.blaze3d.platform.InputConstants;
+
 import java.util.function.*;
-import java.util.stream.Collectors;
 
 /**
  * Created by cpw on 08/01/16.
@@ -34,7 +31,7 @@ import java.util.stream.Collectors;
 public enum Action
 {
     SORT(SortingHandler.INSTANCE, "key.inventorysorter.sort",
-            GLFW.GLFW_MOUSE_BUTTON_MIDDLE, Config.ClientConfig.CONFIG.sortingModule, ModConfigSpec.ConfigValue::get),
+            InputConstants.MOUSE_BUTTON_MIDDLE, Config.ClientConfig.CONFIG.sortingModule, ModConfigSpec.ConfigValue::get),
     ONEITEMIN(ScrollWheelHandler.ONEITEMIN, "key.inventorysorter.itemin",
             99, Config.ClientConfig.CONFIG.wheelmoveModule, cf->cf.get() && InventorySorter.INSTANCE.dontDodgeMouseTweaks()),
     ONEITEMOUT(ScrollWheelHandler.ONEITEMOUT, "key.inventorysorter.itemout",

@@ -127,7 +127,7 @@ public class KeyHandler {
             return;
         }
 
-        Slot slot = guiContainer.getSlotUnderMouse();
+        Slot slot = guiContainer.getHoveredSlot();
         if (!ContainerContext.validSlot(slot)) {
             InventorySorter.LOGGER.log(Level.DEBUG, "Skipping action handling for blacklisted slot");
             return;

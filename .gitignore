@@ -27,3 +27,4 @@ repo
 /runs/
 
 .DS_Store
+.vscode

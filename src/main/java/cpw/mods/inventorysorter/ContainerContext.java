@@ -3,7 +3,6 @@ package cpw.mods.inventorysorter;
 import com.google.common.collect.*;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
-import net.neoforged.neoforge.items.SlotItemHandler;
 import net.neoforged.neoforge.transfer.item.ResourceHandlerSlot;
 import org.apache.logging.log4j.*;
 
@@ -29,7 +28,7 @@ class ContainerContext
         // Skip slots without an inventory - they're probably dummy slots
         return slot != null && slot.container != null
                 // don't skip slots that are slotitemhandlers with a container size > 0
-                && (slot instanceof SlotItemHandler || slot instanceof ResourceHandlerSlot || slot.container.getContainerSize() > 0)
+                && (slot instanceof ResourceHandlerSlot || slot.container.getContainerSize() > 0)
                 // Skip blacklisted slots
                 && !InventorySorter.INSTANCE.isSlotBlacklisted(slot);
     }

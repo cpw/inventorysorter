@@ -25,7 +25,6 @@ import net.minecraft.commands.synchronization.ArgumentTypeInfos;
 import net.minecraft.commands.synchronization.SingletonArgumentInfo;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.ChatFormatting;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.inventory.Slot;
 import net.neoforged.bus.api.IEventBus;
@@ -129,7 +128,7 @@ public class InventorySorter {
         }
 
         switch (configEvent.getConfig().getType()) {
-            case SERVER:
+            case SYNCED:
                 this.slotBlacklist.addAll(Config.ServerConfig.CONFIG.slotBlacklist.get());
                 this.containerBlacklist.addAll(Config.ServerConfig.CONFIG.containerBlacklist.get());
                 break;
@@ -137,6 +136,8 @@ public class InventorySorter {
                 if (Config.ClientConfig.CONFIG.dodgeMousetweaks.get() && ModList.get().isLoaded("mousetweaks")) {
                     this.dodgeMouseTweaks = true;
                 }
+                break;
+            default:
                 break;
         }
 
@@ -148,11 +149,11 @@ public class InventorySorter {
         }
     }
 
-    private static Component greenText(final String string) {
-        final Component tcs = Component.translatable(string);
-        tcs.getStyle().withColor(ChatFormatting.GREEN);
-        return tcs;
-    }
+    // private static Component greenText(final String string) {
+    //     final Component tcs = Component.translatable(string);
+    //     tcs.getStyle().withColor(ChatFormatting.GREEN);
+    //     return tcs;
+    // }
 
     static int blackListAdd(final CommandContext<CommandSourceStack> context) {
         final var containerType = context.getArgument("container", Identifier.class);
